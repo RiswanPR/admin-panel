@@ -1,0 +1,244 @@
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-2">
+                {{#if teacher.profileImage}}
+                <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" class="ac-teacher-img">
+                {{else}}
+                <div class="ac-teacher-avatar">{{teacher.name.[0]}}</div>
+                {{/if}}
+                <div>
+                    <h3 class="mb-0 fw-800">Assign Courses</h3>
+                    <p class="text-muted mb-0">Select courses for <strong>{{teacher.name}}</strong></p>
+                </div>
+            </div>
+        </div>
+        <a href="/teachers" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Teachers
+        </a>
+    </div>
+
+    <!-- INFO CARD -->
+    <div class="ac-info-card mb-4">
+        <div class="ac-info-item">
+            <i class="fa-solid fa-envelope"></i>
+            <span>{{teacher.email}}</span>
+        </div>
+        <div class="ac-info-item">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>{{#if teacher.designation}}{{teacher.designation}}{{else}}Not set{{/if}}</span>
+        </div>
+        <div class="ac-info-item">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>{{teacher.courseCount}} course(s) currently assigned</span>
+        </div>
+    </div>
+
+    <form id="assignForm">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card p-4" style="border-radius:20px">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Available Courses</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm ac-select-all" onclick="selectAll()">Select All</button>
+                            <button type="button" class="btn btn-sm ac-clear-all" onclick="clearAll()">Clear All</button>
+                        </div>
+                    </div>
+
+                    {{#if courses.length}}
+                    <div class="ac-courses-grid" id="coursesGrid">
+                        {{#each courses}}
+                        <label class="ac-course-card {{#if this.assignedTeachers}}assigned{{/if}}" id="card-{{this._id}}">
+                            <input
+                                type="checkbox"
+                                name="courseIds"
+                                value="{{this._id}}"
+                                class="ac-checkbox"
+                                {{#each this.assignedTeachers}}{{#ifEquals this ../teacher._id}}checked{{/ifEquals}}{{/each}}
+                                data-assigned="{{#if this.assignedTeachers}}true{{/if}}"
+                                onchange="updateCard(this)"
+                            >
+                            <div class="ac-course-img-wrap">
+                                {{#if this.image}}
+                                <img src="{{resolveImage this.image 'course-images'}}" alt="{{this.name}}">
+                                {{else}}
+                                <div class="ac-course-img-placeholder">
+                                    <i class="fa-solid fa-layer-group"></i>
+                                </div>
+                                {{/if}}
+                            </div>
+                            <div class="ac-course-info">
+                                <strong>{{this.name}}</strong>
+                                <small>{{this.studentCount}} students enrolled</small>
+                            </div>
+                            <div class="ac-check-mark">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </label>
+                        {{/each}}
+                    </div>
+                    {{else}}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-layer-group" style="font-size:40px;margin-bottom:16px;opacity:.3;display:block"></i>
+                        No courses available. <a href="/add-courses">Add a course</a> first.
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-3 flex-wrap">
+            <a href="/teachers" class="btn t-btn-cancel">Cancel</a>
+            <button type="submit" class="btn t-btn-submit" id="saveBtn">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save Assignments
+            </button>
+        </div>
+    </form>
+
+</div>
+
+
+<style>
+.ac-teacher-img{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid #9FD5B2; }
+.ac-teacher-avatar{
+    width:52px; height:52px; border-radius:50%;
+    background:linear-gradient(135deg,#9FD5B2,#12314C);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:22px;
+}
+
+.ac-info-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:20px 28px;
+    display:flex;
+    gap:32px;
+    flex-wrap:wrap;
+    box-shadow:var(--shadow);
+}
+.ac-info-item{
+    display:flex; align-items:center; gap:10px;
+    font-size:14px; font-weight:500; color:var(--text);
+}
+.ac-info-item i{ color:#9FD5B2; width:18px; text-align:center; }
+
+.ac-courses-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:16px;
+}
+
+.ac-course-card{
+    border:2px solid var(--border);
+    border-radius:18px;
+    padding:0;
+    cursor:pointer;
+    transition:.25s;
+    position:relative;
+    overflow:hidden;
+    background:var(--surface-2);
+    display:flex;
+    flex-direction:column;
+}
+.ac-course-card:hover{ border-color:#9FD5B2; transform:translateY(-3px); box-shadow:0 12px 28px rgba(0,0,0,.08); }
+.ac-course-card:has(.ac-checkbox:checked){ border-color:#9FD5B2; background:rgba(159,213,178,.06); }
+
+.ac-checkbox{ display:none; }
+
+.ac-course-img-wrap{ width:100%; height:130px; overflow:hidden; }
+.ac-course-img-wrap img{ width:100%; height:100%; object-fit:cover; transition:.3s; }
+.ac-course-card:hover .ac-course-img-wrap img{ transform:scale(1.04); }
+.ac-course-img-placeholder{
+    width:100%; height:130px; background:linear-gradient(135deg,#12314C,#1d4e89);
+    display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,.4); font-size:40px;
+}
+
+.ac-course-info{
+    padding:14px 16px;
+    flex:1;
+}
+.ac-course-info strong{ display:block; font-size:14px; margin-bottom:4px; }
+.ac-course-info small{ color:var(--muted); font-size:12px; }
+
+.ac-check-mark{
+    position:absolute; top:10px; right:10px;
+    width:28px; height:28px; border-radius:50%;
+    background:rgba(159,213,178,.2); border:2px solid rgba(159,213,178,.4);
+    display:flex; align-items:center; justify-content:center;
+    color:#9FD5B2; font-size:12px;
+    transition:.2s; opacity:0;
+}
+.ac-course-card:has(.ac-checkbox:checked) .ac-check-mark{ opacity:1; background:#9FD5B2; color:#fff; border-color:#9FD5B2; }
+
+.ac-select-all{ background:rgba(159,213,178,.15); color:#12314C; border:1px solid rgba(159,213,178,.4); font-weight:600; }
+html[data-theme="dark"] .ac-select-all{ color:#9FD5B2; }
+.ac-clear-all{ background:var(--surface-2); border:1px solid var(--border); color:var(--text); font-weight:600; }
+
+.t-btn-cancel{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:12px 28px; font-weight:600; }
+.t-btn-submit{ background:linear-gradient(135deg,#9FD5B2,#6dbf96); color:#082032; border-radius:12px; padding:12px 32px; font-weight:700; border:none; transition:.2s; }
+.t-btn-submit:hover{ transform:translateY(-2px); filter:brightness(.95); }
+
+@media(max-width:600px){
+    .ac-info-card{ flex-direction:column; gap:14px; }
+    .ac-courses-grid{ grid-template-columns:1fr; }
+}
+</style>
+
+
+<script>
+function selectAll(){
+    document.querySelectorAll('.ac-checkbox').forEach(cb => cb.checked = true);
+}
+function clearAll(){
+    document.querySelectorAll('.ac-checkbox').forEach(cb => cb.checked = false);
+}
+
+// Pre-check already assigned courses
+document.addEventListener('DOMContentLoaded', () => {
+    const assignedIds = [{{#each teacher.assignedCourses}}'{{this}}'{{#unless @last}},{{/unless}}{{/each}}];
+    document.querySelectorAll('.ac-checkbox').forEach(cb => {
+        if(assignedIds.includes(cb.value)) cb.checked = true;
+    });
+});
+
+document.getElementById('assignForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Saving...';
+
+    const checked = Array.from(document.querySelectorAll('.ac-checkbox:checked')).map(cb => cb.value);
+
+    try {
+        const res = await fetch('/teachers/{{teacher._id}}/assign-courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseIds: checked })
+        });
+        const data = await res.json();
+
+        if(data.success){
+            Swal.fire({
+                icon:'success',
+                title:'Courses Assigned!',
+                text:`${checked.length} course(s) assigned to {{teacher.name}}.`,
+                confirmButtonColor:'#12314C'
+            }).then(() => { window.location.href = '/teachers'; });
+        } else {
+            Swal.fire({ icon:'error', title:'Error', text: data.message || 'Failed to assign.' });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Save Assignments';
+        }
+    } catch(err){
+        Swal.fire({ icon:'error', title:'Error', text:'Something went wrong.' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Save Assignments';
+    }
+});
+</script>

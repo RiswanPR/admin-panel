@@ -1,0 +1,566 @@
+<div class="container-fluid">
+
+    <!-- HERO -->
+    <div class="hero-section mb-4">
+        <div>
+            <h2>
+                Welcome back,
+                {{#if admin}}{{admin}}{{else}}Admin{{/if}} 👋
+            </h2>
+            <p>
+                Monitor students, courses, chapters and academy performance
+                from one professional dashboard.
+            </p>
+        </div>
+
+        <div class="hero-buttons">
+            <a href="/add-students" class="btn btn-success">
+                <i class="fa-solid fa-user-plus me-2"></i>
+                Add Student
+            </a>
+
+            <a href="/add-courses" class="btn btn-warning">
+                <i class="fa-solid fa-plus me-2"></i>
+                Add Course
+            </a>
+        </div>
+    </div>
+
+
+    <!-- STATS -->
+    <div class="row mb-4">
+
+        <!-- Total Students -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-box navy">
+                <div>
+                    <small>Total Students</small>
+                    <h2 class="counter" data-target="{{dashboard.totalStudents}}">
+                        0
+                    </h2>
+                    <span>Registered learners</span>
+                </div>
+
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+        </div>
+
+        <!-- Active Students -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-box green">
+                <div>
+                    <small>Active Students</small>
+                    <h2 class="counter" data-target="{{dashboard.activeStudents}}">
+                        0
+                    </h2>
+                    <span>Currently learning</span>
+                </div>
+
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+
+        <!-- Courses -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-box yellow">
+                <div>
+                    <small>Total Courses</small>
+                    <h2 class="counter" data-target="{{dashboard.totalCourses}}">
+                        0
+                    </h2>
+                    <span>{{dashboard.totalChapters}} chapters</span>
+                </div>
+
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+        </div>
+
+        <!-- Revenue -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-box dark">
+                <div>
+                    <small>Total Revenue</small>
+                    <h2>
+                        ₹<span class="counter" data-target="{{dashboard.totalRevenue}}">
+                            0
+                        </span>
+                    </h2>
+                    <span>Total collections</span>
+                </div>
+
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="row">
+
+        <!-- LEFT -->
+        <div class="col-lg-8">
+
+            <!-- Overview -->
+            <div class="card dashboard-card p-4 mb-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="mb-1">Academy Overview</h5>
+                        <small class="text-muted">
+                            Real-time institution summary
+                        </small>
+                    </div>
+
+                    <span class="badge bg-success px-3 py-2">
+                        Live
+                    </span>
+                </div>
+
+                <div class="overview-grid">
+
+                    <div class="overview-box">
+                        <h6>Expired Students</h6>
+                        <h3>{{dashboard.expiredStudents}}</h3>
+                        <small>Need renewal</small>
+                    </div>
+
+                    <div class="overview-box">
+                        <h6>Popular Course</h6>
+                        <h5>{{dashboard.popularCourse}}</h5>
+                        <small>Highest enrollments</small>
+                    </div>
+
+                    <div class="overview-box">
+                        <h6>Total Chapters</h6>
+                        <h3>{{dashboard.totalChapters}}</h3>
+                        <small>Learning modules</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Recent Students -->
+            <div class="card dashboard-card p-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="m-0">Recent Students</h5>
+
+                    <a href="/students" class="fw-semibold">
+                        View All
+                    </a>
+                </div>
+
+                {{#if dashboard.recentStudents.length}}
+
+                {{#each dashboard.recentStudents}}
+                <div class="student-row">
+
+                    <div class="student-avatar">
+                        {{this.Name.[0]}}
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <strong>{{this.name}}</strong>
+                        <small>{{#each this.course}}{{courseName}}, {{/each}}</small>
+                    </div>
+
+                    {{#if this.account_Status.isActive}}
+                    <span class="badge bg-success">
+                        Active
+                    </span>
+                    {{else}}
+
+                    {{#if this.course.length}}
+                    <span class="badge bg-danger">
+                        Expired
+                    </span>
+                    {{else}}
+                    <span class="badge bg-warning">
+                        No Course
+                    </span>
+                    {{/if}}
+                    {{/if}}
+
+                </div>
+                {{/each}}
+
+                {{else}}
+
+                <div class="text-muted text-center py-4">
+                    No students found
+                </div>
+
+                {{/if}}
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT -->
+        <div class="col-lg-4">
+
+            <!-- Quick Actions -->
+            <div class="card dashboard-card p-4 mb-4">
+
+                <h5 class="mb-3">Quick Actions</h5>
+
+                <div class="quick-grid">
+
+                    <a href="/add-students">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Student</span>
+                    </a>
+
+                    <a href="/add-courses">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Course</span>
+                    </a>
+
+                    <a href="/add-chapters">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>Chapter</span>
+                    </a>
+
+                    <a href="/upload-video">
+                        <i class="fa-solid fa-video"></i>
+                        <span>Video</span>
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Reminder -->
+            <div class="card dashboard-card p-4 mb-4">
+
+                <h5 class="mb-3">Reminder</h5>
+
+                <div class="alert alert-warning">
+                    {{dashboard.expiredStudents}} students expired
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    Popular course:
+                    <strong>{{dashboard.popularCourse}}</strong>
+                </div>
+
+            </div>
+
+
+            <!-- Performance -->
+            <div class="card dashboard-card p-4">
+
+                <h5 class="mb-3">Performance</h5>
+
+                <div class="performance-box">
+                    <span>Total Revenue</span>
+                    <strong>
+                        ₹{{dashboard.totalRevenue}}
+                    </strong>
+                </div>
+
+                <div class="performance-box">
+                    <span>Active Ratio</span>
+                    <strong>
+                        {{dashboard.activeStudents}} /
+                        {{dashboard.totalStudents}}
+                    </strong>
+                </div>
+
+                <div class="performance-box">
+                    <span>Courses</span>
+                    <strong>{{dashboard.totalCourses}}</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: white !important;
+        border-radius: 24px;
+        padding: 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-section h2 {
+        color: white !important;
+        font-weight: 800;
+        font-size: 26px;
+    }
+
+    .hero-section p {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-size: 14px;
+        margin-bottom: 0;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .stat-box {
+        border-radius: 22px;
+        padding: 24px;
+        min-height: 150px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow), var(--shadow-glow) !important;
+        border-color: rgba(159, 213, 178, 0.3) !important;
+    }
+
+    .stat-box i {
+        font-size: 36px;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-box.green i {
+        background: linear-gradient(135deg, #9fd5b2, #70bf8e);
+        -webkit-background-clip: text;
+    }
+
+    .stat-box.yellow i {
+        background: linear-gradient(135deg, #f6ed4a, #d8d038);
+        -webkit-background-clip: text;
+    }
+
+    .stat-box.dark i {
+        background: linear-gradient(135deg, #12314c, #1d4e89);
+        -webkit-background-clip: text;
+    }
+
+    .stat-box h2 {
+        font-size: 30px;
+        font-weight: 850;
+        margin: 4px 0;
+        color: var(--text) !important;
+    }
+
+    .stat-box small {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-box span {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .dashboard-card {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+    }
+
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .overview-box {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        padding: 20px;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+    }
+
+    .overview-box:hover {
+        background: var(--surface);
+        border-color: rgba(159, 213, 178, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .overview-box h6 {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .overview-box h3,
+    .overview-box h5 {
+        color: var(--text);
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .overview-box small {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .student-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .student-row:last-child {
+        border-bottom: none;
+    }
+
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        box-shadow: 0 4px 10px var(--shadow-brand);
+    }
+
+    .student-row strong {
+        color: var(--text);
+        font-size: 14px;
+    }
+
+    .student-row small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .quick-grid a {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .quick-grid a:hover {
+        background: var(--surface);
+        border-color: var(--brand);
+        color: var(--brand);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+    }
+
+    .quick-grid i {
+        display: block;
+        font-size: 20px;
+        margin-bottom: 8px;
+        color: var(--brand);
+    }
+
+    .performance-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .performance-box:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .performance-box span {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .performance-box strong {
+        color: var(--text);
+        font-weight: 700;
+    }
+
+    @media(max-width:991px) {
+        .hero-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .hero-buttons {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .overview-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+<script>
+    document.querySelectorAll(".counter").forEach(counter => {
+
+        const target = Number(counter.dataset.target || 0);
+        let count = 0;
+        const speed = Math.max(target / 80, 1);
+
+        function updateCounter() {
+            count += speed;
+
+            if (count < target) {
+                counter.innerText =
+                    Math.floor(count).toLocaleString('en-IN');
+
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.innerText =
+                    target.toLocaleString('en-IN');
+            }
+        }
+
+        updateCounter();
+    });
+</script>

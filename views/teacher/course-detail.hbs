@@ -1,0 +1,366 @@
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <a href="/teacher/courses" class="tcd-back-link mb-2 d-inline-flex">
+                <i class="fa-solid fa-arrow-left me-2"></i>My Courses
+            </a>
+            <h3 class="mb-0 fw-800">{{course.name}}</h3>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/teacher/tstudents?course={{course._id}}" class="btn tcd-btn-secondary">
+                <i class="fa-solid fa-users me-2"></i>View Students
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <!-- CHAPTERS LIST -->
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4" style="border-radius:22px">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="mb-1">Chapters</h5>
+                        <small class="text-muted">{{chapters.length}} chapter(s) in this course</small>
+                    </div>
+                    <button class="btn tcd-btn-add" data-toggle="modal" data-target="#addChapterModal">
+                        <i class="fa-solid fa-plus me-2"></i>Add Chapter
+                    </button>
+                </div>
+
+                {{#if chapters.length}}
+                <div class="tcd-chapters">
+                    {{#each chapters}}
+                    <div class="tcd-chapter-item" data-code="{{this.uniqueCode}}">
+                        <div class="tcd-chapter-order">{{inc @index}}</div>
+                        <div class="tcd-chapter-img">
+                            {{#if this.imageName}}
+                            <img src="{{resolveImage this.imageName 'chapter-images'}}" alt="{{this.title}}">
+                            {{else}}
+                            <div class="tcd-chapter-img-placeholder"><i class="fa-solid fa-book-open"></i></div>
+                            {{/if}}
+                        </div>
+                        <div class="tcd-chapter-info flex-grow-1">
+                            <strong>{{this.title}}</strong>
+                            <small>{{this.description}}</small>
+                            <div class="tcd-chapter-meta">
+                                <span><i class="fa-solid fa-play-circle me-1"></i>{{#if this.classes}}{{this.classes.length}}{{else}}0{{/if}} classes</span>
+                            </div>
+                        </div>
+                        <div class="tcd-chapter-actions">
+                            <button class="tcd-action-btn" onclick="openEditChapterModal('{{this.uniqueCode}}','{{this.title}}','{{this.description}}','{{this.order}}','{{this.coverImageUrl}}')" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <a href="/teacher/chapters/classes/{{this.uniqueCode}}" class="tcd-action-btn" title="View Classes">
+                                <i class="fa-solid fa-play-circle"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="tcd-empty">
+                    <i class="fa-solid fa-book-open"></i>
+                    <p>No chapters yet. Add the first chapter.</p>
+                </div>
+                {{/if}}
+
+            </div>
+        </div>
+
+        <!-- RIGHT: Course Info -->
+        <div class="col-lg-4">
+            <div class="card p-4 mb-4" style="border-radius:22px">
+                <h6 class="fw-700 mb-3">Course Info</h6>
+                <div class="tcd-course-img-wrap mb-3">
+                    {{#if course.image}}
+                    <img src="{{resolveImage course.image 'course-images'}}" alt="{{course.name}}" class="tcd-course-img">
+                    {{else}}
+                    <div class="tcd-course-img-placeholder"><i class="fa-solid fa-layer-group"></i></div>
+                    {{/if}}
+                </div>
+                <div class="tcd-info-row">
+                    <span>Students</span>
+                    <strong>{{course.studentCount}}</strong>
+                </div>
+                <div class="tcd-info-row">
+                    <span>Chapters</span>
+                    <strong>{{chapters.length}}</strong>
+                </div>
+                <div class="tcd-info-row">
+                    <span>Type</span>
+                    <strong>{{#if course.type}}{{course.type}}{{else}}Standard{{/if}}</strong>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ADD CHAPTER MODAL -->
+<div class="modal fade" id="addChapterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="border:none;padding:24px 28px 0">
+                <h5 class="modal-title fw-800">Add Chapter</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:20px 28px 28px">
+                <form id="addChapterForm">
+                    <div class="mb-3">
+                        <label class="t-label">Chapter Title</label>
+                        <input type="text" class="form-control" name="title" placeholder="Introduction to Surveying" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="t-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Brief chapter description..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="t-label">Cover Image</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="addChapterPreview" style="width:120px; height:67px; background:#e9ecef; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#adb5bd;">
+                                <i class="fa-solid fa-image"></i>
+                            </div>
+                            <input type="hidden" name="coverImageUrl" id="addChapterCoverUrl">
+                            <button type="button" class="btn tcd-btn-secondary" onclick="openCoverSelector('addChapterCoverUrl', 'addChapterPreview')">
+                                Select Cover
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn tcd-btn-add">Add Chapter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CHAPTER MODAL -->
+<div class="modal fade" id="editChapterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="border:none;padding:24px 28px 0">
+                <h5 class="modal-title fw-800">Edit Chapter</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:20px 28px 28px">
+                <form id="editChapterForm">
+                    <input type="hidden" name="uniqueCode" id="editUniqueCode">
+                    <div class="mb-3">
+                        <label class="t-label">Chapter Title</label>
+                        <input type="text" class="form-control" name="title" id="editTitle" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="t-label">Description</label>
+                        <textarea class="form-control" name="description" id="editDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="t-label">Cover Image</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="editChapterPreview" style="width:120px; height:67px; background:#e9ecef; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#adb5bd;">
+                                <i class="fa-solid fa-image"></i>
+                            </div>
+                            <input type="hidden" name="coverImageUrl" id="editChapterCoverUrl">
+                            <button type="button" class="btn tcd-btn-secondary" onclick="openCoverSelector('editChapterCoverUrl', 'editChapterPreview')">
+                                Select Cover
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn tcd-btn-add">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.tcd-back-link{ color:var(--muted); font-size:14px; font-weight:600; transition:.2s; }
+.tcd-back-link:hover{ color:#9FD5B2; }
+
+.tcd-btn-add{
+    background:linear-gradient(135deg,#9FD5B2,#6dbf96);
+    color:#082032; font-weight:700; border:none; border-radius:12px;
+    padding:10px 22px; transition:.2s;
+}
+.tcd-btn-add:hover{ transform:translateY(-2px); filter:brightness(.95); color:#082032; }
+
+.tcd-btn-secondary{
+    background:var(--surface-2); border:1px solid var(--border);
+    color:var(--text); font-weight:600; border-radius:12px;
+    padding:10px 20px; transition:.2s;
+}
+.tcd-btn-secondary:hover{ border-color:#9FD5B2; color:#9FD5B2; }
+
+.tcd-chapters{ display:flex; flex-direction:column; gap:12px; }
+.tcd-chapter-item{
+    display:flex; align-items:center; gap:14px;
+    padding:16px; border-radius:16px; background:var(--surface-2);
+    border:1px solid var(--border); transition:.2s;
+}
+.tcd-chapter-item:hover{ border-color:#9FD5B2; }
+
+.tcd-chapter-order{
+    width:32px; height:32px; border-radius:50%;
+    background:rgba(18,49,76,.12); color:#12314C;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; flex-shrink:0;
+}
+html[data-theme="dark"] .tcd-chapter-order{ background:rgba(159,213,178,.15); color:#9FD5B2; }
+
+.tcd-chapter-img{ width:54px; height:54px; border-radius:12px; overflow:hidden; flex-shrink:0; }
+.tcd-chapter-img img{ width:100%; height:100%; object-fit:cover; }
+.tcd-chapter-img-placeholder{
+    width:54px; height:54px; border-radius:12px;
+    background:linear-gradient(135deg,#12314C,#1d4e89);
+    display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.4); font-size:20px;
+}
+
+.tcd-chapter-info strong{ display:block; font-size:14px; font-weight:700; }
+.tcd-chapter-info small{ color:var(--muted); font-size:12px; display:block; margin:.3rem 0; }
+.tcd-chapter-meta{ display:flex; gap:12px; }
+.tcd-chapter-meta span{ font-size:12px; color:var(--muted); }
+
+.tcd-chapter-actions{ display:flex; gap:8px; }
+.tcd-action-btn{
+    width:36px; height:36px; border-radius:10px; border:none;
+    background:var(--surface); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--muted); font-size:14px; cursor:pointer; transition:.2s;
+}
+.tcd-action-btn:hover{ border-color:#9FD5B2; color:#9FD5B2; }
+
+.tcd-course-img-wrap{ border-radius:14px; overflow:hidden; }
+.tcd-course-img{ width:100%; height:150px; object-fit:cover; }
+.tcd-course-img-placeholder{
+    width:100%; height:150px; background:linear-gradient(135deg,#12314C,#1d4e89);
+    display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.35); font-size:45px;
+}
+
+.tcd-info-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 0; border-bottom:1px solid var(--border); font-size:14px;
+}
+.tcd-info-row:last-child{ border-bottom:none; }
+.tcd-info-row span{ color:var(--muted); }
+.tcd-info-row strong{ font-weight:700; }
+
+.tcd-empty{ text-align:center; padding:50px 20px; color:var(--muted); }
+.tcd-empty i{ font-size:40px; display:block; margin-bottom:14px; opacity:.35; }
+
+.t-label{ display:block; font-size:13px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.tcd-chapter-item {
+    cursor: grab;
+}
+.tcd-chapter-item:active {
+    cursor: grabbing;
+}
+.sortable-ghost {
+    opacity: 0.4;
+    border: 2px dashed var(--brand) !important;
+}
+.sortable-chosen {
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+
+<script>
+function openEditChapterModal(id, title, desc, order, coverUrl) {
+    document.getElementById('editUniqueCode').value = id;
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editDescription').value = desc;
+    document.getElementById('editChapterCoverUrl').value = coverUrl || '';
+    
+    const preview = document.getElementById('editChapterPreview');
+    if (coverUrl) {
+        preview.innerHTML = `<img src="${coverUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
+    } else {
+        preview.innerHTML = `<i class="fa-solid fa-image"></i>`;
+    }
+    
+    $('#editChapterModal').modal('show');
+}
+
+document.getElementById('addChapterForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch('/teacher/courses/{{course._id}}/add-chapter', { method:'POST', body:formData });
+        if(res.ok || res.redirected){
+            window.location.reload();
+        }
+    } catch(err){ console.error(err); }
+});
+
+document.getElementById('editChapterForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+    const uniqueCode = document.getElementById('editUniqueCode').value;
+    try {
+        const res = await fetch(`/teacher/courses/{{course._id}}/chapters/${uniqueCode}/edit`, { method:'POST', body:formData });
+        if(res.ok || res.redirected){
+            Swal.fire({ icon:'success', title:'Updated!', timer:1200, showConfirmButton:false });
+            setTimeout(() => location.reload(), 1200);
+        }
+    } catch(err){ console.error(err); }
+});
+
+    // Initialize Sortable on chapters list
+    const chaptersEl = document.querySelector('.tcd-chapters');
+    if (chaptersEl) {
+        new Sortable(chaptersEl, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: async function () {
+                const uniqueCodes = Array.from(chaptersEl.querySelectorAll('.tcd-chapter-item')).map(el => el.dataset.code);
+                try {
+                    const res = await fetch('/teacher/courses/{{course._id}}/chapters/update-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uniqueCodes })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1000,
+                            timerProgressBar: true
+                        });
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Order updated'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to save order:', err);
+                }
+            }
+        });
+    }
+</script>
+
+{{> cover-selector-modal}}

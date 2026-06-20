@@ -1,0 +1,1221 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="ru-hero mb-4">
+        <div class="ru-hero-glow"></div>
+        <div class="ru-hero-content d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <div class="ru-hero-tag">
+                    <i class="fa-solid fa-shield-halved me-2"></i>
+                    Admin Panel
+                </div>
+
+                <h2 class="text-white fw-bold m-0 mt-2">
+                    Registered Users
+                </h2>
+
+                <p class="ru-hero-sub mt-2 mb-0">
+                    Accounts created from the user panel — awaiting course assignment
+                </p>
+            </div>
+
+            <div class="ru-hero-icon">
+                <i class="fa-solid fa-user-clock"></i>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="ru-stat">
+                <div class="ru-stat-icon" style="background:linear-gradient(135deg,var(--brand),var(--brand-2));">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <small class="ru-stat-label">Total Users</small>
+                    <h3 class="ru-stat-value">{{users.length}}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="ru-stat">
+                <div class="ru-stat-icon" style="background:linear-gradient(135deg,#9fd5b2,#70bf8e);color:#12314c;">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <small class="ru-stat-label">Verified</small>
+                    <h3 class="ru-stat-value" id="verifiedCount">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="ru-stat">
+                <div class="ru-stat-icon" style="background:linear-gradient(135deg,#f6ed4a,#d8d038);color:#12314c;">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <small class="ru-stat-label">Unverified</small>
+                    <h3 class="ru-stat-value" id="unverifiedCount">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="ru-stat">
+                <div class="ru-stat-icon" style="background:linear-gradient(135deg,#dc3545,#ff8a8a);">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+                <div>
+                    <small class="ru-stat-label">Blocked</small>
+                    <h3 class="ru-stat-value" id="blockedCount">0</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH + TOGGLE -->
+    <div class="ru-toolbar mb-4">
+
+        <div class="ru-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="myInput" placeholder="Search by name or email..." onkeyup="searchUser()">
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- ==================== GRID VIEW ==================== -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#each users}}
+            <div class="col-xl-3 col-lg-4 col-md-6 user-card-wrap"
+                data-name="{{this.name}}{{this.Name}}{{this.email}}{{this.Email}}" id="card-{{this._id}}">
+                <div class="ru-card">
+
+                    <!-- Status ribbon -->
+                    {{#if this.account_Status.isVerified}}
+                    <div class="ru-ribbon ru-ribbon-verified">
+                        <i class="fa-solid fa-check"></i> Verified
+                    </div>
+                    {{else}}
+                    <div class="ru-ribbon ru-ribbon-pending">
+                        <i class="fa-solid fa-clock"></i> Pending
+                    </div>
+                    {{/if}}
+
+                    <!-- Avatar -->
+                    <div class="ru-card-avatar-wrap">
+                        {{#if this.avatar}}
+                        <img src="{{this.avatar}}" alt="" class="ru-card-avatar">
+                        {{else}}
+                        <div class="ru-card-avatar-placeholder">
+                            {{#if this.name}}
+                            {{this.name.[0]}}
+                            {{else if this.Name}}
+                            {{this.Name.[0]}}
+                            {{else}}
+                            ?
+                            {{/if}}
+                        </div>
+                        {{/if}}
+                        <div class="ru-card-avatar-ring"></div>
+                    </div>
+
+                    <!-- Info -->
+                    <h5 class="ru-card-name">
+                        {{#if this.name}}{{this.name}}{{else}}{{this.Name}}{{/if}}
+                    </h5>
+                    <p class="ru-card-email">
+                        {{#if this.email}}{{this.email}}{{else}}{{this.Email}}{{/if}}
+                    </p>
+
+                    <!-- Meta chips -->
+                    <div class="ru-card-meta">
+                        <span class="ru-chip ru-chip-role">
+                            <i class="fa-solid fa-tag me-1"></i>
+                            {{#if this.role}}{{this.role}}{{else}}student{{/if}}
+                        </span>
+                        <span class="ru-chip ru-chip-date">
+                            <i class="fa-regular fa-calendar me-1"></i>
+                            {{formatDateTime this.createdAt}}
+                        </span>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="ru-card-divider"></div>
+
+                    <!-- Assign Course -->
+                    <div class="ru-card-assign">
+                        <label class="ru-assign-label">
+                            <i class="fa-solid fa-graduation-cap me-1"></i>
+                            Assign Course
+                        </label>
+                        <select class="form-select form-select-sm ru-course-select" id="grid-course-select-{{this._id}}"
+                            multiple>
+                            {{#each ../courses}}
+                            <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="ru-card-actions">
+
+                        <button class="ru-btn ru-btn-assign" onclick="assignCourseGrid('{{this._id}}')">
+                            <i class="fa-solid fa-plus me-2"></i>
+                            Assign Course
+                        </button>
+
+                        {{#unless this.account_Status.isVerified}}
+                        <button class="ru-btn ru-btn-verify" onclick="verifyAccount('{{this._id}}')">
+                            <i class="fa-solid fa-check-circle me-2"></i>
+                            Verify
+                        </button>
+                        {{/unless}}
+
+                        {{#unless this.account_Status.isBlocked}}
+                        <button class="ru-btn ru-btn-block" onclick="changeStatus('{{this._id}}', false)">
+                            <i class="fa-solid fa-ban me-2"></i>
+                            Block Access
+                        </button>
+                        {{else}}
+                        <button class="ru-btn ru-btn-approve" onclick="changeStatus('{{this._id}}', true)">
+                            <i class="fa-solid fa-circle-check me-2"></i>
+                            Approve Access
+                        </button>
+                        {{/unless}}
+
+                        <button class="ru-btn ru-btn-delete" onclick="deleteUser('{{this._id}}')">
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+            {{/each}}
+
+        </div>
+    </div>
+
+
+    <!-- ==================== TABLE VIEW ==================== -->
+    <div id="tableView" style="display:none;">
+        <div class="ru-table-wrap">
+            <table class="table table-hover align-middle mb-0" id="usersTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th>Assign Course</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {{#each users}}
+                    <tr id="user-row-{{this._id}}" class="user-row"
+                        data-name="{{this.name}}{{this.Name}}{{this.email}}{{this.Email}}">
+
+                        <td class="si-no fw-bold"></td>
+
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                {{#if this.avatar}}
+                                <img src="{{this.avatar}}" alt="" class="ru-table-avatar">
+                                {{else}}
+                                <div class="ru-table-avatar-placeholder">
+                                    {{#if this.name}}
+                                    {{this.name.[0]}}
+                                    {{else if this.Name}}
+                                    {{this.Name.[0]}}
+                                    {{else}}
+                                    ?
+                                    {{/if}}
+                                </div>
+                                {{/if}}
+
+                                <strong class="user-name">
+                                    {{#if this.name}}{{this.name}}{{else}}{{this.Name}}{{/if}}
+                                </strong>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="text-muted" style="font-size:0.9em;">
+                                {{#if this.email}}{{this.email}}{{else}}{{this.Email}}{{/if}}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="ru-chip ru-chip-role" style="font-size:0.8em;">
+                                {{#if this.role}}{{this.role}}{{else}}student{{/if}}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="text-muted" style="font-size:0.85em;">
+                                {{formatDateTime this.createdAt}}
+                            </span>
+                        </td>
+
+                        <td class="user-status-cell">
+                            {{#if this.account_Status.isVerified}}
+                            <span class="ru-status-badge ru-status-verified">
+                                <i class="fa-solid fa-check-circle me-1"></i> Verified
+                            </span>
+                            {{else}}
+                            <span class="ru-status-badge ru-status-pending">
+                                <i class="fa-solid fa-clock me-1"></i> Pending
+                            </span>
+                            {{/if}}
+                        </td>
+
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm ru-course-select"
+                                    id="course-select-{{this._id}}" multiple style="min-width:150px;">
+                                    {{#each ../courses}}
+                                    <option value="{{this._id}}">{{this.name}}</option>
+                                    {{/each}}
+                                </select>
+
+                                <button class="btn btn-sm ru-btn-assign-sm" onclick="assignCourse('{{this._id}}')">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {{#unless this.account_Status.isVerified}}
+                                <button class="btn btn-sm ru-btn-verify-sm" onclick="verifyAccount('{{this._id}}')">
+                                    Verify
+                                </button>
+                                {{/unless}}
+
+                                {{#unless this.account_Status.isBlocked}}
+                                <button class="btn btn-sm ru-btn-block-sm" onclick="changeStatus('{{this._id}}', false)">
+                                    Block Access
+                                </button>
+                                {{else}}
+                                <button class="btn btn-sm ru-btn-approve-sm" onclick="changeStatus('{{this._id}}', true)">
+                                    Approve Access
+                                </button>
+                                {{/unless}}
+
+                                <button class="btn btn-sm ru-btn-delete-sm" onclick="deleteUser('{{this._id}}')">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+
+    {{#unless users.length}}
+    <div class="ru-empty">
+        <div class="ru-empty-icon">
+            <i class="fa-solid fa-user-clock"></i>
+        </div>
+        <h4>No Registered Users</h4>
+        <p class="text-muted">Users who register from the app will appear here.</p>
+    </div>
+    {{/unless}}
+
+</div>
+
+
+<style>
+    /* =========================================
+   HERO
+   ========================================= */
+    .ru-hero {
+        position: relative;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        border-radius: 24px;
+        padding: 38px 36px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ru-hero-glow {
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(159, 213, 178, .3), transparent 70%);
+        pointer-events: none;
+        animation: ruGlow 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes ruGlow {
+        0% {
+            transform: scale(1);
+            opacity: .6;
+        }
+
+        100% {
+            transform: scale(1.4);
+            opacity: 1;
+        }
+    }
+
+    .ru-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .ru-hero-tag {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, .15);
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+    }
+
+    .ru-hero-sub {
+        color: rgba(255, 255, 255, .8);
+        font-size: 14px;
+        max-width: 400px;
+    }
+
+    .ru-hero-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, .1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, .15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: rgba(255, 255, 255, .8);
+    }
+
+
+    /* =========================================
+   STATS
+   ========================================= */
+    .ru-stat {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 22px 24px;
+        border-radius: 18px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transition: .25s;
+    }
+
+    .ru-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, .12);
+    }
+
+    .ru-stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .ru-stat-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .ru-stat-value {
+        margin: 2px 0 0;
+        font-weight: 800;
+        font-size: 24px;
+        color: var(--text);
+    }
+
+
+    /* =========================================
+   TOOLBAR
+   ========================================= */
+    .ru-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 22px;
+        border-radius: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+
+    .ru-search {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        flex: 1;
+        max-width: 420px;
+        transition: .2s;
+    }
+
+    .ru-search:focus-within {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px var(--shadow-brand);
+    }
+
+    .ru-search i {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .ru-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--text);
+        font-size: 14px;
+        width: 100%;
+    }
+
+
+    /* =========================================
+   USER CARD (GRID)
+   ========================================= */
+    .ru-card {
+        position: relative;
+        padding: 30px 24px 24px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transition: .3s cubic-bezier(.4, 0, .2, 1);
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .ru-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--green));
+        opacity: 0;
+        transition: .3s;
+    }
+
+    .ru-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, .15);
+    }
+
+    .ru-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Ribbon */
+    .ru-ribbon {
+        position: absolute;
+        top: 14px;
+        right: -2px;
+        padding: 4px 14px 4px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        border-radius: 6px 0 0 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+    }
+
+    .ru-ribbon-verified {
+        background: linear-gradient(135deg, #9fd5b2, #70bf8e);
+        color: #12314c;
+    }
+
+    .ru-ribbon-pending {
+        background: linear-gradient(135deg, #f6ed4a, #d8d038);
+        color: #12314c;
+    }
+
+    /* Avatar */
+    .ru-card-avatar-wrap {
+        position: relative;
+        width: 78px;
+        height: 78px;
+        margin: 0 auto 16px;
+    }
+
+    .ru-card-avatar,
+    .ru-card-avatar-placeholder {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        position: relative;
+        z-index: 1;
+    }
+
+    .ru-card-avatar {
+        object-fit: cover;
+        border: 3px solid var(--surface);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .1);
+    }
+
+    .ru-card-avatar-placeholder {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--btn-primary-text);
+        font-weight: 800;
+        font-size: 28px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px var(--shadow-brand);
+    }
+
+    .ru-card-avatar-ring {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px dashed var(--border);
+        animation: ruSpin 12s linear infinite;
+    }
+
+    @keyframes ruSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Info */
+    .ru-card-name {
+        text-align: center;
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 4px;
+        color: var(--text);
+    }
+
+    .ru-card-email {
+        text-align: center;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        word-break: break-all;
+    }
+
+    /* Meta */
+    .ru-card-meta {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .ru-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .ru-chip-role {
+        background: rgba(159, 213, 178, .18);
+        color: #065f46;
+        border: 1px solid rgba(159, 213, 178, .3);
+        text-transform: capitalize;
+    }
+
+    html[data-theme="dark"] .ru-chip-role {
+        background: rgba(159, 213, 178, .1);
+        color: var(--brand);
+    }
+
+    .ru-chip-date {
+        background: var(--surface-2);
+        color: var(--muted);
+        border: 1px solid var(--border);
+    }
+
+    /* Divider */
+    .ru-card-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 0 -24px 16px;
+    }
+
+    /* Assign */
+    .ru-card-assign {
+        margin-bottom: 16px;
+    }
+
+    .ru-assign-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .ru-course-select {
+        font-size: 13px !important;
+        min-height: 56px !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border) !important;
+        background: var(--surface-2) !important;
+        color: var(--text) !important;
+        padding: 6px !important;
+    }
+
+    /* Actions */
+    .ru-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ru-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .ru-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .ru-btn-assign {
+        background: linear-gradient(135deg, #9fd5b2, #70bf8e);
+        color: #12314c;
+        box-shadow: 0 4px 15px rgba(159, 213, 178, .2);
+    }
+
+    .ru-btn-assign:hover {
+        box-shadow: 0 8px 25px rgba(159, 213, 178, .3);
+    }
+
+    .ru-btn-verify {
+        background: linear-gradient(135deg, #f6ed4a, #d8d038);
+        color: #12314c;
+        box-shadow: 0 4px 15px rgba(246, 237, 74, .2);
+    }
+
+    .ru-btn-verify:hover {
+        box-shadow: 0 8px 25px rgba(246, 237, 74, .3);
+    }
+
+    .ru-btn-delete {
+        background: var(--surface-2);
+        color: var(--red);
+        border: 1px solid var(--border);
+    }
+
+    .ru-btn-delete:hover {
+        background: rgba(239, 68, 68, .1);
+        border-color: rgba(239, 68, 68, .3);
+    }
+
+    .ru-btn-block {
+        background: rgba(245, 158, 11, .1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, .2);
+    }
+
+    .ru-btn-block:hover {
+        background: rgba(245, 158, 11, .2);
+    }
+
+    .ru-btn-approve {
+        background: rgba(16, 185, 129, .1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, .2);
+    }
+
+    .ru-btn-approve:hover {
+        background: rgba(16, 185, 129, .2);
+    }
+
+
+    /* =========================================
+   TABLE
+   ========================================= */
+    .ru-table-wrap {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        background: var(--surface);
+    }
+
+    .ru-table-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .ru-table-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--btn-primary-text);
+        font-weight: 700;
+        font-size: 15px;
+        text-transform: uppercase;
+    }
+
+    .ru-status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 14px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .ru-status-verified {
+        background: rgba(159, 213, 178, .18);
+        color: #065f46;
+    }
+
+    html[data-theme="dark"] .ru-status-verified {
+        background: rgba(159, 213, 178, .1);
+        color: var(--brand);
+    }
+
+    .ru-status-pending {
+        background: rgba(246, 237, 74, .18);
+        color: #b45309;
+    }
+
+    html[data-theme="dark"] .ru-status-pending {
+        background: rgba(246, 237, 74, .1);
+        color: var(--yellow);
+    }
+
+    .ru-btn-assign-sm {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px !important;
+        background: linear-gradient(135deg, #9fd5b2, #70bf8e) !important;
+        color: #12314c !important;
+        border: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+        transition: .2s;
+    }
+
+    .ru-btn-assign-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(159, 213, 178, .3);
+    }
+
+    .ru-btn-verify-sm {
+        background: linear-gradient(135deg, #f6ed4a, #d8d038) !important;
+        color: #12314c !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px 14px !important;
+    }
+
+    .ru-btn-delete-sm {
+        background: rgba(239, 68, 68, .08) !important;
+        color: var(--red) !important;
+        border: 1px solid rgba(239, 68, 68, .2) !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px 14px !important;
+    }
+
+    .ru-btn-delete-sm:hover {
+        background: rgba(239, 68, 68, .15) !important;
+    }
+
+    .ru-btn-block-sm {
+        background: rgba(245, 158, 11, .1) !important;
+        color: #f59e0b !important;
+        border: 1px solid rgba(245, 158, 11, .2) !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px 14px !important;
+    }
+
+    .ru-btn-block-sm:hover {
+        background: rgba(245, 158, 11, .2) !important;
+    }
+
+    .ru-btn-approve-sm {
+        background: rgba(16, 185, 129, .1) !important;
+        color: #10b981 !important;
+        border: 1px solid rgba(16, 185, 129, .2) !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px 14px !important;
+    }
+
+    .ru-btn-approve-sm:hover {
+        background: rgba(16, 185, 129, .2) !important;
+    }
+
+
+    /* =========================================
+   EMPTY STATE
+   ========================================= */
+    .ru-empty {
+        text-align: center;
+        padding: 80px 20px;
+        border-radius: 22px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+
+    .ru-empty-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(159, 213, 178, .1), rgba(18, 49, 76, .08));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: var(--brand);
+        margin: 0 auto 20px;
+        animation: ruPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes ruPulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.08);
+        }
+    }
+
+    .ru-empty h4 {
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+
+    /* =========================================
+   ANIMATIONS
+   ========================================= */
+    .ru-card,
+    .ru-stat {
+        animation: ruFadeUp .4s ease both;
+    }
+
+    .col-xl-3:nth-child(1) .ru-card,
+    .col-lg-3:nth-child(1) .ru-stat {
+        animation-delay: .05s;
+    }
+
+    .col-xl-3:nth-child(2) .ru-card,
+    .col-lg-3:nth-child(2) .ru-stat {
+        animation-delay: .1s;
+    }
+
+    .col-xl-3:nth-child(3) .ru-card,
+    .col-lg-3:nth-child(3) .ru-stat {
+        animation-delay: .15s;
+    }
+
+    .col-xl-3:nth-child(4) .ru-card,
+    .col-lg-3:nth-child(4) .ru-stat {
+        animation-delay: .2s;
+    }
+
+    @keyframes ruFadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+
+<script>
+
+    let gridBtn = document.getElementById("gridBtn");
+    let tableBtn = document.getElementById("tableBtn");
+
+    function showGrid() {
+        document.getElementById("gridView").style.display = "block";
+        document.getElementById("tableView").style.display = "none";
+        gridBtn.classList.add("active");
+        tableBtn.classList.remove("active");
+    }
+
+    function showTable() {
+        document.getElementById("gridView").style.display = "none";
+        document.getElementById("tableView").style.display = "block";
+        tableBtn.classList.add("active");
+        gridBtn.classList.remove("active");
+    }
+
+    function searchUser() {
+        let input = document.getElementById("myInput").value.toUpperCase();
+
+        document.querySelectorAll(".user-card-wrap").forEach(card => {
+            let data = card.dataset.name.toUpperCase();
+            card.style.display = data.includes(input) ? "" : "none";
+        });
+
+        document.querySelectorAll(".user-row").forEach(row => {
+            let data = row.dataset.name.toUpperCase();
+            row.style.display = data.includes(input) ? "" : "none";
+        });
+
+        updateSerialNumbers();
+    }
+
+    function updateSerialNumbers() {
+        let count = 1;
+        document.querySelectorAll(".user-row").forEach(row => {
+            if (row.style.display !== "none") {
+                row.querySelector(".si-no").innerText = count++;
+            }
+        });
+    }
+
+    function changeStatus(userId, status) {
+        Swal.fire({
+            title: status ? "Approve access?" : "Block access?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Confirm",
+            confirmButtonColor: status ? "#9fd5b2" : "#f6ed4a"
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            fetch('/change-status/' + userId + '/' + status, { method: 'POST' })
+                .then(res => { if(!res.ok) throw new Error("Network error"); return res.json(); })
+                .then(data => {
+                    if (data.status) {
+                        location.reload();
+                    }
+                });
+        });
+    }
+
+    function verifyAccount(userId) {
+        Swal.fire({
+            title: "Verify Account?",
+            text: "This will mark the user's account as verified.",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Verify",
+            confirmButtonColor: "#9fd5b2"
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            fetch('/verify-account/' + userId, { method: 'POST' })
+                .then(res => { if(!res.ok) throw new Error("Network error"); return res.json(); })
+                .then(data => {
+                    if (data.status) {
+                        Swal.fire("Verified!", "Account has been verified.", "success").then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+        });
+    }
+
+    function doAssignCourse(userId, selectEl) {
+        let selected = [];
+        let courseNames = [];
+
+        for (let i = 0; i < selectEl.options.length; i++) {
+            if (selectEl.options[i].selected) {
+                selected.push(selectEl.options[i].value);
+                courseNames.push(selectEl.options[i].text);
+            }
+        }
+
+        if (selected.length === 0) {
+            Swal.fire("Select Course", "Please select at least one course to assign.", "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: "Assign Course?",
+            html: "Assign <strong>" + courseNames.join(', ') + "</strong> and promote to student.",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Assign",
+            confirmButtonColor: "#9fd5b2"
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            let formData = new URLSearchParams();
+            formData.append('userId', userId);
+            selected.forEach(id => formData.append('package', id));
+
+            fetch('/assign-course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            })
+                .then(res => { if(!res.ok) throw new Error("Network error"); return res.json(); })
+                .then(data => {
+                    if (data.status) {
+                        Swal.fire("Assigned!", "User has been promoted to student.", "success").then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire("Error", data.error || "Something went wrong", "error");
+                    }
+                });
+        });
+    }
+
+    function assignCourse(userId) {
+        let select = document.getElementById('course-select-' + userId);
+        doAssignCourse(userId, select);
+    }
+
+    function assignCourseGrid(userId) {
+        let select = document.getElementById('grid-course-select-' + userId);
+        doAssignCourse(userId, select);
+    }
+
+    function deleteUser(id) {
+        Swal.fire({
+            title: "Delete user?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#ef4444",
+            confirmButtonText: "Delete"
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            fetch('/delete-student/' + id, {
+                method: 'POST'
+            })
+                .then(res => { if(!res.ok) throw new Error("Network error"); return res.json(); })
+                .then(data => {
+                    if (data.success) {
+                        let row = document.getElementById("user-row-" + id);
+                        let card = document.getElementById("card-" + id);
+
+                        if (row) row.remove();
+                        if (card) card.remove();
+
+                        updateSerialNumbers();
+                        updateDashboard();
+
+                        Swal.fire("Deleted!", "", "success");
+                    }
+                });
+        });
+    }
+
+    function updateDashboard() {
+        let cards = document.querySelectorAll(".user-card-wrap");
+        let verified = 0;
+        let unverified = 0;
+
+        cards.forEach(card => {
+            let ribbon = card.querySelector('.ru-ribbon');
+            if (ribbon) {
+                if (ribbon.classList.contains('ru-ribbon-verified')) verified++;
+                else if (ribbon.classList.contains('ru-ribbon-pending')) unverified++;
+            }
+        });
+
+        document.getElementById("verifiedCount").innerText = verified;
+        document.getElementById("unverifiedCount").innerText = unverified;
+        document.getElementById("blockedCount").innerText = 0;
+    }
+
+    window.onload = function () {
+        updateSerialNumbers();
+        updateDashboard();
+    };
+
+</script>

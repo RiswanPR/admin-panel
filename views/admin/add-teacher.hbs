@@ -1,0 +1,273 @@
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h3 class="mb-1 fw-800">Add New Teacher</h3>
+            <p class="text-muted mb-0">Create a teacher account and set their login credentials.</p>
+        </div>
+        <a href="/teachers" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Teachers
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card t-form-card p-4 p-lg-5">
+
+                <form id="addTeacherForm" enctype="multipart/form-data">
+
+                    <!-- PROFILE IMAGE -->
+                    <div class="t-image-upload-area mb-4">
+                        <div class="t-image-preview" id="imagePreview">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Upload Photo</span>
+                        </div>
+                        <input type="file" id="profileImage" name="profileImage" accept="image/*" class="d-none" onchange="previewImage(this)">
+                        <label for="profileImage" class="t-upload-label">
+                            <i class="fa-solid fa-upload me-2"></i>Choose Profile Image
+                        </label>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Name -->
+                        <div class="col-md-6">
+                            <label class="t-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control t-input" name="name" id="name" placeholder="John Mathew" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label class="t-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control t-input" name="email" id="email" placeholder="john@zeitnah.com" required>
+                        </div>
+
+                        <!-- Mobile -->
+                        <div class="col-md-6">
+                            <label class="t-label">Mobile Number</label>
+                            <input type="text" class="form-control t-input" name="mobile" placeholder="+91 9876543210">
+                        </div>
+
+                        <!-- Designation -->
+                        <div class="col-md-6">
+                            <label class="t-label">Designation</label>
+                            <input type="text" class="form-control t-input" name="designation" placeholder="Senior Lecturer">
+                        </div>
+
+                        <!-- Password -->
+                        <div class="col-md-6">
+                            <label class="t-label">Password <span class="text-danger">*</span></label>
+                            <div class="t-password-wrap">
+                                <input type="password" class="form-control t-input" name="password" id="password" placeholder="Set login password" required>
+                                <button type="button" class="t-eye-btn" onclick="togglePass('password')">
+                                    <i class="fa-regular fa-eye" id="password-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6">
+                            <label class="t-label">Confirm Password <span class="text-danger">*</span></label>
+                            <div class="t-password-wrap">
+                                <input type="password" class="form-control t-input" name="confirmPassword" id="confirmPassword" placeholder="Repeat password" required>
+                                <button type="button" class="t-eye-btn" onclick="togglePass('confirmPassword')">
+                                    <i class="fa-regular fa-eye" id="confirmPassword-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="col-12">
+                            <label class="t-label">Bio</label>
+                            <textarea class="form-control t-input" name="bio" rows="3" placeholder="Brief introduction about the teacher..."></textarea>
+                        </div>
+
+                    </div>
+
+                    <div class="t-form-actions mt-4">
+                        <a href="/teachers" class="btn t-btn-cancel">Cancel</a>
+                        <button type="submit" class="btn t-btn-submit" id="submitBtn">
+                            <i class="fa-solid fa-user-plus me-2"></i>Create Teacher
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+.t-form-card{
+    border-radius:24px;
+    background:var(--surface);
+    box-shadow:0 20px 50px rgba(0,0,0,.07);
+}
+
+.t-image-upload-area{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+}
+
+.t-image-preview{
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    border:2px dashed #9FD5B2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    color:var(--muted);
+    font-size:13px;
+    background:var(--surface-2);
+    overflow:hidden;
+    transition:.2s;
+}
+
+.t-image-preview i{ font-size:28px; color:#9FD5B2; }
+.t-image-preview img{ width:100%; height:100%; object-fit:cover; }
+
+.t-upload-label{
+    background:rgba(159,213,178,.15);
+    color:#12314C;
+    border:1px solid rgba(159,213,178,.4);
+    border-radius:12px;
+    padding:9px 20px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+.t-upload-label:hover{ background:rgba(159,213,178,.3); }
+html[data-theme="dark"] .t-upload-label{ color:#9FD5B2; }
+
+.t-label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+    margin-bottom:8px;
+}
+
+.t-input{
+    height:48px;
+    border-radius:12px !important;
+    font-size:14px;
+}
+
+.t-password-wrap{
+    position:relative;
+}
+
+.t-eye-btn{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:4px;
+}
+
+.t-form-actions{
+    display:flex;
+    gap:12px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+}
+
+.t-btn-cancel{
+    background:var(--surface-2);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 28px;
+    font-weight:600;
+}
+
+.t-btn-submit{
+    background:linear-gradient(135deg,#12314C,#1d4e89);
+    color:#fff;
+    border-radius:12px;
+    padding:12px 32px;
+    font-weight:700;
+    border:none;
+    transition:.2s;
+}
+.t-btn-submit:hover{ transform:translateY(-2px); filter:brightness(1.1); color:#fff; }
+</style>
+
+
+<script>
+function previewImage(input){
+    const preview = document.getElementById('imagePreview');
+    if(input.files && input.files[0]){
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function togglePass(id){
+    const input = document.getElementById(id);
+    const icon = document.getElementById(id + '-eye');
+    if(input.type === 'password'){
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+
+document.getElementById('addTeacherForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirmPassword').value;
+
+    if(password !== confirm){
+        Swal.fire({ icon:'error', title:'Password Mismatch', text:'Passwords do not match.' });
+        return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Creating...';
+
+    const formData = new FormData(this);
+
+    try {
+        const res = await fetch('/teachers/add', { method:'POST', body:formData });
+        const data = await res.json();
+
+        if(data.success){
+            Swal.fire({
+                icon:'success',
+                title:'Teacher Created!',
+                text:'The teacher account has been set up successfully.',
+                confirmButtonColor:'#12314C'
+            }).then(() => { window.location.href = '/teachers'; });
+        } else {
+            Swal.fire({ icon:'error', title:'Error', text: data.message || 'Failed to create teacher.' });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Create Teacher';
+        }
+    } catch(err){
+        Swal.fire({ icon:'error', title:'Error', text:'Something went wrong.' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Create Teacher';
+    }
+});
+</script>

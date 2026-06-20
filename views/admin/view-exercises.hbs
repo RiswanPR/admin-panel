@@ -1,0 +1,700 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <a
+                    href="/chapters/classes/{{chapter.uniqueCode}}"
+                    class="hero-back-btn"
+                >
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <div class="ml-5">
+                    <small class="text-light opacity-75 d-block mb-1">
+                        Class Exercises
+                    </small>
+
+                    <h2 class="text-white fw-bold m-0">
+                        {{classData.title}}
+                    </h2>
+
+                    <span class="hero-badge mt-2">
+                        Learning Resources
+                    </span>
+                </div>
+
+            </div>
+
+            <a
+               href="/add-exercise/{{chapter.uniqueCode}}/{{classData._id}}"
+                class="btn btn-light px-4 py-2"
+            >
+                <i class="fa-solid fa-plus me-2"></i>
+                Add Exercise
+            </a>
+
+        </div>
+    </div>
+
+
+    <!-- DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Files</small>
+                    <h2>{{classData.exercises.length}}</h2>
+                </div>
+                <i class="fa-solid fa-folder-open stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>PDF</small>
+                    <h2 id="pdfCount">0</h2>
+                </div>
+                <i class="fa-solid fa-file-pdf stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Excel</small>
+                    <h2 id="excelCount">0</h2>
+                </div>
+                <i class="fa-solid fa-file-excel stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>AutoCAD</small>
+                    <h2 id="cadCount">0</h2>
+                </div>
+                <i class="fa-solid fa-drafting-compass stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH + TOGGLE -->
+    <div class="toolbar-card mb-4">
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="text"
+                id="myInput"
+                placeholder="Search exercise..."
+                onkeyup="searchExercise()"
+            >
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- GRID -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#if classData.exercises.length}}
+{{#each classData.exercises}}
+            <div
+                class="col-xl-3 col-lg-4 col-md-6 exercise-card-wrap"
+                data-name="{{this.title}}"
+                data-type="{{this.type}}"
+            >
+                <div class="exercise-card">
+
+                    <div class="file-top">
+
+                        <div class="file-icon
+                            {{#if (eq this.type 'pdf')}}pdf-bg{{/if}}
+                            {{#if (eq this.type 'excel')}}excel-bg{{/if}}
+                            {{#if (eq this.type 'autocad')}}cad-bg{{/if}}
+                        ">
+                            {{#if (eq this.type "pdf")}}
+                                <i class="fa-solid fa-file-pdf"></i>
+                            {{/if}}
+
+                            {{#if (eq this.type "excel")}}
+                                <i class="fa-solid fa-file-excel"></i>
+                            {{/if}}
+
+                            {{#if (eq this.type "autocad")}}
+                                <i class="fa-solid fa-drafting-compass"></i>
+                            {{/if}}
+                        </div>
+
+                    </div>
+<div class="exercise-body">
+
+    <div>
+        <h5 class="exercise-title fw-bold mb-3">
+            {{this.title}}
+        </h5>
+
+        <span class="type-chip
+            {{#if (eq this.type 'pdf')}}pdf-chip{{/if}}
+            {{#if (eq this.type 'excel')}}excel-chip{{/if}}
+            {{#if (eq this.type 'autocad')}}cad-chip{{/if}}
+        ">
+            {{this.type}}
+        </span>
+    </div>
+
+    <div class="exercise-actions mt-4">
+
+        <button
+            class="btn btn-success btn-sm w-100 mb-2"
+            onclick="openFile('{{this.file}}','{{this.type}}')"
+        >
+            View File
+        </button>
+
+        <div class="d-flex gap-2">
+            <a
+                href="/edit-exercise/{{this._id}}/{{../chapter.uniqueCode}}/{{../classData._id}}"
+                class="btn btn-primary btn-sm w-100"
+            >
+                Edit
+            </a>
+
+            <button
+                class="btn btn-danger btn-sm w-100"
+                onclick="deleteExercise(
+  '{{this._id}}',
+  '{{../chapter.uniqueCode}}',
+  '{{../classData._id}}'
+)"
+            >
+                Delete
+            </button>
+        </div>
+
+    </div>
+
+</div>
+<style>
+    .exercise-card{
+    background:var(--surface);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    transition:.25s;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+.exercise-body{
+    padding:22px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.exercise-title{
+    min-height:56px;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.exercise-actions{
+    margin-top:auto;
+}
+</style>
+                </div>
+            </div>
+            {{/each}}
+            {{/if}}
+
+        </div>
+    </div>
+
+
+    <!-- TABLE -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+
+            <table class="table premium-table align-middle" id="myTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Preview</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {{#if classData.exercises.length}}
+{{#each classData.exercises}}
+                    <tr>
+
+                        <td class="si-no"></td>
+
+                        <td class="exercise-name fw-bold">
+                            {{this.title}}
+                        </td>
+
+                        <td>
+                            <span class="type-chip
+                                {{#if (eq this.type 'pdf')}}pdf-chip{{/if}}
+                                {{#if (eq this.type 'excel')}}excel-chip{{/if}}
+                                {{#if (eq this.type 'autocad')}}cad-chip{{/if}}
+                            ">
+                                {{this.type}}
+                            </span>
+                        </td>
+
+                        <td>
+                            <button
+                                class="btn btn-success btn-sm"
+                                onclick="openFile('{{this.file}}','{{this.type}}')"
+                            >
+                                View
+                            </button>
+                        </td>
+
+                        <td>
+                            <a
+                                href="/edit-exercise/{{this._id}}/{{../chapter.uniqueCode}}/{{../classData._id}}"
+                                class="btn btn-primary btn-sm"
+                            >
+                                Edit
+                            </a>
+
+                            <button
+                                class="btn btn-danger btn-sm"
+                                onclick="deleteExercise(
+  '{{this._id}}',
+  '{{../chapter.uniqueCode}}',
+  '{{../classData._id}}'
+)"
+                            >
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                    {{/if}}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+
+   {{#unless classData.exercises.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-folder-open"></i>
+        <h4>No Exercises Added</h4>
+
+        <a
+            href="/add-exercise/{{chapter.uniqueCode}}/{{classData._id}}"
+            class="btn btn-success mt-2"
+        >
+            Add First Exercise
+        </a>
+    </div>
+    {{/unless}}
+
+</div>
+
+
+<!-- MODAL -->
+<div id="fileModal" class="custom-modal">
+    <div class="modal-box">
+
+        <button class="close-btn" onclick="closeModal()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <iframe id="pdfViewer"></iframe>
+
+        <div id="noPreview">
+            <i class="fa-solid fa-file-circle-question mb-3"></i>
+            <h5>Preview not available</h5>
+
+            <a
+                id="downloadLink"
+                class="btn btn-success mt-2"
+                target="_blank"
+            >
+                Download File
+            </a>
+        </div>
+
+    </div>
+</div>
+
+
+<style>
+.hero-card{
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));
+    border-radius:28px;
+    padding:32px;
+    box-shadow:0 18px 40px rgba(18,49,76,.22);
+}
+.hero-back-btn{
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.18);
+    color:var(--surface);
+    text-decoration:none;
+}
+.hero-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:rgba(255,255,255,.16);
+    color:var(--surface);
+    font-weight:600;
+    font-size:13px;
+}
+
+.stat-card{
+    border-radius:22px;
+    padding:28px;
+    color: white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.stat-dark{background:linear-gradient(135deg,var(--brand),#0b2237);}
+.stat-red{background:linear-gradient(135deg,#ff8a8a,#dc3545);}
+.stat-green{background:linear-gradient(135deg,#9fd5b2,#70bf8e);}
+.stat-blue{background:linear-gradient(135deg,#6cbcff,#1976d2);}
+.stat-icon{font-size:34px;}
+
+.toolbar-card{
+    background:var(--surface);
+    padding:18px;
+    border-radius:18px;
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+}
+.search-box{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#f7f9fc;
+    padding:14px 18px;
+    border-radius:14px;
+}
+.search-box input{
+    width:100%;
+    border:none;
+    outline:none;
+    background:none;
+}
+.view-toggle{
+    display:flex;
+    gap:10px;
+}
+.view-toggle button{
+    width:50px;
+    height:50px;
+    border:none;
+    border-radius:12px;
+}
+.view-toggle .active{
+    background:var(--brand);
+    color:var(--surface);
+}
+
+.exercise-card{
+    background:var(--surface);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    transition:.25s;
+}
+.exercise-card:hover{
+    transform:translateY(-6px);
+}
+.file-top{
+    background:var(--surface-2);
+    padding:35px;
+    text-align:center;
+}
+.file-icon{
+    width:90px;
+    height:90px;
+    border-radius:24px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:38px;
+    color:var(--surface);
+}
+.pdf-bg{background:#dc3545;}
+.excel-bg{background:#198754;}
+.cad-bg{background:#1976d2;}
+
+.exercise-body{
+    padding:22px;
+}
+.type-chip{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+}
+.pdf-chip{
+    background:#ffe3e3;
+    color:#dc3545;
+}
+.excel-chip{
+    background:#dff7e7;
+    color:#198754;
+}
+.cad-chip{
+    background:#e3f2ff;
+    color:#1976d2;
+}
+
+.premium-table{
+    background:var(--surface);
+    border-radius:18px;
+    overflow:hidden;
+}
+.premium-table thead{
+    background:var(--brand);
+    color:var(--surface);
+}
+.premium-table th,
+.premium-table td{
+    padding:18px;
+}
+
+.empty-box{
+    background:var(--surface);
+    padding:70px 20px;
+    border-radius:24px;
+}
+.empty-box i{
+    font-size:55px;
+    color:var(--brand);
+    margin-bottom:20px;
+}
+
+/* Modal */
+.custom-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(6px);
+}
+.modal-box{
+    width:min(1100px,92%);
+    height:85vh;
+    margin:4vh auto;
+    background:var(--surface);
+    border-radius:24px;
+    position:relative;
+    overflow:hidden;
+    padding:20px;
+}
+.close-btn{
+    position:absolute;
+    top:15px;
+    right:15px;
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:50%;
+    background:#f1f3f5;
+}
+#pdfViewer{
+    width:100%;
+    height:100%;
+    border:none;
+    display:none;
+}
+#noPreview{
+    display:none;
+    height:100%;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+}
+#noPreview i{
+    font-size:60px;
+    color:var(--brand);
+}
+</style>
+
+
+<script>
+function updateSerialNumbers(){
+    let rows=document.querySelectorAll("#myTable tbody tr");
+    let count=1;
+
+    rows.forEach(row=>{
+        if(row.style.display!=="none"){
+            let cell=row.querySelector(".si-no");
+            if(cell) cell.innerText=count++;
+        }
+    });
+}
+
+function searchExercise(){
+    let input=document.getElementById("myInput").value.toUpperCase();
+
+    document.querySelectorAll(".exercise-card-wrap").forEach(card=>{
+        let name=card.dataset.name.toUpperCase();
+        card.style.display=name.includes(input)?"":"none";
+    });
+
+    document.querySelectorAll("#myTable tbody tr").forEach(row=>{
+        let title=row.querySelector(".exercise-name");
+        if(title){
+            row.style.display=
+                title.innerText.toUpperCase().includes(input)
+                ? ""
+                : "none";
+        }
+    });
+
+    updateSerialNumbers();
+}
+
+function showGrid(){
+    gridView.style.display="block";
+    tableView.style.display="none";
+
+    gridBtn.classList.add("active");
+    tableBtn.classList.remove("active");
+}
+
+function showTable(){
+    gridView.style.display="none";
+    tableView.style.display="block";
+
+    tableBtn.classList.add("active");
+    gridBtn.classList.remove("active");
+}
+
+function updateDashboard(){
+    let pdf=0;
+    let excel=0;
+    let cad=0;
+
+    document.querySelectorAll(".exercise-card-wrap").forEach(card=>{
+        let type=card.dataset.type;
+
+        if(type==="pdf") pdf++;
+        if(type==="excel") excel++;
+        if(type==="autocad") cad++;
+    });
+
+    pdfCount.innerText=pdf;
+    excelCount.innerText=excel;
+    cadCount.innerText=cad;
+}
+
+function openFile(filePath,type){
+
+    let modal=document.getElementById("fileModal");
+    let pdfViewer=document.getElementById("pdfViewer");
+    let noPreview=document.getElementById("noPreview");
+    let downloadLink=document.getElementById("downloadLink");
+
+    modal.style.display="block";
+
+    pdfViewer.style.display="none";
+    noPreview.style.display="none";
+
+    if(type==="pdf"){
+        pdfViewer.src=filePath;
+        pdfViewer.style.display="block";
+    }else{
+        noPreview.style.display="flex";
+        downloadLink.href=filePath;
+    }
+}
+
+function closeModal(){
+    fileModal.style.display="none";
+    pdfViewer.src="";
+}
+
+window.onclick=function(e){
+    if(e.target===fileModal){
+        closeModal();
+    }
+}
+
+async function deleteExercise(
+    id,
+    chapterCode,
+    classId
+){
+
+    const result =
+        await Swal.fire({
+            title:"Delete exercise?",
+            text:"This action cannot be undone",
+            icon:"warning",
+            showCancelButton:true,
+            confirmButtonColor:"#dc3545",
+            confirmButtonText:"Delete"
+        });
+
+    if(!result.isConfirmed) return;
+
+    const response = await fetch(
+        `/delete-exercise/${id}/${chapterCode}/${classId}`,
+        {method:"POST"}
+    );
+    if(response.ok) location.reload();
+}
+
+window.onload=function(){
+    updateSerialNumbers();
+    updateDashboard();
+};
+</script>

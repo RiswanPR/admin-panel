@@ -1,0 +1,410 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO -->
+    <div class="hero-card mb-4">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <small class="text-light opacity-75 d-block mb-1">
+                    Class Resources
+                </small>
+
+                <h2 class="text-white fw-bold m-0">
+                    Add Exercise
+                </h2>
+                <p class="text-light opacity-75 mt-2 mb-0">
+    Upload supporting resources for this class
+</p>
+                <span class="hero-badge mt-2">
+                    Class Attachments
+                </span>
+            </div>
+
+            <a
+                href="javascript:history.back()"
+                class="btn btn-light px-4 py-2"
+            >
+                <i class="fa-solid fa-arrow-left me-2"></i>
+                Back
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-11">
+
+            <div class="upload-card">
+
+                <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                <form
+                    id="exerciseForm"
+                    action="/add-exercise"
+                    method="POST"
+                    enctype="multipart/form-data"
+                >
+
+                    <input
+    type="hidden"
+    name="chapterId"
+    value="{{chapterId}}"
+>
+
+<input
+    type="hidden"
+    name="classId"
+    value="{{classId}}"
+>
+
+                    <div class="row g-5">
+
+                        <!-- LEFT -->
+                        <div class="col-lg-7">
+
+                            <!-- TITLE -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-2">
+                                    Exercise Title
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    id="exerciseTitle"
+                                    class="form-control custom-input"
+                                    placeholder="Enter exercise title..."
+                                    required
+                                >
+                            </div>
+
+                            <!-- UPLOAD -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-3">
+                                    Upload File
+                                </label>
+
+                                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+
+                                    <div id="uploadPlaceholder" class="upload-placeholder">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <h5 class="mb-2">Upload Exercise File</h5>
+                                        <small>
+                                            PDF / XLS / XLSX / DWG
+                                        </small>
+                                    </div>
+
+                                    <div id="filePreview" class="file-preview d-none">
+                                        <div id="fileIcon" class="file-icon-big">
+                                            <i class="fa-solid fa-file"></i>
+                                        </div>
+
+                                        <h5 id="previewFileName" class="fw-bold mt-3 mb-2">
+                                            File name
+                                        </h5>
+
+                                        <span id="previewType" class="type-chip">
+                                            File type
+                                        </span>
+
+                                        <p id="previewSize" class="text-muted mt-3 mb-0"></p>
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        name="file"
+                                        id="fileInput"
+                                        hidden
+                                        required
+                                        accept=".pdf,.xls,.xlsx,.dwg"
+                                        onclick="event.stopPropagation()"
+                                    >
+
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <!-- RIGHT -->
+                        <div class="col-lg-5">
+
+                            <div class="summary-card sticky-top">
+
+                                <h5 class="fw-bold mb-4">
+                                    Upload Summary
+                                </h5>
+
+                                <div class="summary-box">
+                                    <p class="mb-2 text-muted">
+                                        Title
+                                    </p>
+
+                                    <h5
+                                        class="fw-bold mb-4"
+                                        id="summaryTitle"
+                                    >
+                                        Exercise Title
+                                    </h5>
+
+                                    <p class="mb-2 text-muted">
+                                        File Type
+                                    </p>
+
+                                    <div id="summaryType">
+                                        —
+                                    </div>
+
+                                    <hr>
+
+                                    <p class="mb-2 text-muted">
+                                        Status
+                                    </p>
+
+                                    <div id="uploadStatus" class="text-warning fw-bold">
+                                        Waiting for upload...
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BUTTON -->
+                    <div class="text-center mt-5">
+                        <button
+                            type="submit"
+                            id="submitBtn"
+                            class="btn btn-success px-5 py-3"
+                            disabled
+                        >
+                            <i class="fa-solid fa-upload me-2"></i>
+                            Upload Exercise
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+.hero-card{
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));
+    border-radius:28px;
+    padding:32px;
+    box-shadow:0 18px 40px rgba(18,49,76,.22);
+}
+.hero-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:rgba(255,255,255,.16);
+    color:white;
+    font-size:13px;
+    font-weight:600;
+}
+
+.upload-card{
+    background: var(--surface);
+    border-radius:28px;
+    padding:35px;
+    box-shadow:0 12px 35px rgba(0,0,0,.06);
+}
+
+.custom-input{
+    border-radius:14px;
+    min-height:56px;
+    padding:14px 18px;
+    border:1px solid #dee2e6;
+}
+
+.upload-area{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:24px;
+    border:2px dashed #cfd8e3;
+    background:var(--surface-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    overflow:hidden;
+}
+
+.upload-placeholder,
+.file-preview{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:30px;
+}
+
+.upload-placeholder i{
+    font-size:55px;
+    color:var(--brand);
+    margin-bottom:18px;
+}
+
+.file-icon-big{
+    width:95px;
+    height:95px;
+    border-radius:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:38px;
+}
+
+.summary-card{
+    background:var(--surface-2);
+    border-radius:24px;
+    padding:28px;
+    top:20px;
+}
+.summary-box{
+    background: var(--surface);
+    border-radius:18px;
+    padding:22px;
+}
+
+.type-chip{
+    display:inline-block;
+    padding:8px 14px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.pdf-chip{
+    background:#ffe3e3;
+    color:#dc3545;
+}
+.excel-chip{
+    background:#dff7e7;
+    color:#198754;
+}
+.cad-chip{
+    background:#e3f2ff;
+    color:#1976d2;
+}
+</style>
+
+
+<script>
+const fileInput=document.getElementById("fileInput");
+const submitBtn=document.getElementById("submitBtn");
+const errorMsg=document.getElementById("errorMsg");
+
+function showError(msg){
+    errorMsg.classList.remove("d-none");
+    errorMsg.innerText=msg;
+}
+
+function clearError(){
+    errorMsg.classList.add("d-none");
+    errorMsg.innerText="";
+}
+
+document.getElementById("exerciseTitle")
+.addEventListener("input",function(){
+    document.getElementById("summaryTitle").innerText =
+        this.value || "Exercise Title";
+});
+
+fileInput.addEventListener("change",function(e){
+
+    clearError();
+
+    const file=e.target.files[0];
+    if(!file) return;
+
+    const ext=file.name.split(".").pop().toLowerCase();
+    const allowed=["pdf","xls","xlsx","dwg"];
+
+    if(!allowed.includes(ext)){
+        showError("Only PDF / XLS / XLSX / DWG allowed");
+        fileInput.value="";
+        submitBtn.disabled=true;
+        return;
+    }
+
+    if(file.size > 20*1024*1024){
+        showError("Max file size is 20MB");
+        fileInput.value="";
+        submitBtn.disabled=true;
+        return;
+    }
+
+    let type="";
+    let chipClass="";
+    let icon="";
+    let bg="";
+
+    if(ext==="pdf"){
+        type="PDF";
+        chipClass="pdf-chip";
+        icon="fa-file-pdf";
+        bg="#dc3545";
+    }
+
+    if(ext==="xls" || ext==="xlsx"){
+        type="EXCEL";
+        chipClass="excel-chip";
+        icon="fa-file-excel";
+        bg="#198754";
+    }
+
+    if(ext==="dwg"){
+        type="AUTOCAD";
+        chipClass="cad-chip";
+        icon="fa-drafting-compass";
+        bg="#1976d2";
+    }
+
+    uploadPlaceholder.classList.add("d-none");
+    filePreview.classList.remove("d-none");
+
+    fileIcon.style.background=bg;
+    fileIcon.innerHTML=`<i class="fa-solid ${icon}"></i>`;
+
+    previewFileName.innerText=file.name;
+    previewSize.innerText=
+        (file.size/(1024*1024)).toFixed(2)+" MB";
+
+    previewType.className="type-chip "+chipClass;
+    previewType.innerText=type;
+
+    summaryType.className="type-chip "+chipClass;
+    summaryType.innerText=type;
+
+    uploadStatus.className="text-success fw-bold";
+    uploadStatus.innerText="Ready to upload";
+
+    submitBtn.disabled=false;
+});
+
+document.getElementById("exerciseForm")
+.addEventListener("submit",function(){
+
+    submitBtn.disabled=true;
+    submitBtn.innerHTML=
+        '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+});
+</script>

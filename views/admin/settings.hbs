@@ -1,0 +1,617 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <small class="text-white-50 d-block mb-1">
+                    Admin Panel
+                </small>
+
+                <h2 class="text-white fw-bold m-0">
+                    Settings
+                </h2>
+
+                <span class="hero-badge mt-2">
+                    Manage academy preferences
+                </span>
+            </div>
+
+            <button class="btn btn-light px-4 py-2">
+                <i class="fa-solid fa-floppy-disk me-2"></i>
+                Save Changes
+            </button>
+
+        </div>
+    </div>
+
+
+    <!-- TOP STATS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Academy Profile</small>
+                    <h3>Configured</h3>
+                </div>
+                <i class="fa-solid fa-building-columns stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Theme</small>
+                    <h3 id="themeName">Dark</h3>
+                </div>
+                <i class="fa-solid fa-palette stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Database</small>
+                    <h3>Connected</h3>
+                </div>
+                <i class="fa-solid fa-database stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>System</small>
+                    <h3>Healthy</h3>
+                </div>
+                <i class="fa-solid fa-shield-halved stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ACADEMY PROFILE -->
+        <div class="col-lg-6">
+            <div class="setting-card">
+                <div class="section-title">
+                    <i class="fa-solid fa-school"></i>
+                    Academy Profile
+                </div>
+
+                <form id="academyForm">
+
+                    <div class="logo-upload mb-4" onclick="document.getElementById('logoInput').click()">
+                        <img src="/images/logo.png" id="logoPreview">
+                        <span>Click to change logo</span>
+
+                        <input type="file" id="logoInput" name="logo" hidden accept="image/*" onclick="event.stopPropagation()">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Academy Name</label>
+                        <input type="text" class="form-control" name="academyName" value="{{settings.academyName}}"
+                            required>
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+                            <label>Email</label>
+                            <input type="email" class="form-control" name="email" value="{{settings.email}}" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label>Phone</label>
+                            <input type="text" class="form-control" name="phone" value="{{settings.phone}}" required>
+                        </div>
+
+                    </div>
+
+                    <div class="mb-4">
+                        <label>Address</label>
+                        <textarea class="form-control" rows="3" name="address" required>{{settings.address}}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>
+                        Save Academy Profile
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+        <!-- ADMIN ACCOUNT -->
+        <div class="col-lg-6">
+            <div class="setting-card">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-user-shield"></i>
+                    Admin Account
+                </div>
+
+                <div class="mb-3">
+                    <label>Username</label>
+                    <input type="text" class="form-control" value="admin">
+                </div>
+
+                <div class="mb-3">
+                    <label>Current Password</label>
+                    <input type="password" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>New Password</label>
+                    <input type="password" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Confirm Password</label>
+                    <input type="password" class="form-control">
+                </div>
+
+                <button class="btn btn-primary w-100">
+                    Update Account
+                </button>
+
+            </div>
+        </div>
+
+
+        <!-- THEME -->
+        <div class="col-lg-6">
+            <div class="setting-card">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-moon"></i>
+                    Theme Settings
+                </div>
+
+                <div class="theme-grid">
+
+                    <div class="theme-box active-theme" onclick="setThemeCard('dark')">
+                        🌙
+                        <span>Dark</span>
+                    </div>
+
+                    <div class="theme-box" onclick="setThemeCard('light')">
+                        ☀️
+                        <span>Light</span>
+                    </div>
+
+                    <div class="theme-box" onclick="setThemeCard('auto')">
+                        🖥
+                        <span>Auto</span>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- BACKUP -->
+        <div class="col-lg-6">
+            <div class="setting-card">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    Backup & Export
+                </div>
+
+                <div class="backup-grid">
+
+                    <button type="button" class="btn btn-success backup-btn"
+                        onclick="window.location.href='/export-students'">
+                        <i class="fa-solid fa-file-csv mb-2"></i>
+                        <span>Export Students</span>
+                    </button>
+
+                    <button type="button" class="btn btn-primary backup-btn"
+                        onclick="window.location.href='/export-courses'">
+                        <i class="fa-solid fa-file-code mb-2"></i>
+                        <span>Export Courses</span>
+                    </button>
+
+                    <button type="button" class="btn btn-warning backup-btn"
+                        onclick="window.location.href='/full-backup'">
+                        <i class="fa-solid fa-database mb-2"></i>
+                        <span>Full Backup</span>
+                    </button>
+
+                    {{#if isSuperuser}}
+                        <button type="button" class="btn btn-danger backup-btn"
+                            onclick="document.getElementById('restoreFile').click()">
+                            <i class="fa-solid fa-rotate-left mb-2"></i>
+                            <span>Restore Backup</span>
+                        </button>
+
+                        <input type="file" id="restoreFile" hidden accept=".json" onchange="restoreBackup(this)">
+                    {{/if}}
+
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .backup-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .backup-btn {
+                height: 110px;
+                border-radius: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                font-weight: 700;
+                font-size: 15px;
+            }
+
+            .backup-btn i {
+                font-size: 26px;
+            }
+
+            @media(max-width:768px) {
+                .backup-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+        <!-- SYSTEM INFO -->
+        <div class="col-12">
+            <div class="setting-card">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-circle-info"></i>
+                    System Information
+                </div>
+
+                <div class="system-grid">
+
+                    <div class="sys-item">
+                        <small>Node.js</small>
+                        <strong>Running</strong>
+                    </div>
+
+                    <div class="sys-item">
+                        <small>MongoDB</small>
+                        <strong>Connected</strong>
+                    </div>
+
+                    <div class="sys-item">
+                        <small>Storage</small>
+                        <strong>1.2 GB</strong>
+                    </div>
+
+                    <div class="sys-item">
+                        <small>Version</small>
+                        <strong>1.0.0</strong>
+                    </div>
+
+                    <div class="sys-item">
+                        <small>Last Backup</small>
+                        <strong>Today</strong>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+    .hero-card {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        border-radius: 28px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, .16);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .stat-card {
+        border-radius: 22px;
+        padding: 28px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-dark {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    }
+
+    .stat-green {
+        background: linear-gradient(135deg, var(--green), #10b981);
+        color: #082032;
+    }
+
+    .stat-yellow {
+        background: linear-gradient(135deg, var(--yellow), #f59e0b);
+        color: #111;
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, #4aa3ff, var(--brand));
+    }
+
+    .stat-icon {
+        font-size: 34px;
+    }
+
+    .setting-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: var(--shadow);
+        height: 100%;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--brand);
+    }
+
+    .logo-upload {
+        width: 170px;
+        aspect-ratio: 1/1;
+        border: 2px dashed var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: var(--surface-2);
+        margin: auto;
+    }
+
+    .logo-upload img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+    }
+
+    .logo-upload span {
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .theme-box {
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 30px;
+        transition: .2s;
+    }
+
+    .theme-box span {
+        display: block;
+        margin-top: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .theme-box:hover {
+        transform: translateY(-4px);
+    }
+
+    .active-theme {
+        border: 2px solid var(--brand);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, .15);
+    }
+
+    .system-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 18px;
+    }
+
+    .sys-item {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 22px;
+    }
+
+    .sys-item small {
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .sys-item strong {
+        font-size: 18px;
+    }
+
+    @media(max-width:768px) {
+        .theme-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+<script>
+    document.getElementById("logoInput").addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+            document.getElementById("logoPreview").src =
+                URL.createObjectURL(file);
+        }
+    });
+
+    function setThemeCard(theme) {
+
+        document.querySelectorAll(".theme-box").forEach(box => {
+            box.classList.remove("active-theme");
+        });
+
+        event.currentTarget.classList.add("active-theme");
+
+        if (theme === "auto") {
+            const prefersDark =
+                window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            document.documentElement.setAttribute(
+                "data-theme",
+                prefersDark ? "dark" : "light"
+            );
+
+            localStorage.setItem("zeitnah-theme", "auto");
+
+            document.getElementById("themeName").innerText = "Auto";
+            return;
+        }
+
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("zeitnah-theme", theme);
+
+        document.getElementById("themeName").innerText =
+            theme.charAt(0).toUpperCase() + theme.slice(1);
+
+        const switcher = document.getElementById("themeSwitch");
+        if (switcher) {
+            switcher.checked = theme === "light";
+        }
+    }
+</script>
+<script>
+    async function restoreBackup(input) {
+
+        const file = input.files[0];
+        if (!file) return;
+
+        const confirm = await Swal.fire({
+            title: "Restore backup?",
+            text: "Current database data will be replaced.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Restore"
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        const formData = new FormData();
+        formData.append("backup", file);
+
+        try {
+
+            const res = await fetch('/restore-backup', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.status) {
+                Swal.fire(
+                    "Success",
+                    "Backup restored successfully",
+                    "success"
+                ).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire(
+                    "Failed",
+                    "Could not restore backup",
+                    "error"
+                );
+            }
+
+        } catch (err) {
+            Swal.fire(
+                "Error",
+                "Something went wrong",
+                "error"
+            );
+        }
+
+        input.value = "";
+    }
+</script>
+<script>
+document
+.getElementById("academyForm")
+.addEventListener("submit", async function(e){
+
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    try{
+
+        const res = await fetch('/update-settings',{
+            method:'POST',
+            body:new URLSearchParams(formData)
+        });
+
+        const data = await res.json();
+
+        if(data.status){
+            Swal.fire(
+                "Saved",
+                "Academy profile updated",
+                "success"
+            );
+        }else{
+            Swal.fire(
+                "Failed",
+                "Could not save",
+                "error"
+            );
+        }
+
+    }catch(err){
+        Swal.fire(
+            "Error",
+            "Something went wrong",
+            "error"
+        );
+    }
+
+});
+</script>

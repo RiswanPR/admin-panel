@@ -1,0 +1,344 @@
+<section class="container-fluid mt-4 mb-5">
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-11">
+
+            <div class="card border-0 shadow-lg add-card">
+
+                <!-- HEADER -->
+                <div class="card-header page-header border-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                        <div>
+                            <h2 class="m-0 fw-bold text-white">
+                                Add Chapter
+                            </h2>
+                            <small class="text-light opacity-75">
+                                Create a new learning module
+                            </small>
+                        </div>
+
+                        <a href="/chapters" class="btn btn-light">
+                            <i class="fa-solid fa-arrow-left me-2"></i>
+                            Back
+                        </a>
+
+                    </div>
+                </div>
+
+
+                <div class="card-body p-4 p-lg-5">
+
+                    <div
+                        id="errorMsg"
+                        class="alert alert-danger d-none"
+                    ></div>
+
+                    <form
+                        action="/add-chapters"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        id="chapterForm"
+                    >
+
+                        <div class="row g-5">
+
+                            <!-- LEFT -->
+                            <div class="col-lg-7">
+
+                                <!-- IMAGE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Chapter Cover <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div id="addChapterPreview" style="width:180px; height:101px; background:var(--surface-2); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--muted); border: 2px dashed var(--border);">
+                                            <i class="fa-solid fa-image fa-2x"></i>
+                                        </div>
+                                        <input type="hidden" name="coverImageUrl" id="addChapterCoverUrl">
+                                        <button type="button" class="btn btn-outline-primary" onclick="openCoverSelector('addChapterCoverUrl', 'addChapterPreview')">
+                                            <i class="fa-solid fa-images me-2"></i>Select Cover
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- TITLE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Chapter Title
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        class="form-control custom-input"
+                                        name="title"
+                                        id="title"
+                                        placeholder="Enter chapter title"
+                                        required
+                                    >
+                                </div>
+
+
+
+                                <!-- COURSE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Select Course
+                                    </label>
+
+                                    <select
+                                        name="package"
+                                        id="chapterCourse"
+                                        class="form-select custom-input"
+                                        required
+                                    >
+                                        <option value="">Choose course...</option>
+
+                                        {{#each courses}}
+                                        <option value="{{this._id}}">
+                                            {{this.name}}
+                                        </option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+
+                                <!-- DESCRIPTION -->
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Description
+                                    </label>
+
+                                    <textarea
+                                        class="form-control custom-textarea"
+                                        name="description"
+                                        id="chapterDescription"
+                                        rows="5"
+                                        placeholder="Write chapter description..."
+                                        required
+                                    ></textarea>
+                                </div>
+
+                            </div>
+
+
+                            <!-- RIGHT -->
+                            <div class="col-lg-5">
+
+                                <div class="preview-card sticky-top">
+
+                                    <h5 class="fw-bold mb-4">
+                                        Live Preview
+                                    </h5>
+
+                                    <div
+                                        class="summary-placeholder mb-3"
+                                        id="summaryPlaceholder"
+                                    >
+                                        No image selected
+                                    </div>
+
+                                    <img
+                                        id="summaryImage"
+                                        class="summary-image mb-3"
+                                        style="display:none"
+                                    >
+
+                                    <h5
+                                        class="fw-bold mb-2"
+                                        id="previewTitle"
+                                    >
+                                        Chapter Title
+                                    </h5>
+
+                                    <div class="d-flex gap-2 flex-wrap mb-3">
+                                        <span
+                                            class="preview-chip"
+                                            id="previewCourse"
+                                        >
+                                            Course
+                                        </span>
+
+
+                                    </div>
+
+                                    <p
+                                        class="text-muted mb-0"
+                                        id="previewDesc"
+                                    >
+                                        Chapter description preview...
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BUTTON -->
+                        <div class="text-center mt-5">
+                            <button
+                                type="submit"
+                                id="submitBtn"
+                                class="btn btn-success px-5 py-3"
+                            >
+                                <i class="fa-solid fa-check me-2"></i>
+                                Create Chapter
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+
+<style>
+.add-card{
+    border-radius:24px;
+    overflow:hidden;
+}
+.page-header{
+    background:linear-gradient(135deg,#12314c,#1d4e89);
+    padding:28px 32px;
+}
+.custom-input{
+    border-radius:14px;
+    min-height:56px;
+    border:1px solid #dee2e6;
+    padding:12px 18px;
+}
+.custom-textarea{
+    border-radius:14px;
+    padding:18px;
+    border:1px solid #dee2e6;
+    resize:none;
+}
+
+.upload-area{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:24px;
+    overflow:hidden;
+    background:#f8fafc;
+    border:2px dashed #cfd8e3;
+    display:block;
+    cursor:pointer;
+    position:relative;
+}
+.upload-placeholder{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#12314c;
+    text-align:center;
+}
+.upload-placeholder i{
+    font-size:52px;
+    margin-bottom:15px;
+}
+.preview-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.preview-card{
+    background:#f8fafc;
+    border-radius:24px;
+    padding:28px;
+    top:20px;
+}
+.summary-placeholder,
+.summary-image{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:18px;
+}
+.summary-placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#e9eef5;
+    color:#777;
+}
+.summary-image{
+    object-fit:cover;
+}
+.preview-chip{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:#eef5fb;
+    color:#12314c;
+    font-size:13px;
+    font-weight:700;
+}
+.order-chip{
+    background:#fff3d4;
+    color:#b8860b;
+}
+</style>
+
+
+<script>
+const errorMsg=document.getElementById("errorMsg");
+const submitBtn=document.getElementById("submitBtn");
+
+function showError(msg){
+    errorMsg.classList.remove("d-none");
+    errorMsg.innerText=msg;
+}
+function clearError(){
+    errorMsg.classList.add("d-none");
+    errorMsg.innerText="";
+}
+
+function updatePreview(){
+
+    previewTitle.innerText =
+        title.value || "Chapter Title";
+
+    previewDesc.innerText =
+        chapterDescription.value ||
+        "Chapter description preview...";
+
+    const selected =
+        chapterCourse.options[chapterCourse.selectedIndex];
+
+    previewCourse.innerText =
+        selected.value
+            ? selected.text
+            : "Course";
+}
+
+title.addEventListener("input",updatePreview);
+chapterDescription.addEventListener("input",updatePreview);
+chapterCourse.addEventListener("change",updatePreview);
+
+document.getElementById("chapterForm")
+.addEventListener("submit",function(e){
+
+    const coverUrl = document.getElementById("addChapterCoverUrl").value;
+    if(!coverUrl){
+        e.preventDefault();
+        showError("Please select a chapter cover image");
+        return;
+    }
+
+    submitBtn.disabled=true;
+    submitBtn.innerHTML=
+        '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+});
+</script>
+
+{{> cover-selector-modal}}

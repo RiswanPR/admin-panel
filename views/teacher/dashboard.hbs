@@ -1,0 +1,316 @@
+<div class="container-fluid">
+
+    <!-- HERO WELCOME -->
+    <div class="td-hero mb-4">
+        <div class="td-hero-left">
+            <h2>Welcome back, {{teacher.name}} 👋</h2>
+            <p>Here's what's happening in your courses today.</p>
+        </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="row mb-4">
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="td-stat navy">
+                <div>
+                    <small>Assigned Courses</small>
+                    <h2 class="counter" data-target="{{dashboard.assignedCourseCount}}">0</h2>
+                    <span>Your teaching modules</span>
+                </div>
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="td-stat green">
+                <div>
+                    <small>Total Students</small>
+                    <h2 class="counter" data-target="{{dashboard.totalStudents}}">0</h2>
+                    <span>Across all courses</span>
+                </div>
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="td-stat yellow">
+                <div>
+                    <small>Active Students</small>
+                    <h2 class="counter" data-target="{{dashboard.activeStudents}}">0</h2>
+                    <span>Currently learning</span>
+                </div>
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="row">
+
+        <!-- LEFT: Courses + Recent Students -->
+        <div class="col-lg-8">
+
+            <!-- MY COURSES -->
+            <div class="card td-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="mb-1">My Courses</h5>
+                        <small class="text-muted">Courses assigned to you</small>
+                    </div>
+                    <a href="/teacher/courses" class="td-view-all">View All <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                </div>
+
+                {{#if courses.length}}
+                <div class="td-courses-grid">
+                    {{#each courses}}
+                    <a href="/teacher/courses/{{this._id}}" class="td-course-card">
+                        <div class="td-course-img">
+                            {{#if this.image}}
+                            <img src="{{resolveImage this.image 'course-images'}}" alt="{{this.name}}">
+                            {{else}}
+                            <div class="td-course-placeholder">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            {{/if}}
+                        </div>
+                        <div class="td-course-info">
+                            <h6>{{this.name}}</h6>
+                            <div class="td-course-meta">
+                                <span><i class="fa-solid fa-users me-1"></i>{{this.studentCount}} students</span>
+                                <span><i class="fa-solid fa-book me-1"></i>{{this.chapterCount}} chapters</span>
+                            </div>
+                        </div>
+                        <div class="td-course-arrow">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </div>
+                    </a>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="td-empty">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <p>No courses assigned yet. Contact your admin.</p>
+                </div>
+                {{/if}}
+            </div>
+
+            <!-- RECENT STUDENTS -->
+            <div class="card td-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Recent Students</h5>
+                    <a href="/teacher/tstudents" class="td-view-all">View All <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                </div>
+
+                {{#if dashboard.recentStudents.length}}
+                    {{#each dashboard.recentStudents}}
+                    <div class="td-student-row">
+                        <div class="td-student-avatar">{{this.name.[0]}}</div>
+                        <div class="flex-grow-1">
+                            <strong>{{this.name}}</strong>
+                            <small>{{this.courseName}}</small>
+                        </div>
+                        {{#if this.isBlocked}}
+                        <span class="badge blocked-pill">Blocked</span>
+                        {{else if this.isActive}}
+                        <span class="badge active-pill">Active</span>
+                        {{else}}
+                        <span class="badge" style="background:rgba(251,146,60,.15);color:#f97316">Expired</span>
+                        {{/if}}
+                    </div>
+                    {{/each}}
+                {{else}}
+                <div class="td-empty">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <p>No students enrolled yet.</p>
+                </div>
+                {{/if}}
+            </div>
+
+        </div>
+
+        <!-- RIGHT: Quick Actions + Teacher Info -->
+        <div class="col-lg-4">
+
+            <!-- QUICK ACTIONS -->
+            <div class="card td-card p-4 mb-4">
+                <h5 class="mb-3">Quick Actions</h5>
+                <div class="td-quick-grid">
+                    <a href="/teacher/tstudents">
+                        <i class="fa-solid fa-user-graduate"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="/teacher/courses">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="/teacher/profile">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span>Profile</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- TEACHER PROFILE SUMMARY -->
+            <div class="card td-card p-4">
+                <h5 class="mb-3">Your Profile</h5>
+                <div class="td-profile-summary">
+                    {{#if teacher.profileImage}}
+                    <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" class="td-profile-img">
+                    {{else}}
+                    <div class="td-profile-avatar">{{teacher.name.[0]}}</div>
+                    {{/if}}
+                    <h6>{{teacher.name}}</h6>
+                    <p class="text-muted mb-0" style="font-size:13px">{{#if teacher.designation}}{{teacher.designation}}{{else}}Educator{{/if}}</p>
+                    <p class="text-muted mb-2" style="font-size:12px">{{teacher.email}}</p>
+                    {{#if teacher.bio}}
+                    <p class="td-bio">{{teacher.bio}}</p>
+                    {{/if}}
+                    <a href="/teacher/profile" class="btn td-edit-profile-btn mt-2">
+                        <i class="fa-solid fa-pen me-2"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+.td-hero{
+    background:linear-gradient(135deg,#12314C 0%,#1a4a7a 60%,#9FD5B2 150%);
+    color:#fff;
+    border-radius:24px;
+    padding:36px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 20px 50px rgba(18,49,76,.2);
+}
+.td-hero h2{ margin:0; font-weight:800; font-size:28px; }
+.td-hero p{ margin:.5rem 0 0; opacity:.8; }
+
+.td-hero-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+.td-btn-mint{ background:#9FD5B2; color:#082032; font-weight:700; border-radius:14px; padding:12px 24px; border:none; transition:.2s; }
+.td-btn-mint:hover{ filter:brightness(.95); transform:translateY(-2px); color:#082032; }
+.td-btn-yellow{ background:#F6ED4A; color:#111; font-weight:700; border-radius:14px; padding:12px 24px; border:none; transition:.2s; }
+.td-btn-yellow:hover{ filter:brightness(.95); transform:translateY(-2px); color:#111; }
+
+.td-stat{
+    border-radius:22px; padding:28px; min-height:160px;
+    display:flex; justify-content:space-between; align-items:center;
+    box-shadow:0 16px 40px rgba(0,0,0,.08);
+}
+.td-stat > div small{ display:block; font-size:12px; opacity:.8; margin-bottom:4px; }
+.td-stat h2{ font-size:40px; font-weight:800; margin:0; }
+.td-stat > div span{ font-size:13px; opacity:.75; }
+.td-stat i{ font-size:44px; opacity:.9; }
+.td-stat.navy{ background:#12314C; color:#fff; }
+.td-stat.green{ background:#9FD5B2; color:#082032; }
+.td-stat.yellow{ background:#F6ED4A; color:#111; }
+.td-stat.dark{ background:#111827; color:#fff; }
+
+.td-card{ border-radius:22px; }
+
+.td-view-all{
+    font-size:14px; font-weight:700; color:#9FD5B2;
+    display:flex; align-items:center; gap:4px; transition:.2s;
+}
+.td-view-all:hover{ color:#6dbf96; }
+
+.td-courses-grid{ display:flex; flex-direction:column; gap:12px; }
+.td-course-card{
+    display:flex; align-items:center; gap:14px;
+    padding:14px; border-radius:16px;
+    background:var(--surface-2); border:1px solid var(--border);
+    transition:.2s; color:var(--text);
+}
+.td-course-card:hover{ border-color:#9FD5B2; transform:translateX(4px); }
+.td-course-img{ width:60px; height:60px; border-radius:12px; overflow:hidden; flex-shrink:0; }
+.td-course-img img{ width:100%; height:100%; object-fit:cover; }
+.td-course-placeholder{
+    width:60px; height:60px; border-radius:12px;
+    background:linear-gradient(135deg,#12314C,#1d4e89);
+    display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,.5); font-size:22px;
+}
+.td-course-info{ flex:1; }
+.td-course-info h6{ margin:0 0 6px; font-weight:700; }
+.td-course-meta{ display:flex; gap:16px; }
+.td-course-meta span{ font-size:12px; color:var(--muted); }
+.td-course-arrow{ color:var(--muted); font-size:14px; }
+
+.td-student-row{
+    display:flex; align-items:center; gap:14px;
+    padding:13px 0; border-bottom:1px solid var(--border);
+}
+.td-student-row:last-child{ border-bottom:none; }
+.td-student-avatar{
+    width:42px; height:42px; border-radius:50%;
+    background:linear-gradient(135deg,#9FD5B2,#12314C);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:17px; flex-shrink:0;
+}
+.td-student-row > div > strong{ display:block; font-size:14px; }
+.td-student-row > div > small{ color:var(--muted); font-size:12px; }
+
+.td-quick-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:12px; }
+.td-quick-grid a{
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:16px; padding:20px; text-align:center;
+    color:var(--text); font-weight:600; transition:.2s;
+}
+.td-quick-grid a:hover{ border-color:#9FD5B2; background:rgba(159,213,178,.08); }
+.td-quick-grid i{ display:block; font-size:22px; margin-bottom:10px; color:#9FD5B2; }
+
+.td-profile-summary{ text-align:center; }
+.td-profile-img{ width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid #9FD5B2; margin-bottom:12px; }
+.td-profile-avatar{
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(135deg,#9FD5B2,#12314C);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:30px; margin:0 auto 12px;
+}
+.td-profile-summary h6{ font-size:18px; font-weight:800; margin:0 0 4px; }
+.td-bio{ font-size:13px; color:var(--muted); margin:8px 0 0; }
+.td-edit-profile-btn{
+    background:rgba(159,213,178,.15); color:#12314C;
+    border:1px solid rgba(159,213,178,.4); border-radius:12px;
+    font-weight:700; font-size:13px; padding:9px 22px;
+    transition:.2s; display:inline-flex; align-items:center;
+}
+.td-edit-profile-btn:hover{ background:rgba(159,213,178,.3); color:#12314C; }
+html[data-theme="dark"] .td-edit-profile-btn{ color:#9FD5B2; }
+
+.td-empty{ text-align:center; padding:40px 20px; color:var(--muted); }
+.td-empty i{ font-size:40px; margin-bottom:14px; display:block; opacity:.35; }
+
+@media(max-width:768px){
+    .td-hero{ flex-direction:column; align-items:flex-start; }
+    .td-hero-actions{ width:100%; }
+    .td-hero-actions .btn{ flex:1; }
+}
+</style>
+
+<script>
+document.querySelectorAll(".counter").forEach(counter => {
+    const target = Number(counter.dataset.target || 0);
+    let count = 0;
+    const speed = Math.max(target / 80, 1);
+    function update(){
+        count += speed;
+        if(count < target){
+            counter.innerText = Math.floor(count).toLocaleString('en-IN');
+            requestAnimationFrame(update);
+        } else {
+            counter.innerText = target.toLocaleString('en-IN');
+        }
+    }
+    update();
+});
+</script>

@@ -1,0 +1,106 @@
+<div class="error-container">
+  <div class="error-card">
+    <div class="error-icon">⚠️</div>
+    <h1 class="error-title">{{message}}</h1>
+    {{#if error.status}}
+      <h2 class="error-status">Code: {{error.status}}</h2>
+    {{else}}
+      <h2 class="error-status">An unexpected error occurred</h2>
+    {{/if}}
+    
+    {{#if error.stack}}
+      <div class="error-debug">
+        <h3>Diagnostics (Development Mode Only):</h3>
+        <pre>{{error.stack}}</pre>
+      </div>
+    {{/if}}
+    
+    <div class="error-actions">
+      <a href="/" class="btn-primary">Return to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .error-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    padding: 2rem;
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+  .error-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+  .error-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite ease-in-out;
+  }
+  .error-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #f3f4f6;
+  }
+  .error-status {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #9ca3af;
+    margin-bottom: 2rem;
+  }
+  .error-debug {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+  .error-debug h3 {
+    font-size: 0.9rem;
+    color: #f87171;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
+  .error-debug pre {
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    color: #fca5a5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .error-actions {
+    display: flex;
+    justify-content: center;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    text-decoration: none;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+</style>

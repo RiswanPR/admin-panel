@@ -1,0 +1,179 @@
+<!-- COVER IMAGE SELECTOR MODAL -->
+<div class="modal fade" id="coverSelectorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-800">Select Cover Image</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="d-flex justify-content-between mb-3 gap-2 flex-wrap">
+                    <input type="text" id="coverSearch" class="form-control" style="max-width:300px;" placeholder="Search images...">
+                    <select id="coverCategoryFilter" class="form-select" style="max-width:200px;">
+                        <option value="All">All Categories</option>
+                        <option value="Module">Module Covers</option>
+                        <option value="Chapter">Chapter Covers</option>
+                        <option value="Class">Class Covers</option>
+                        <option value="Day">Day Covers</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                
+                <div id="coverImagesGrid" class="row g-3" style="max-height: 60vh; overflow-y: auto;">
+                    <!-- Images will be loaded here via JS -->
+                    <div class="col-12 text-center py-5" id="coverLoading">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2">Loading images...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.cover-select-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: .2s;
+    background: #fff;
+}
+.cover-select-card:hover {
+    border-color: #9FD5B2;
+    transform: translateY(-2px);
+}
+.cover-select-card.selected {
+    border-color: #6dbf96;
+    box-shadow: 0 4px 15px rgba(109,191,150,.3);
+}
+.cover-select-img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    background: #eee;
+}
+.cover-select-info {
+    padding: 10px;
+}
+.cover-select-info h6 {
+    margin: 0;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cover-select-info small {
+    font-size: 11px;
+    color: #6c757d;
+}
+</style>
+
+<script>
+let currentCoverTargetId = null;
+let currentCoverTargetPreview = null;
+let coverImagesData = [];
+
+// Call this when opening the selector
+function openCoverSelector(inputId, previewId) {
+    currentCoverTargetId = inputId;
+    currentCoverTargetPreview = previewId;
+    $('#coverSelectorModal').modal('show');
+    loadCoverImages();
+}
+
+async function loadCoverImages() {
+    try {
+        const grid = document.getElementById('coverImagesGrid');
+        grid.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2">Loading images...</p></div>';
+        
+        // Assume API is at /teacher/cover-images or /admin/cover-images
+        // We can just use the teacher one, but let's check which role the user is.
+        // Or better yet, we can fetch from the current base URL.
+        const basePath = location.pathname.includes('/teacher') ? '/teacher/cover-images' : '/cover-images';
+        const res = await fetch(basePath, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        
+        if (data.success && data.images) {
+            coverImagesData = data.images;
+            renderCoverImages(coverImagesData);
+        } else {
+            grid.innerHTML = '<div class="col-12 text-center py-5 text-danger">Failed to load images.</div>';
+        }
+    } catch (e) {
+        document.getElementById('coverImagesGrid').innerHTML = '<div class="col-12 text-center py-5 text-danger">Network Error.</div>';
+    }
+}
+
+function renderCoverImages(images) {
+    const grid = document.getElementById('coverImagesGrid');
+    if (images.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">No images found.</div>';
+        return;
+    }
+    
+    grid.innerHTML = images.map(img => `
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="cover-select-card" onclick="selectCover('${img.image}')">
+                <img src="${img.image}" class="cover-select-img" loading="lazy">
+                <div class="cover-select-info">
+                    <h6>${img.title}</h6>
+                    <small>${img.category}</small>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectCover(imageUrl) {
+    if (currentCoverTargetId) {
+        document.getElementById(currentCoverTargetId).value = imageUrl;
+    }
+    if (currentCoverTargetPreview) {
+        const preview = document.getElementById(currentCoverTargetPreview);
+        if (preview) {
+            if(preview.tagName === 'IMG') {
+                preview.src = imageUrl;
+                preview.classList.remove('d-none');
+            } else {
+                preview.innerHTML = `<img src="${imageUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
+            }
+        }
+    }
+    $('#coverSelectorModal').modal('hide');
+    
+    if (typeof window.onCoverSelected === 'function') {
+        window.onCoverSelected(imageUrl, currentCoverTargetId);
+    }
+}
+
+document.getElementById('coverSearch').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const cat = document.getElementById('coverCategoryFilter').value;
+    filterCovers(term, cat);
+});
+
+document.getElementById('coverCategoryFilter').addEventListener('change', function(e) {
+    const term = document.getElementById('coverSearch').value.toLowerCase();
+    const cat = e.target.value;
+    filterCovers(term, cat);
+});
+
+function filterCovers(term, cat) {
+    let filtered = coverImagesData;
+    if (cat !== 'All') {
+        filtered = filtered.filter(img => img.category === cat);
+    }
+    if (term) {
+        filtered = filtered.filter(img => img.title.toLowerCase().includes(term));
+    }
+    renderCoverImages(filtered);
+}
+</script>

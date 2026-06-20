@@ -1,0 +1,115 @@
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            {{#if teacher.profileImage}}
+            <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid #9FD5B2">
+            {{else}}
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#9FD5B2,#12314C);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px">{{teacher.name.[0]}}</div>
+            {{/if}}
+            <div>
+                <h3 class="mb-0 fw-800">{{teacher.name}}'s Students</h3>
+                <p class="text-muted mb-0">Students enrolled in courses assigned to this teacher</p>
+            </div>
+        </div>
+        <a href="/teachers" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Teachers
+        </a>
+    </div>
+
+    <div class="card p-4" style="border-radius:22px">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="mb-0">Enrolled Students <span class="badge ms-2" style="background:rgba(159,213,178,.2);color:#12314C;border-radius:8px;font-size:13px">{{students.length}}</span></h5>
+        </div>
+
+        {{#if students.length}}
+        <div class="table-responsive">
+            <table class="table t-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Phone</th>
+                        <th>Course</th>
+                        <th>Progress</th>
+                        <th>Last Seen</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each students}}
+                    <tr>
+                        <td class="text-muted">{{inc @index}}</td>
+                        <td>
+                            <div>
+                                <strong>{{this.Name}}</strong>
+                                <div class="text-muted" style="font-size:12px">{{this.email}}</div>
+                            </div>
+                        </td>
+                        <td>{{this.Phone_Number}}</td>
+                        <td><span class="course-chip">{{this.displayCourse}}</span></td>
+                        <td>
+                            <div class="ts-progress-wrap">
+                                <div class="ts-progress-bar">
+                                    <div class="ts-progress-fill" style="width:{{this.displayProgress}}%"></div>
+                                </div>
+                                <span>{{this.displayProgress}}%</span>
+                            </div>
+                        </td>
+                        <td class="text-muted" style="font-size:13px">{{this.lastSeenDisplay}}</td>
+                        <td>
+                            {{#if this.isBlocked}}
+                            <span class="badge blocked-pill">Blocked</span>
+                            {{else if this.isActive}}
+                            <span class="badge active-pill">Active</span>
+                            {{else}}
+                            <span class="badge" style="background:rgba(251,146,60,.15);color:#f97316">Expired</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-user-graduate" style="font-size:50px;margin-bottom:16px;opacity:.3;display:block"></i>
+            <h5>No Students Yet</h5>
+            <p>No students are enrolled in this teacher's assigned courses.</p>
+        </div>
+        {{/if}}
+
+    </div>
+
+</div>
+
+<style>
+.course-chip{
+    background:rgba(159,213,178,.12);
+    border:1px solid rgba(159,213,178,.3);
+    border-radius:8px;
+    padding:4px 10px;
+    font-size:12px;
+    font-weight:600;
+    color:#12314C;
+    display:inline-block;
+}
+html[data-theme="dark"] .course-chip{ color:#9FD5B2; }
+
+.ts-progress-wrap{
+    display:flex; align-items:center; gap:10px; min-width:120px;
+}
+.ts-progress-bar{
+    flex:1; height:6px; background:var(--surface-2);
+    border-radius:10px; overflow:hidden;
+}
+.ts-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#9FD5B2,#6dbf96);
+    border-radius:10px;
+    transition:.4s;
+}
+.ts-progress-wrap span{ font-size:12px; font-weight:700; color:var(--muted); min-width:30px; }
+</style>

@@ -1,0 +1,921 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <small class="text-light opacity-75 d-block mb-1">
+                    Admin Panel
+                </small>
+
+                <h2 class="text-white fw-bold m-0">
+                    Students Management
+                </h2>
+
+                <span class="hero-badge mt-2">
+                    Learner Progress & Access
+                </span>
+            </div>
+
+            <a href="/add-students" class="btn btn-light px-4 py-2">
+                <i class="fa-solid fa-user-plus me-2"></i>
+                Add Student
+            </a>
+
+        </div>
+    </div>
+
+
+    <!-- DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Students</small>
+                    <h2>{{students.length}}</h2>
+                </div>
+                <i class="fa-solid fa-users stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Active</small>
+                    <h2 id="activeCount">0</h2>
+                </div>
+                <i class="fa-solid fa-circle-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Blocked</small>
+                    <h2 id="blockedCount">0</h2>
+                </div>
+                <i class="fa-solid fa-ban stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Fees Collected</small>
+                    <h2 id="totalCollected">₹0</h2>
+                </div>
+                <i class="fa-solid fa-indian-rupee-sign stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH + TOGGLE -->
+    <div class="toolbar-card mb-4">
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="text"
+                id="myInput"
+                placeholder="Search student..."
+                onkeyup="searchStudent()"
+            >
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+
+    <!-- GRID VIEW -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#each students}}
+            <div class="col-xl-3 col-lg-4 col-md-6 student-card-wrap" data-name="{{this.Name}}" id="card-{{this._id}}">
+                <div class="student-card">
+
+                    <div class="student-top">
+
+                        <img src="/student-images/{{this._id}}.jpg" class="student-avatar"
+                            onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+
+                        <span class="status-pill {{#if this.account_Status.isActive}}active-pill{{else}}blocked-pill{{/if}}">
+                            {{#if this.account_Status.isActive}}Active{{else}}Blocked{{/if}}
+                        </span>
+
+                         <span class="status-pill {{#if this.account_Status.isVerified}}active-pill{{else}}blocked-pill{{/if}}">
+                            {{#if this.account_Status.isVerified}}Verified{{else}}Not Verified{{/if}}
+                        </span>
+
+
+                    </div>
+
+                    <div class="student-body">
+
+                        <h5 class="fw-bold mb-1">
+                            {{this.name}}
+                        </h5>
+
+                        <small class="text-muted d-block mb-3">
+                            {{this.email}}
+                        </small>
+
+                        <!-- Progress -->
+                        {{#if this.course}}
+                            {{#each this.course}}
+                                <div class="course-progress-section mb-3">
+                                    <div class="mb-1 d-flex justify-content-between align-items-center">
+                                        <span class="fw-semibold text-truncate me-2" style="max-width: 150px; font-size: 0.9em;" title="{{this.courseName}}">
+                                            {{this.courseName}}
+                                        </span>
+                                        <strong style="font-size: 0.9em;">
+                                            {{#if this.learningProgress}}{{this.learningProgress.completionPercent}}%{{else}}0%{{/if}}
+                                        </strong>
+                                    </div>
+                                    <div class="progress progress-custom mb-2" style="height: 6px;">
+                                        <div class="progress-bar"
+                                            style="width:{{#if this.learningProgress}}{{this.learningProgress.completionPercent}}%{{else}}0%{{/if}};background:linear-gradient(90deg,var(--brand),#9fd5b2);">
+                                        </div>
+                                    </div>
+                                    <div class="student-meta mb-2">
+                                        <div class="meta-chip blue-chip py-1 px-2" style="font-size: 0.8em;">
+                                            🎥
+                                            {{#if this.learningProgress}}{{this.learningProgress.watchedClasses}} / {{this.learningProgress.totalClasses}}{{else}}0 / 0{{/if}}
+                                        </div>
+                                    </div>
+                                </div>
+                            {{/each}}
+                            <div class="student-meta">
+                                <div class="meta-chip pending-chip pending w-100 text-center" data-fee="{{this.courseFee}}" data-paid="{{this.Paid_Amount}}">
+                                    ₹0
+                                </div>
+                            </div>
+                        {{else}}
+                            <div class="mb-2 d-flex justify-content-between">
+                                <span class="fw-semibold">Progress</span>
+                                <strong>
+                                    {{this.learningProgress.completionPercent}}%
+                                </strong>
+                            </div>
+
+                            <div class="progress progress-custom mb-3">
+                                <div class="progress-bar"
+                                    style="width:{{this.learningProgress.completionPercent}}%;background:linear-gradient(90deg,var(--brand),#9fd5b2);">
+                                </div>
+                            </div>
+
+                            <!-- Stats -->
+                            <div class="student-meta">
+
+                                <div class="meta-chip blue-chip">
+                                    🎥
+                                    {{this.learningProgress.watchedClasses}} /
+                                    {{this.learningProgress.totalClasses}}
+                                </div>
+
+                                <div class="meta-chip pending-chip pending" data-fee="{{this.courseFee}}"
+                                    data-paid="{{this.Paid_Amount}}">
+                                    ₹0
+                                </div>
+
+                            </div>
+                        {{/if}}
+
+                        <small class="text-muted d-block mt-3 mb-3">
+                            Last active:
+                            <strong>{{this.devices.lastSeen}}</strong>
+                        </small>
+                        <!-- ACTION -->
+                        <div class="student-actions">
+
+                            {{#unless this.account_Status.isVerified}}
+                            <button class="btn btn-warning btn-sm access-btn"
+                                onclick="verifyAccount('{{this._id}}')">
+                                <i class="fa-solid fa-check-circle me-2"></i>
+                                Verify Account
+                            </button>
+                            {{/unless}}
+
+                            {{#if this.account_Status.isActive}}
+                            <button class="btn btn-danger btn-sm access-btn"
+                                onclick="changeStatus('{{this._id}}', false)">
+                                <i class="fa-solid fa-ban me-2 mr-2"></i>
+                                Deny Access
+                            </button>
+                            {{else}}
+                            <button class="btn btn-success btn-sm access-btn"
+                                onclick="changeStatus('{{this._id}}', true)">
+                                <i class="fa-solid fa-circle-check me-2"></i>
+                                Approve Access
+                            </button>
+                            {{/if}}
+
+                            <div class="action-row">
+                                <a href="/edit-student/{{this._id}}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fa-solid fa-pen me-2"></i>
+                                    Edit
+                                </a>
+
+                                <button class="btn btn-danger btn-sm w-100" onclick="deleteStudent('{{this._id}}')">
+                                    <i class="fa-solid fa-trash me-2"></i>
+                                    Delete
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <style>
+                            .student-actions {
+                                margin-top: 20px;
+                            }
+
+                            .access-btn {
+                                height: 48px;
+                                border-radius: 14px;
+                                margin-bottom: 14px;
+                                font-weight: 700;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+
+                            .action-row {
+                                display: flex;
+                                gap: 12px;
+                            }
+
+                            .action-row .btn {
+                                height: 44px;
+                                border-radius: 14px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+                        </style>
+
+                    </div>
+
+                </div>
+            </div>
+            {{/each}}
+
+        </div>
+    </div>
+
+
+
+
+    <!-- TABLE VIEW -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+
+            <table class="table premium-table align-middle" id="myTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Profile</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Pending</th>
+                        <th>Progress</th>
+                        <th>Watched</th>
+                        <th>Last Active</th>
+                        <th>Status</th>
+                        <th>Access</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {{#each students}}
+                    <tr id="row-{{this._id}}">
+
+                        <td class="si-no"></td>
+
+                        <td>
+                            <img
+                                src="/student-images/{{this._id}}.jpg"
+                                class="table-avatar"
+                                onerror="this.onerror=null;this.src='/student-images/default-image.jpg';"
+                            >
+                        </td>
+
+                        <td class="student-name">
+                            <strong>{{this.Name}}</strong>
+                            <small class="d-block text-muted">
+                                {{this.Email}}
+                            </small>
+                        </td>
+
+                        <td>
+                            {{#if this.course}}
+                                {{#each this.course}}
+                                <span class="course-chip mb-1 d-inline-block">
+                                    {{this.courseName}}
+                                </span>
+                                {{/each}}
+                            {{else}}
+                                <span class="course-chip">
+                                    {{this.courseName}}
+                                </span>
+                            {{/if}}
+                        </td>
+
+                        <td
+                            class="pending fw-bold"
+                            data-fee="{{this.courseFee}}"
+                            data-paid="{{this.Paid_Amount}}"
+                        ></td>
+
+                        <td style="min-width:180px;">
+                            {{#if this.course}}
+                                {{#each this.course}}
+                                <div class="mb-3">
+                                    <strong style="font-size: 0.9em;">
+                                        {{#if this.learningProgress}}{{this.learningProgress.completionPercent}}{{else}}0{{/if}}%
+                                    </strong>
+                                    <div class="progress mt-1" style="height:6px;border-radius:30px;">
+                                        <div
+                                            class="progress-bar"
+                                            style="width:{{#if this.learningProgress}}{{this.learningProgress.completionPercent}}%{{else}}0%{{/if}};background:linear-gradient(90deg,#12314c,#9fd5b2);"
+                                        ></div>
+                                    </div>
+                                </div>
+                                {{/each}}
+                            {{else}}
+                                <strong>
+                                    {{this.learningProgress.completionPercent}}%
+                                </strong>
+
+                                <div class="progress mt-2" style="height:10px;border-radius:30px;">
+                                    <div
+                                        class="progress-bar"
+                                        style="width:{{this.learningProgress.completionPercent}}%;background:linear-gradient(90deg,#12314c,#9fd5b2);"
+                                    ></div>
+                                </div>
+                            {{/if}}
+                        </td>
+
+                        <td class="fw-bold">
+                            {{#if this.course}}
+                                {{#each this.course}}
+                                <div class="mb-3" style="font-size: 0.9em; height: 1.5em; display: flex; align-items: center;">
+                                    {{#if this.learningProgress}}{{this.learningProgress.watchedClasses}}{{else}}0{{/if}}
+                                    /
+                                    {{#if this.learningProgress}}{{this.learningProgress.totalClasses}}{{else}}0{{/if}}
+                                </div>
+                                {{/each}}
+                            {{else}}
+                                {{this.learningProgress.watchedClasses}}
+                                /
+                                {{this.learningProgress.totalClasses}}
+                            {{/if}}
+                        </td>
+
+                        <td>
+                            {{this.learningProgress.lastActive}}
+                        </td>
+
+                        <td id="status-{{this._id}}">
+                            <span class="status-pill {{#if this.status}}active-pill{{else}}blocked-pill{{/if}}">
+                                {{#if this.status}}Active{{else}}Blocked{{/if}}
+                            </span>
+                        </td>
+
+                        <td id="btn-{{this._id}}">
+                            {{#unless this.account_Status.isVerified}}
+                            <button
+                                class="btn btn-warning btn-sm mb-1"
+                                onclick="verifyAccount('{{this._id}}')"
+                            >
+                                Verify
+                            </button><br>
+                            {{/unless}}
+
+                            {{#if this.status}}
+                            <button
+                                class="btn btn-danger btn-sm"
+                                onclick="changeStatus('{{this._id}}', false)"
+                            >
+                                Deny
+                            </button>
+                            {{else}}
+                            <button
+                                class="btn btn-success btn-sm"
+                                onclick="changeStatus('{{this._id}}', true)"
+                            >
+                                Approve
+                            </button>
+                            {{/if}}
+                        </td>
+
+                        <td>
+                            <a href="/edit-student/{{this._id}}" class="btn btn-primary btn-sm mb-1">
+                                Edit
+                            </a>
+
+                            <button
+                                class="btn btn-danger btn-sm"
+                                onclick="deleteStudent('{{this._id}}')"
+                            >
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+
+    {{#unless students.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-user-graduate"></i>
+        <h4>No Students Found</h4>
+        <a href="/add-students" class="btn btn-success mt-2">
+            Add First Student
+        </a>
+    </div>
+    {{/unless}}
+
+</div>
+
+
+<style>
+.hero-card {
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    border-radius: 28px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.stat-card {
+    border-radius: 22px;
+    padding: 24px;
+    color: var(--text) !important;
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow), var(--shadow-glow) !important;
+}
+
+.stat-card i {
+    font-size: 36px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card.stat-green i {
+    background: linear-gradient(135deg, #9fd5b2, #70bf8e);
+    -webkit-background-clip: text;
+}
+
+.stat-card.stat-red i {
+    background: linear-gradient(135deg, var(--red), #dc2626);
+    -webkit-background-clip: text;
+}
+
+.stat-card.stat-yellow i {
+    background: linear-gradient(135deg, var(--yellow), #e1d839);
+    -webkit-background-clip: text;
+}
+
+.stat-card h2 {
+    font-size: 28px;
+    font-weight: 850;
+    margin: 4px 0;
+}
+
+.stat-card small {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.toolbar-card {
+    background: var(--card);
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow);
+}
+
+.search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-2);
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.search-box input {
+    border: none;
+    background: none;
+    width: 100%;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.search-box input::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 8px;
+}
+
+.view-toggle button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.view-toggle button:hover {
+    background: var(--surface);
+    color: var(--brand);
+}
+
+.view-toggle button.active {
+    background: linear-gradient(135deg, var(--brand), var(--brand-2)) !important;
+    color: var(--btn-primary-text) !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px var(--shadow-brand);
+}
+
+.student-card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+}
+
+.student-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow), var(--shadow-glow) !important;
+    border-color: rgba(159, 213, 178, 0.3) !important;
+}
+
+.student-top {
+    padding: 24px;
+    text-align: center;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 8px;
+    border: 4px solid var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.student-body {
+    padding: 22px;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.course-chip {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--brand);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.progress-custom {
+    height: 8px;
+    border-radius: 30px;
+    background: var(--surface-2);
+}
+
+.student-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-chip {
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+
+.blue-chip {
+    background: rgba(159, 213, 178, 0.18);
+    color: #065f46;
+}
+
+html[data-theme="dark"] .blue-chip {
+    background: rgba(159, 213, 178, 0.1);
+    color: var(--brand);
+}
+
+.pending-chip {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--red);
+}
+
+.premium-table {
+    background: transparent !important;
+}
+
+.table-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+.empty-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 60px 20px;
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+}
+
+.empty-box i {
+    font-size: 48px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+}
+
+.empty-box h4 {
+    font-weight: 700;
+    color: var(--text);
+}
+
+@media(max-width:768px) {
+    .hero-card,
+    .toolbar-card {
+        padding: 20px;
+    }
+    .toolbar-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+</style>
+
+
+<script>
+function updateSerialNumbers(){
+    let rows=document.querySelectorAll("#myTable tbody tr");
+    let count=1;
+
+    rows.forEach(row=>{
+        if(row.style.display!=="none"){
+            row.querySelector(".si-no").innerText=count++;
+        }
+    });
+}
+
+function searchStudent(){
+    let input=document.getElementById("myInput").value.toUpperCase();
+
+    document.querySelectorAll(".student-card-wrap").forEach(card=>{
+        let name=card.dataset.name.toUpperCase();
+        card.style.display=name.includes(input)?"":"none";
+    });
+
+    document.querySelectorAll("#myTable tbody tr").forEach(row=>{
+        let name=row.querySelector(".student-name").innerText.toUpperCase();
+        row.style.display=name.includes(input)?"":"none";
+    });
+
+    updateSerialNumbers();
+}
+
+function showGrid(){
+    document.getElementById("gridView").style.display="block";
+    document.getElementById("tableView").style.display="none";
+
+    gridBtn.classList.add("active");
+    tableBtn.classList.remove("active");
+}
+
+function showTable(){
+    document.getElementById("gridView").style.display="none";
+    document.getElementById("tableView").style.display="block";
+
+    tableBtn.classList.add("active");
+    gridBtn.classList.remove("active");
+}
+
+function calculatePendingFees(){
+    let cells=document.querySelectorAll(".pending");
+
+    cells.forEach(cell=>{
+        let fee=Number(cell.dataset.fee)||0;
+        let paid=Number(cell.dataset.paid)||0;
+        let balance=fee-paid;
+
+        cell.innerText="₹"+balance.toLocaleString('en-IN');
+
+        if(balance<=0){
+            cell.style.color="#198754";
+            cell.style.background="#dff7e7";
+        }
+    });
+}
+
+function updateDashboard(){
+    let rows=document.querySelectorAll("#myTable tbody tr");
+
+    let active=0;
+    let blocked=0;
+    let total=0;
+
+    rows.forEach(row=>{
+        let html=row.innerHTML;
+
+        if(html.includes("Active")) active++;
+        if(html.includes("Blocked")) blocked++;
+
+        total += Number(
+            row.querySelector(".pending").dataset.paid
+        ) || 0;
+    });
+
+    document.getElementById("activeCount").innerText=active;
+    document.getElementById("blockedCount").innerText=blocked;
+    document.getElementById("totalCollected").innerText=
+        "₹"+total.toLocaleString('en-IN');
+}
+
+function changeStatus(studentId,status){
+
+    Swal.fire({
+        title:status ? "Approve access?" : "Block access?",
+        icon:"question",
+        showCancelButton:true,
+        confirmButtonText:"Confirm"
+    }).then(result=>{
+
+        if(!result.isConfirmed) return;
+
+        fetch('/change-status/'+studentId+'/'+status, {
+            method: 'POST'
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            if(data.status){
+                location.reload();
+            }
+        });
+
+    });
+}
+
+function verifyAccount(studentId) {
+    Swal.fire({
+        title: "Verify Account?",
+        text: "This will mark the user's account as verified.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Verify"
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch('/verify-account/' + studentId, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status) {
+                Swal.fire("Verified!", "", "success").then(() => {
+                    location.reload();
+                });
+            }
+        });
+    });
+}
+
+function deleteStudent(id){
+
+    Swal.fire({
+        title:"Delete student?",
+        text:"This action cannot be undone",
+        icon:"warning",
+        showCancelButton:true,
+        confirmButtonColor:"#dc3545",
+        confirmButtonText:"Delete"
+    }).then(result=>{
+
+        if(!result.isConfirmed) return;
+
+        fetch('/delete-student/'+id,{
+            method:'POST'
+        })
+        .then(res=>res.json())
+        .then(data=>{
+
+            if(data.success){
+
+                let row=document.getElementById("row-"+id);
+                let card=document.getElementById("card-"+id);
+
+                if(row) row.remove();
+                if(card) card.remove();
+
+                updateSerialNumbers();
+                updateDashboard();
+
+                Swal.fire("Deleted!","","success");
+            }
+
+        });
+
+    });
+}
+
+window.onload=function(){
+    updateSerialNumbers();
+    calculatePendingFees();
+    updateDashboard();
+};
+</script>

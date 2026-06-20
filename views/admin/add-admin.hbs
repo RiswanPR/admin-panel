@@ -1,0 +1,470 @@
+<div class="container-fluid">
+
+  <!-- PAGE HEADER -->
+  <div class="aa-header">
+    <div>
+      <h2 class="aa-title">
+        <i class="fa-solid fa-user-plus me-2"></i> Create New Admin
+      </h2>
+      <p class="aa-sub">
+        <i class="fa-solid fa-eye-slash me-1" style="color:var(--muted);"></i>
+        This page is hidden — only the superuser has access.
+      </p>
+    </div>
+    <a href="/admins" class="aa-back-btn">
+      <i class="fa-solid fa-arrow-left"></i> Back to Admins
+    </a>
+  </div>
+
+  <!-- ALERTS -->
+  {{#if addErr}}
+  <div class="aa-alert aa-alert-error">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>{{addErr}}</span>
+  </div>
+  {{/if}}
+
+  {{#if addSuccess}}
+  <div class="aa-alert aa-alert-success">
+    <i class="fa-solid fa-circle-check"></i>
+    <span>{{addSuccess}}</span>
+  </div>
+  {{/if}}
+
+  <!-- FORM CARD -->
+  <div class="aa-card">
+
+    <div class="aa-card-inner">
+
+      <!-- left: icon -->
+      <div class="aa-icon-panel">
+        <div class="aa-big-icon">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h4>Admin Account</h4>
+        <p>
+          Admins can access all courses, students, chapters, and audit logs.
+          They <strong>cannot</strong> manage other admins or access this page.
+        </p>
+        <ul class="aa-perm-list">
+          <li><i class="fa-solid fa-check"></i> Dashboard & Analytics</li>
+          <li><i class="fa-solid fa-check"></i> All Courses & Chapters</li>
+          <li><i class="fa-solid fa-check"></i> Student Management</li>
+          <li><i class="fa-solid fa-check"></i> Settings & Audit Logs</li>
+          <li class="aa-denied"><i class="fa-solid fa-xmark"></i> Admin Management</li>
+          <li class="aa-denied"><i class="fa-solid fa-xmark"></i> This page</li>
+        </ul>
+      </div>
+
+      <!-- right: form -->
+      <div class="aa-form-panel">
+        <form action="/superuser/add-admin" method="POST" id="addAdminForm" autocomplete="off">
+
+          <div class="aa-field">
+            <label for="aaName">Full Name</label>
+            <div class="aa-input-wrap">
+              <i class="fa-solid fa-user"></i>
+              <input
+                type="text"
+                id="aaName"
+                name="Name"
+                placeholder="e.g. Mohammed Riyas"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="aa-field">
+            <label for="aaEmail">Email Address</label>
+            <div class="aa-input-wrap">
+              <i class="fa-regular fa-envelope"></i>
+              <input
+                type="email"
+                id="aaEmail"
+                name="Email"
+                placeholder="admin@zeitnah.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="aa-field">
+            <label for="aaPhone">Phone Number <span class="optional">(optional)</span></label>
+            <div class="aa-input-wrap">
+              <i class="fa-solid fa-phone"></i>
+              <input
+                type="text"
+                id="aaPhone"
+                name="Phone_Number"
+                placeholder="+91 98765 43210"
+              />
+            </div>
+          </div>
+
+          <div class="aa-field">
+            <label for="aaPassword">
+              Password
+              <button type="button" class="aa-gen-btn" onclick="generatePwd()" title="Generate password">
+                <i class="fa-solid fa-dice"></i> Generate
+              </button>
+            </label>
+            <div class="aa-input-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input
+                type="text"
+                id="aaPassword"
+                name="Password"
+                placeholder="Minimum 8 characters"
+                required
+                minlength="8"
+              />
+              <button type="button" class="aa-copy-btn" onclick="copyPwd()" title="Copy password">
+                <i class="fa-regular fa-copy" id="aaCopyIcon"></i>
+              </button>
+            </div>
+            <small class="aa-pwd-hint">Share this password securely with the new admin.</small>
+          </div>
+
+          <div class="aa-actions">
+            <button type="submit" class="aa-submit" id="aaSubmit">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Create Admin</span>
+            </button>
+            <a href="/admins" class="aa-cancel">Cancel</a>
+          </div>
+
+        </form>
+      </div>
+
+    </div><!-- /inner -->
+
+  </div><!-- /card -->
+
+</div>
+
+
+<style>
+/* ── HEADER ───────────────────────────────────── */
+.aa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+
+.aa-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.aa-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.aa-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.aa-back-btn:hover {
+  background: var(--surface-2);
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+/* ── ALERTS ───────────────────────────────────── */
+.aa-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 22px;
+}
+
+.aa-alert-error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #f87171;
+}
+
+.aa-alert-success {
+  background: rgba(39,239,159,0.08);
+  border: 1px solid rgba(39,239,159,0.25);
+  color: #34d399;
+}
+
+/* ── CARD ─────────────────────────────────────── */
+.aa-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.aa-card-inner {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+
+/* ── LEFT PANEL ───────────────────────────────── */
+.aa-icon-panel {
+  background: linear-gradient(160deg, var(--brand) 0%, var(--brand-2) 100%);
+  padding: 48px 36px;
+  color: rgba(255,255,255,0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.aa-big-icon {
+  font-size: 52px;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.aa-icon-panel h4 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.aa-icon-panel p {
+  font-size: 13.5px;
+  margin: 0;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.75);
+}
+
+.aa-perm-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aa-perm-list li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+}
+
+.aa-perm-list li i {
+  font-size: 13px;
+  width: 16px;
+  color: #86efac;
+}
+
+.aa-denied { color: rgba(255,255,255,0.45) !important; }
+.aa-denied i { color: #f87171 !important; }
+
+/* ── RIGHT PANEL (FORM) ───────────────────────── */
+.aa-form-panel {
+  padding: 48px 44px;
+}
+
+/* ── FIELDS ───────────────────────────────────── */
+.aa-field {
+  margin-bottom: 24px;
+}
+
+.aa-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+
+.optional {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.aa-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.aa-input-wrap > i:first-child {
+  position: absolute;
+  left: 16px;
+  color: var(--muted);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.aa-input-wrap input {
+  width: 100%;
+  height: 52px;
+  padding: 0 52px 0 46px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.aa-input-wrap input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+}
+
+.aa-gen-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--brand);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.aa-gen-btn:hover { background: var(--surface-2); }
+
+.aa-copy-btn {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.aa-copy-btn:hover { color: var(--brand); }
+
+.aa-pwd-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── ACTIONS ──────────────────────────────────── */
+.aa-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.aa-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 28px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.aa-submit:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.aa-cancel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.aa-cancel:hover { color: var(--text); }
+
+/* ── RESPONSIVE ───────────────────────────────── */
+@media (max-width: 900px) {
+  .aa-card-inner { grid-template-columns: 1fr; }
+  .aa-icon-panel { padding: 32px 28px; }
+  .aa-form-panel { padding: 32px 24px; }
+}
+</style>
+
+<script>
+// Generate a strong random password
+function generatePwd() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let pwd = '';
+  for (let i = 0; i < 14; i++) {
+    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const input = document.getElementById('aaPassword');
+  if (input) input.value = pwd;
+}
+
+// Copy password to clipboard
+function copyPwd() {
+  const input = document.getElementById('aaPassword');
+  const icon  = document.getElementById('aaCopyIcon');
+  if (!input || !input.value) return;
+
+  navigator.clipboard.writeText(input.value).then(() => {
+    if (icon) {
+      icon.className = 'fa-solid fa-check';
+      setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 1800);
+    }
+  });
+}
+
+// Submit loading state
+document.getElementById('addAdminForm')?.addEventListener('submit', () => {
+  const btn = document.getElementById('aaSubmit');
+  if (btn) {
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Creating...</span>';
+  }
+});
+</script>

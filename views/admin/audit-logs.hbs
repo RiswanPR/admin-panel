@@ -1,0 +1,326 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                Audit Logs
+            </h2>
+            <small class="text-muted">
+                Track admin actions across students, courses, content and backups
+            </small>
+        </div>
+
+        <button class="btn btn-danger px-4 py-2" onclick="clearAuditLogs()">
+            <i class="fa-solid fa-trash-can me-2"></i>
+            Clear Logs
+        </button>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Records</small>
+                    <h2>{{logs.length}}</h2>
+                </div>
+                <i class="fa-solid fa-list-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>Retention View</small>
+                    <h2>{{filters.limit}}</h2>
+                </div>
+                <i class="fa-solid fa-database stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Status</small>
+                    <h2>Live</h2>
+                </div>
+                <i class="fa-solid fa-shield-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Scope</small>
+                    <h2>Admin</h2>
+                </div>
+                <i class="fa-solid fa-user-shield stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <form class="toolbar-card mb-4" method="get" action="/audit-logs">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" value="{{filters.search}}" placeholder="Search logs...">
+        </div>
+
+        <select class="form-select filter-select" name="entityType">
+            <option value="">All Entities</option>
+            <option value="student" {{selected filters.entityType "student"}}>Students</option>
+            <option value="course" {{selected filters.entityType "course"}}>Courses</option>
+            <option value="chapter" {{selected filters.entityType "chapter"}}>Chapters</option>
+            <option value="class" {{selected filters.entityType "class"}}>Classes</option>
+            <option value="exercise" {{selected filters.entityType "exercise"}}>Exercises</option>
+            <option value="settings" {{selected filters.entityType "settings"}}>Settings</option>
+            <option value="backup" {{selected filters.entityType "backup"}}>Backups</option>
+            <option value="admin" {{selected filters.entityType "admin"}}>Admin</option>
+        </select>
+
+        <select class="form-select filter-select" name="status">
+            <option value="">All Statuses</option>
+            <option value="success" {{selected filters.status "success"}}>Success</option>
+            <option value="failed" {{selected filters.status "failed"}}>Failed</option>
+        </select>
+
+        <select class="form-select filter-select" name="limit">
+            <option value="100" {{selected filters.limit "100"}}>100</option>
+            <option value="200" {{selected filters.limit "200"}}>200</option>
+            <option value="500" {{selected filters.limit "500"}}>500</option>
+        </select>
+
+        <button class="btn btn-primary filter-btn" type="submit">
+            <i class="fa-solid fa-filter"></i>
+        </button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table premium-table align-middle">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Admin</th>
+                    <th>Status</th>
+                    <th>Message</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {{#each logs}}
+                <tr>
+                    <td class="text-nowrap">
+                        <strong>{{formatDateTime this.createdAt}}</strong>
+                    </td>
+                    <td>
+                        <span class="action-chip">{{this.action}}</span>
+                    </td>
+                    <td>
+                        <strong>{{this.entityType}}</strong>
+                        <small class="d-block text-muted">{{this.entityName}}</small>
+                    </td>
+                    <td>
+                        <strong>{{this.admin.name}}</strong>
+                        <small class="d-block text-muted">{{this.admin.email}}</small>
+                    </td>
+                    <td>
+                        <span class="status-pill {{#ifEquals this.status "failed"}}blocked-pill{{else}}active-pill{{/ifEquals}}">
+                            {{this.status}}
+                        </span>
+                    </td>
+                    <td>{{this.message}}</td>
+                    <td class="text-muted">{{this.ipAddress}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    {{#unless logs.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <h4>No Audit Logs Found</h4>
+        <p class="text-muted mb-0">New admin actions will appear here.</p>
+    </div>
+    {{/unless}}
+</div>
+
+<style>
+    .stat-card {
+        border-radius: 22px;
+        padding: 28px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-dark {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    }
+
+    .stat-green {
+        background: linear-gradient(135deg, var(--green), #10b981);
+        color: #082032;
+    }
+
+    .stat-yellow {
+        background: linear-gradient(135deg, var(--yellow), #f59e0b);
+        color: #111;
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, #4aa3ff, var(--brand));
+    }
+
+    .stat-icon {
+        font-size: 34px;
+        opacity: .9;
+    }
+
+    .toolbar-card {
+        background: var(--surface);
+        padding: 18px;
+        border-radius: 18px;
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 170px 150px 110px 52px;
+        gap: 14px;
+        align-items: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        padding: 14px 18px;
+        border-radius: 14px;
+        color: var(--muted);
+        min-height: 52px;
+    }
+
+    .search-box input {
+        border: none;
+        background: transparent;
+        width: 100%;
+        outline: none;
+        color: var(--text);
+    }
+
+    .filter-select {
+        min-height: 52px;
+    }
+
+    .filter-btn {
+        width: 52px;
+        height: 52px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+    }
+
+    .premium-table {
+        background: var(--surface);
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .premium-table thead {
+        background: var(--surface-2);
+        color: var(--text);
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 16px;
+    }
+
+    .action-chip {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--text);
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: capitalize;
+    }
+
+    .active-pill {
+        background: rgba(52,211,153,.15);
+        color: var(--green);
+    }
+
+    .blocked-pill {
+        background: rgba(248,113,113,.15);
+        color: var(--red);
+    }
+
+    .empty-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 70px 20px;
+        border-radius: 24px;
+    }
+
+    .empty-box i {
+        font-size: 55px;
+        color: var(--brand);
+        margin-bottom: 20px;
+    }
+
+    @media(max-width: 991px) {
+        .toolbar-card {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    async function clearAuditLogs() {
+        const result = await Swal.fire({
+            title: "Clear audit logs?",
+            text: "This will remove all existing log records.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Clear"
+        });
+
+        if (!result.isConfirmed) return;
+
+        const res = await fetch('/audit-logs/clear', {
+            method: 'POST'
+        });
+
+        const data = await res.json();
+
+        if (data.status) {
+            Swal.fire("Cleared", "", "success").then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire("Failed", "Could not clear audit logs", "error");
+        }
+    }
+</script>

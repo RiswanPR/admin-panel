@@ -1,0 +1,7 @@
+node_modules
+.env
+seed-superuser.js
+backups/
+logs/
+temp/
+.DS_Store

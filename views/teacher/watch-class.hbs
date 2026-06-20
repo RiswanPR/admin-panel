@@ -1,0 +1,240 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%); border-radius: 24px; padding: 32px; box-shadow: var(--shadow);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <small class="text-light opacity-75 d-block mb-1 fw-600" style="letter-spacing: 0.5px;">
+                    Class Preview - Teacher Panel
+                </small>
+                <h2 class="text-white fw-bold m-0" style="font-size: 26px;">
+                    {{classData.title}}
+                </h2>
+                <span class="hero-badge mt-2">
+                    Secure Preview Mode
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/teacher/chapters/classes/{{chapterCode}}" class="btn btn-light btn-sm px-4">
+                    <i class="fa-solid fa-chevron-left me-2"></i>Back to Classes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- VIDEO PLAYER -->
+        <div class="col-lg-9">
+            <div class="player-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow);">
+                <div class="player-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; background: #000;">
+                    <div id="videoContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        {{#if (eq classData.videoSource 's3')}}
+                        <video id="videoPlayer" controls controlsList="nodownload" playsinline
+                               style="width:100%;height:100%;display:block;">
+                            <source src="{{classData.videoUrl}}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        {{else}}
+                        <iframe id="videoFrame"
+                                src=""
+                                allowfullscreen
+                                allow="encrypted-media; autoplay; fullscreen; picture-in-picture"
+                                referrerpolicy="no-referrer"
+                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+                                style="width:100%;height:100%;border:none;display:none;"></iframe>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLASS INFO -->
+            <div class="class-info-card mt-4" style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow);">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-2">{{classData.title}}</h3>
+                        <p class="text-muted mb-0" style="max-width: 600px;">{{classData.description}}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-light text-dark px-3 py-2 fw-bold">
+                            <i class="fa-solid fa-clock me-2"></i>
+                            <span id="durationDisplay">{{classData.duration}}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+                    <div class="info-item">
+                        <small class="text-muted d-block mb-1">Course</small>
+                        <strong>{{course.name}}</strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block mb-1">Chapter</small>
+                        <strong>{{chapter.name}}</strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block mb-1">Video Source</small>
+                        <strong>
+                            {{#if (eq classData.videoSource 's3')}}
+                            <i class="fa-brands fa-aws me-1"></i>Amazon S3
+                            {{else}}
+                            <i class="fa-solid fa-shield-halved me-1"></i>VdoCipher
+                            {{/if}}
+                        </strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block mb-1">Created</small>
+                        <strong id="createdDate">{{formatDate classData.createdAt}}</strong>
+                    </div>
+                </div>
+
+                {{#if classData.exercises}}
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <a href="/teacher/chapters/exercises/{{chapterCode}}/{{classData._id}}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-file-lines me-2"></i>View Exercises ({{classData.exercises.length}})
+                    </a>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <!-- SECURITY INFO -->
+            <div class="security-card" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.05) 0%, rgba(159, 213, 178, 0.05) 100%); border: 1px solid rgba(159, 213, 178, 0.2); border-radius: 18px; padding: 20px; margin-bottom: 20px;">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="security-icon" style="width: 48px; height: 48px; background: rgba(159, 213, 178, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--green); font-size: 24px;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-2" style="color: var(--green);">High Security Mode</h6>
+                        <p class="small text-muted mb-0">
+                            This preview is encrypted and access is logged. Download and sharing is restricted.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METADATA -->
+            <div class="metadata-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px;">
+                <h6 class="fw-bold mb-3">
+                    <i class="fa-solid fa-circle-info me-2"></i>Class Metadata
+                </h6>
+                <div class="metadata-item mb-3">
+                    <small class="text-muted d-block mb-1">Class ID</small>
+                    <code style="font-size: 11px; background: var(--surface-2); padding: 4px 8px; border-radius: 6px; display: block; word-break: break-all;">{{classData._id}}</code>
+                </div>
+                <div class="metadata-item mb-3">
+                    <small class="text-muted d-block mb-1">Video Source Type</small>
+                    <span class="badge" style="background: {{#if (eq classData.videoSource 's3')}}#ff9900{{else}}var(--brand){{/if}}; color: white; font-size: 11px;">
+                        {{classData.videoSource}}
+                    </span>
+                </div>
+                <div class="metadata-item">
+                    <small class="text-muted d-block mb-1">Order</small>
+                    <strong>#{{classData.order}}</strong>
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="actions-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px;">
+                <h6 class="fw-bold mb-3">
+                    <i class="fa-solid fa-sliders me-2"></i>Actions
+                </h6>
+                <div class="d-flex flex-column gap-2">
+                    <a href="/teacher/chapters/classes/{{chapterCode}}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-arrow-left me-2"></i>Back to Chapter
+                    </a>
+                    <a href="/teacher/dashboard" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-home me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.player-card {
+    animation: slideUp 0.4s ease-out;
+}
+
+.class-info-card, .security-card, .metadata-card, .actions-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.security-icon {
+    flex-shrink: 0;
+}
+
+code {
+    font-family: 'Courier New', monospace;
+    user-select: all;
+}
+</style>
+
+<script>
+    function formatDuration(seconds) {
+        seconds = Number(seconds) || 0;
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${secs}s`;
+        }
+        if (minutes > 0) {
+            return `${minutes}m ${secs}s`;
+        }
+        return `${secs}s`;
+    }
+
+    function loadVdoCipherVideo() {
+        const videoId = '{{classData.videoId}}';
+        if (!videoId) return;
+
+        fetch('/class-video/' + encodeURIComponent(videoId))
+            .then(res => res.json())
+            .then(data => {
+                if (data.otp && data.playbackInfo) {
+                    const videoFrame = document.getElementById('videoFrame');
+                    videoFrame.src = `https://player.vdocipher.com/v2/?otp=${encodeURIComponent(data.otp)}&playbackInfo=${encodeURIComponent(data.playbackInfo)}`;
+                    videoFrame.style.display = 'block';
+                }
+            })
+            .catch(err => console.error('Failed to load video:', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Format duration
+        const durationDisplay = document.getElementById('durationDisplay');
+        if (durationDisplay) {
+            durationDisplay.textContent = formatDuration({{classData.duration}});
+        }
+
+        // Load VdoCipher video if needed
+        {{#if (eq classData.videoSource 'vdocipher')}}
+        loadVdoCipherVideo();
+        {{/if}}
+    });
+</script>

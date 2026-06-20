@@ -1,0 +1,472 @@
+<section class="container-fluid mt-4 mb-5">
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-11">
+
+            <div class="card border-0 shadow-lg edit-course-card">
+
+                <!-- HEADER -->
+                <div class="card-header course-header border-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                        <div>
+                            <h2 class="m-0 fw-bold text-var(--surface)">
+                                Edit Course
+                            </h2>
+                            <small class="text-light opacity-75">
+                                Update learning package
+                            </small>
+                        </div>
+
+                        <a href="/courses" class="btn btn-light">
+                            <i class="fa-solid fa-arrow-left me-2"></i>
+                            Back
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-lg-5">
+
+                    <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                    <form action="/edit-course/{{course._id}}" method="POST" enctype="multipart/form-data"
+                        id="courseForm">
+
+                        <div class="row g-5">
+
+                            <!-- LEFT -->
+                            <div class="col-lg-7">
+
+                                <!-- IMAGE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Course Cover
+                                    </label>
+
+                                    <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+
+                                        <img src="{{resolveImage course.image 'course-images'}}" id="imgView" class="course-preview"
+                                            onerror="this.src='/course-images/default.jpg'">
+
+                                        <div class="upload-overlay">
+                                            <i class="fa-solid fa-camera"></i>
+                                            <span>Click to Replace Image</span>
+                                            <small>JPG / PNG / WEBP • Max 2MB</small>
+                                        </div>
+
+                                        <input type="file" name="image" id="imageInput"
+                                            accept="image/jpeg,image/png,image/webp" hidden onchange="viewImage(event)"
+                                            onclick="event.stopPropagation()">
+                                    </div>
+                                </div>
+
+                                <!-- TITLE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Course Title
+                                    </label>
+
+                                    <input type="text" class="form-control custom-input" name="name" id="courseName"
+                                        value="{{course.name}}" required>
+                                </div>
+
+                                <!-- ACCESS -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Access Type
+                                    </label>
+
+                                    <div class="type-grid">
+
+                                        <label
+                                            class="type-card access-card {{#ifEquals course.accessType 'free'}}active{{/ifEquals}}">
+                                            <input type="radio" name="accessType" value="free" {{selected
+                                                course.accessType "free" }} hidden>
+                                            <i class="fa-solid fa-gift"></i>
+                                            <span>Free</span>
+                                        </label>
+
+                                        <label
+                                            class="type-card access-card {{#ifEquals course.accessType 'paid'}}active{{/ifEquals}}">
+                                            <input type="radio" name="accessType" value="paid" {{selected
+                                                course.accessType "paid" }} hidden>
+                                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                                            <span>Paid</span>
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                                <!-- FEE -->
+                                <div class="mb-4 {{#ifEquals course.accessType 'free'}}d-none{{/ifEquals}}"
+                                    id="feeWrap">
+                                    <label class="form-label fw-semibold">
+                                        Course Fee
+                                    </label>
+
+                                    <input type="number" min="0" class="form-control custom-input" name="Total_Fees"
+                                        id="courseFee" value="{{course.Total_Fees}}">
+                                </div>
+
+                                <!-- TYPE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Course Type
+                                    </label>
+
+                                    <div class="type-grid">
+
+                                        <label class="type-card {{#ifEquals course.type 'online'}}active{{/ifEquals}}">
+                                            <input type="radio" name="type" value="online" {{selected
+                                                course.type "online" }} hidden>
+                                            <i class="fa-solid fa-globe"></i>
+                                            <span>Online</span>
+                                        </label>
+
+                                        <label
+                                            class="type-card {{#ifEquals course.type 'Recording'}}active{{/ifEquals}}">
+                                            <input type="radio" name="type" value="Recording" {{selected
+                                                course.type "Recording" }} hidden>
+                                            <i class="fa-solid fa-school"></i>
+                                            <span>Recording</span>
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                                <!-- DESCRIPTION -->
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Description
+                                    </label>
+
+                                    <textarea class="form-control custom-textarea" name="description"
+                                        id="courseDescription" rows="5" required>{{course.description}}</textarea>
+                                </div>
+
+                            </div>
+
+
+                            <!-- RIGHT -->
+                            <div class="col-lg-5">
+
+                                <div class="summary-card sticky-top">
+
+                                    <h5 class="fw-bold mb-4">
+                                        Live Preview
+                                    </h5>
+
+                                    <img src="{{resolveImage course.image 'course-images'}}" id="summaryImage"
+                                        class="summary-image mb-3" onerror="this.src='/course-images/default.jpg'">
+
+                                    <h5 class="fw-bold mb-2" id="previewName">
+                                        {{course.name}}
+                                    </h5>
+
+                                    <div class="mb-3 d-flex gap-2 flex-wrap">
+
+                                        <span
+                                            class="badge {{#ifEquals course.type 'online'}}bg-success{{else}}bg-secondary{{/ifEquals}}"
+                                            id="previewType">
+                                            {{course.type}}
+                                        </span>
+
+                                        <span
+                                            class="badge {{#ifEquals course.accessType 'paid'}}bg-warning text-dark{{else}}bg-primary{{/ifEquals}}"
+                                            id="previewAccess">
+                                            {{course.accessType}}
+                                        </span>
+
+                                    </div>
+
+                                    <h3 class="fw-bold mb-3" style="color:var(--brand);" id="previewFee">
+                                        ₹{{course.Total_Fees}}
+                                    </h3>
+
+                                    <p class="text-muted mb-0" id="previewDesc">
+                                        {{course.description}}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BUTTON -->
+                        <div class="text-center mt-5">
+                            <button type="submit" id="submitBtn" class="btn btn-success px-5 py-3">
+                                <i class="fa-solid fa-floppy-disk me-2"></i>
+                                Update Course
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+
+<style>
+    .edit-course-card {
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    .course-header {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        padding: 28px 32px;
+    }
+
+    .custom-input {
+        border-radius: 14px;
+        min-height: 56px;
+        border: 1px solid #dee2e6;
+        padding: 12px 18px;
+    }
+
+    .custom-textarea {
+        border-radius: 14px;
+        padding: 18px;
+        border: 1px solid #dee2e6;
+        resize: none;
+    }
+
+    .upload-area {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1/1;
+        border-radius: 24px;
+        overflow: hidden;
+        cursor: pointer;
+        display: block;
+    }
+
+    .course-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .upload-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(18, 49, 76, .45);
+        color: var(--surface);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transition: .25s;
+    }
+
+    .upload-area:hover .upload-overlay {
+        opacity: 1;
+    }
+
+    .upload-overlay i {
+        font-size: 42px;
+    }
+
+    .type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .type-card {
+        background: var(--surface-2);
+        border: 2px solid transparent;
+        border-radius: 18px;
+        padding: 28px 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .type-card.active {
+        border-color: var(--brand);
+        background: #eef5fb;
+        color: var(--brand);
+    }
+
+    .type-card i {
+        display: block;
+        font-size: 30px;
+        margin-bottom: 10px;
+    }
+
+    .summary-card {
+        background: var(--surface-2);
+        border-radius: 24px;
+        padding: 28px;
+        top: 20px;
+    }
+
+    .summary-image {
+        width: 100%;
+        aspect-ratio: 1/1;
+        border-radius: 18px;
+        object-fit: cover;
+    }
+</style>
+
+
+<script>
+    const errorMsg = document.getElementById("errorMsg");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function showError(msg) {
+        errorMsg.classList.remove("d-none");
+        errorMsg.innerText = msg;
+    }
+
+    function clearError() {
+        errorMsg.classList.add("d-none");
+        errorMsg.innerText = "";
+    }
+
+    function viewImage(event) {
+
+        const file = event.target.files[0];
+        if (!file) return;
+
+        clearError();
+
+        const allowed = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!allowed.includes(file.type)) {
+            showError("Only JPG, PNG, WEBP allowed");
+            event.target.value = "";
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            showError("Image must be below 2MB");
+            event.target.value = "";
+            return;
+        }
+
+        const url = URL.createObjectURL(file);
+
+        document.getElementById("imgView").src = url;
+        document.getElementById("summaryImage").src = url;
+    }
+
+    function updatePreview() {
+
+        document.getElementById("previewName").innerText =
+            document.getElementById("courseName").value;
+
+        const fee =
+            Number(document.getElementById("courseFee").value || 0);
+
+        document.getElementById("previewFee").innerText =
+            "₹" + fee.toLocaleString("en-IN");
+
+        document.getElementById("previewDesc").innerText =
+            document.getElementById("courseDescription").value;
+    }
+
+    document.getElementById("courseName").addEventListener("input", updatePreview);
+    document.getElementById("courseFee").addEventListener("input", updatePreview);
+    document.getElementById("courseDescription").addEventListener("input", updatePreview);
+    // ACCESS TYPE
+    document.querySelectorAll(".access-card").forEach(card => {
+
+        card.addEventListener("click", function () {
+
+            document.querySelectorAll(".access-card")
+                .forEach(c => c.classList.remove("active"));
+
+            this.classList.add("active");
+
+            const value = this.querySelector("input").value;
+
+            const feeWrap =
+                document.getElementById("feeWrap");
+
+            const feeInput =
+                document.getElementById("courseFee");
+
+            const badge =
+                document.getElementById("previewAccess");
+
+            if (value === "paid") {
+
+                feeWrap.classList.remove("d-none");
+
+                feeInput.required = true;
+
+                badge.innerText = "Paid";
+                badge.className =
+                    "badge bg-warning text-dark";
+
+            } else {
+
+                feeWrap.classList.add("d-none");
+
+                feeInput.required = false;
+                feeInput.value = 0;
+
+                badge.innerText = "Free";
+                badge.className =
+                    "badge bg-primary";
+
+                updatePreview();
+            }
+        });
+
+    });
+    document.querySelectorAll('input[name="type"]').forEach(input => {
+
+        const card = input.closest(".type-card");
+
+        card.addEventListener("click", function () {
+
+            document.querySelectorAll('input[name="type"]')
+                .forEach(i =>
+                    i.closest(".type-card")
+                        .classList.remove("active")
+                );
+
+            this.classList.add("active");
+
+            const type =
+                input.value === "online"
+                    ? "Online"
+                    : "Recording";
+
+            const badge =
+                document.getElementById("previewType");
+
+            badge.innerText = type;
+
+            badge.className =
+                type === "Online"
+                    ? "badge bg-success"
+                    : "badge bg-secondary";
+        });
+
+    });
+
+    document.getElementById("courseForm")
+        .addEventListener("submit", function () {
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+        });
+</script>

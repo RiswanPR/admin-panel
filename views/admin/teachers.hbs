@@ -1,0 +1,407 @@
+<div class="container-fluid">
+
+    <!-- HERO -->
+    <div class="teacher-hero mb-4">
+        <div>
+            <h2>Teachers</h2>
+            <p>Manage all educators, assign courses and monitor their students.</p>
+        </div>
+        <a href="/teachers/add" class="btn btn-teacher-add">
+            <i class="fa-solid fa-user-plus me-2"></i>Add Teacher
+        </a>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="t-stat-card navy">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <div>
+                    <small>Total Teachers</small>
+                    <h3>{{teachers.length}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="t-stat-card green">
+                <i class="fa-solid fa-check-circle"></i>
+                <div>
+                    <small>Active</small>
+                    <h3 id="activeCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="t-stat-card yellow">
+                <i class="fa-solid fa-layer-group"></i>
+                <div>
+                    <small>Courses Assigned</small>
+                    <h3 id="coursesAssigned">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="t-stat-card dark">
+                <i class="fa-solid fa-ban"></i>
+                <div>
+                    <small>Disabled</small>
+                    <h3 id="disabledCount">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card t-table-card p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h5 class="mb-1">All Teachers</h5>
+                <small class="text-muted">Manage faculty and their course assignments</small>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="t-search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="teacherSearch" placeholder="Search teachers..." oninput="filterTeachers()">
+                </div>
+                <select class="form-select t-filter-select" id="statusFilter" onchange="filterTeachers()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="disabled">Disabled</option>
+                </select>
+            </div>
+        </div>
+
+        {{#if teachers.length}}
+        <div class="table-responsive">
+            <table class="table t-table" id="teachersTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Teacher</th>
+                        <th>Contact</th>
+                        <th>Designation</th>
+                        <th>Courses</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each teachers}}
+                    <tr data-status="{{this.status}}" data-name="{{this.name}}" data-email="{{this.email}}">
+                        <td class="text-muted">{{inc @index}}</td>
+                        <td>
+                            <div class="t-teacher-cell">
+                                {{#if this.profileImage}}
+                                <img src="{{resolveImage this.profileImage 'teacher-images'}}" alt="{{this.name}}" class="t-avatar-img">
+                                {{else}}
+                                <div class="t-avatar-placeholder">{{this.name.[0]}}</div>
+                                {{/if}}
+                                <div>
+                                    <strong>{{this.name}}</strong>
+                                    <small>{{this.email}}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div><i class="fa-solid fa-phone me-1 text-muted" style="font-size:11px"></i>{{this.mobile}}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="t-designation-chip">{{#if this.designation}}{{this.designation}}{{else}}—{{/if}}</span>
+                        </td>
+                        <td>
+                            <span class="t-course-badge">
+                                <i class="fa-solid fa-layer-group me-1"></i>{{this.courseCount}} course(s)
+                            </span>
+                            {{#if this.assignedCourseNames}}
+                            <div class="t-course-names mt-1">{{this.assignedCourseNames}}</div>
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{#ifEquals this.status 'active'}}
+                            <span class="t-status-badge active">Active</span>
+                            {{else}}
+                            <span class="t-status-badge disabled">Disabled</span>
+                            {{/ifEquals}}
+                        </td>
+                        <td class="text-muted" style="font-size:13px">
+                            {{formatDateTime this.createdAt}}
+                        </td>
+                        <td>
+                            <div class="t-actions">
+                                <a href="/teachers/{{this._id}}/edit" class="t-btn t-btn-edit" title="Edit">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <a href="/teachers/{{this._id}}/assign-courses" class="t-btn t-btn-assign" title="Assign Courses">
+                                    <i class="fa-solid fa-link"></i>
+                                </a>
+                                <a href="/teachers/{{this._id}}/students" class="t-btn t-btn-students" title="View Students">
+                                    <i class="fa-solid fa-users"></i>
+                                </a>
+                                {{#ifEquals this.status 'active'}}
+                                <button class="t-btn t-btn-disable" onclick="toggleTeacherStatus('{{this._id}}', 'disable')" title="Disable">
+                                    <i class="fa-solid fa-ban"></i>
+                                </button>
+                                {{else}}
+                                <button class="t-btn t-btn-enable" onclick="toggleTeacherStatus('{{this._id}}', 'enable')" title="Enable">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                {{/ifEquals}}
+                                <button class="t-btn t-btn-delete" onclick="deleteTeacher('{{this._id}}', '{{this.name}}')" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="t-empty-state">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            <h5>No Teachers Yet</h5>
+            <p>Add your first teacher to get started.</p>
+            <a href="/teachers/add" class="btn btn-teacher-add">
+                <i class="fa-solid fa-user-plus me-2"></i>Add Teacher
+            </a>
+        </div>
+        {{/if}}
+
+    </div>
+
+</div>
+
+
+<style>
+.teacher-hero{
+    background:linear-gradient(135deg,#12314C,#1d4e89);
+    color:#fff;
+    border-radius:24px;
+    padding:32px 36px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 20px 40px rgba(18,49,76,.2);
+}
+.teacher-hero h2{ margin:0; font-weight:800; }
+.teacher-hero p{ margin:.4rem 0 0; opacity:.8; }
+
+.btn-teacher-add{
+    background:linear-gradient(135deg,#9FD5B2,#6dbf96);
+    color:#082032;
+    font-weight:700;
+    padding:13px 24px;
+    border-radius:14px;
+    border:none;
+    white-space:nowrap;
+    transition:.2s;
+}
+.btn-teacher-add:hover{ transform:translateY(-2px); filter:brightness(.95); color:#082032; }
+
+.t-stat-card{
+    border-radius:20px;
+    padding:22px 24px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    color:#fff;
+    box-shadow:0 12px 28px rgba(0,0,0,.1);
+}
+.t-stat-card i{ font-size:36px; opacity:.9; }
+.t-stat-card small{ display:block; opacity:.8; font-size:12px; }
+.t-stat-card h3{ margin:4px 0 0; font-size:28px; font-weight:800; }
+.navy{ background:#12314C; }
+.green{ background:#9FD5B2; color:#082032; }
+.yellow{ background:#F6ED4A; color:#111; }
+.dark{ background:#111827; }
+
+.t-table-card{ border-radius:22px; }
+
+.t-search-box{
+    position:relative;
+    width:260px;
+}
+.t-search-box i{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:14px;
+}
+.t-search-box input{
+    width:100%; height:44px; padding-left:40px;
+    border:1px solid var(--border); border-radius:12px;
+    background:var(--surface); color:var(--text); outline:none;
+}
+.t-filter-select{
+    height:44px; border-radius:12px; font-size:14px; min-width:140px;
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+}
+
+.t-table thead th{
+    font-size:12px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--muted);
+    background:var(--surface-2)!important;
+    padding:14px 16px;
+}
+.t-table tbody td{ padding:14px 16px; vertical-align:middle; }
+.t-table tbody tr:hover{ background:var(--surface-2); }
+
+.t-teacher-cell{ display:flex; align-items:center; gap:12px; }
+.t-avatar-img{ width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #9FD5B2; }
+.t-avatar-placeholder{
+    width:42px; height:42px; border-radius:50%;
+    background:linear-gradient(135deg,#9FD5B2,#12314C);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:17px; flex-shrink:0;
+}
+.t-teacher-cell strong{ display:block; font-size:14px; }
+.t-teacher-cell small{ color:var(--muted); font-size:12px; }
+
+.t-designation-chip{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:4px 10px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.t-course-badge{
+    background:rgba(159,213,178,.15);
+    color:#12314C;
+    border:1px solid rgba(159,213,178,.4);
+    border-radius:8px;
+    padding:4px 10px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+}
+html[data-theme="dark"] .t-course-badge{ color:#9FD5B2; }
+.t-course-names{ font-size:11px; color:var(--muted); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.t-status-badge{
+    border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700;
+}
+.t-status-badge.active{ background:rgba(159,213,178,.18); color:#12a064; }
+.t-status-badge.disabled{ background:rgba(248,113,113,.15); color:#dc3545; }
+html[data-theme="dark"] .t-status-badge.active{ color:#9FD5B2; }
+
+.t-actions{ display:flex; gap:6px; align-items:center; }
+.t-btn{
+    width:34px; height:34px; border-radius:10px; border:none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; cursor:pointer; transition:.2s;
+}
+.t-btn:hover{ transform:translateY(-2px); }
+.t-btn-edit{ background:rgba(59,130,246,.12); color:#3b82f6; }
+.t-btn-edit:hover{ background:rgba(59,130,246,.22); }
+.t-btn-assign{ background:rgba(159,213,178,.15); color:#12a064; }
+.t-btn-assign:hover{ background:rgba(159,213,178,.3); }
+.t-btn-students{ background:rgba(246,237,74,.15); color:#a07c00; }
+html[data-theme="dark"] .t-btn-students{ color:#F6ED4A; }
+.t-btn-students:hover{ background:rgba(246,237,74,.3); }
+.t-btn-disable{ background:rgba(251,146,60,.12); color:#f97316; }
+.t-btn-disable:hover{ background:rgba(251,146,60,.25); }
+.t-btn-enable{ background:rgba(52,211,153,.12); color:#10b981; }
+.t-btn-enable:hover{ background:rgba(52,211,153,.25); }
+.t-btn-delete{ background:rgba(248,113,113,.12); color:#dc3545; }
+.t-btn-delete:hover{ background:rgba(248,113,113,.25); }
+
+.t-empty-state{
+    text-align:center; padding:80px 20px; color:var(--muted);
+}
+.t-empty-state i{ font-size:60px; margin-bottom:20px; opacity:.4; }
+.t-empty-state h5{ font-size:20px; margin-bottom:8px; }
+.t-empty-state p{ margin-bottom:24px; }
+
+@media(max-width:768px){
+    .teacher-hero{ flex-direction:column; align-items:flex-start; }
+    .t-search-box{ width:100%; }
+}
+</style>
+
+
+<script>
+// Compute stats
+document.addEventListener('DOMContentLoaded', () => {
+    const rows = document.querySelectorAll('#teachersTable tbody tr');
+    let active = 0, disabled = 0, courses = 0;
+    rows.forEach(row => {
+        const status = row.dataset.status;
+        if(status === 'active') active++;
+        else disabled++;
+        const badge = row.querySelector('.t-course-badge');
+        if(badge) {
+            const n = parseInt(badge.textContent.trim());
+            if(!isNaN(n)) courses += n;
+        }
+    });
+    document.getElementById('activeCount').textContent = active;
+    document.getElementById('disabledCount').textContent = disabled;
+    document.getElementById('coursesAssigned').textContent = courses;
+});
+
+function filterTeachers(){
+    const search = document.getElementById('teacherSearch').value.toLowerCase();
+    const statusVal = document.getElementById('statusFilter').value;
+    document.querySelectorAll('#teachersTable tbody tr').forEach(row => {
+        const name = (row.dataset.name || '').toLowerCase();
+        const email = (row.dataset.email || '').toLowerCase();
+        const status = row.dataset.status || '';
+        const matchSearch = !search || name.includes(search) || email.includes(search);
+        const matchStatus = !statusVal || status === statusVal;
+        row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+    });
+}
+
+function toggleTeacherStatus(id, action){
+    Swal.fire({
+        title: action === 'disable' ? 'Disable Teacher?' : 'Enable Teacher?',
+        text: action === 'disable'
+            ? 'The teacher will not be able to login until re-enabled.'
+            : 'The teacher will be able to login again.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: action === 'disable' ? '#f97316' : '#10b981',
+        confirmButtonText: action === 'disable' ? 'Yes, Disable' : 'Yes, Enable',
+        cancelButtonText: 'Cancel'
+    }).then(result => {
+        if(result.isConfirmed){
+            fetch(`/teachers/${id}/${action}`, { method: 'POST' })
+                .then(r => { if(!r.ok) throw new Error("Network error"); return r.json(); })
+                .then(data => {
+                    if(data.success){
+                        Swal.fire({ icon:'success', title:'Done!', timer:1500, showConfirmButton:false });
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                });
+        }
+    });
+}
+
+function deleteTeacher(id, name){
+    Swal.fire({
+        title: 'Delete Teacher?',
+        html: `This will permanently delete <strong>${name}</strong>. This action cannot be undone.`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel'
+    }).then(result => {
+        if(result.isConfirmed){
+            fetch(`/teachers/${id}/delete`, { method: 'POST' })
+                .then(r => { if(!r.ok) throw new Error("Network error"); return r.json(); })
+                .then(data => {
+                    if(data.status){
+                        Swal.fire({ icon:'success', title:'Deleted!', timer:1500, showConfirmButton:false });
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                });
+        }
+    });
+}
+</script>

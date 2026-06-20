@@ -1,0 +1,353 @@
+<section class="container-fluid mt-4 mb-5">
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-11">
+
+            <div class="card border-0 shadow-lg edit-card">
+
+                <!-- HEADER -->
+                <div class="card-header page-header border-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                        <div>
+                            <h2 class="m-0 fw-bold text-white">
+                                Edit Chapter
+                            </h2>
+                            <small class="text-light opacity-75">
+                                Update learning module
+                            </small>
+                        </div>
+
+                        <a href="/chapters" class="btn btn-light">
+                            <i class="fa-solid fa-arrow-left me-2"></i>
+                            Back
+                        </a>
+
+                    </div>
+                </div>
+
+
+                <div class="card-body p-4 p-lg-5">
+
+                    <div
+                        id="errorMsg"
+                        class="alert alert-danger d-none"
+                    ></div>
+
+                    <form
+                        action="/edit-chapter/{{chapter.courseId}}/{{chapter.uniqueCode}}"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        id="chapterForm"
+                    >
+
+                        <div class="row g-5">
+
+                            <!-- LEFT -->
+                            <div class="col-lg-7">
+
+                                <!-- IMAGE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Chapter Cover
+                                    </label>
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div id="editChapterPreview" style="width:180px; height:101px; background:var(--surface-2); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--muted); border: 2px dashed var(--border); overflow:hidden;">
+                                            <img src="{{chapter.imageName}}" onerror="this.src='/chapter-images/default.jpg'" style="width:100%; height:100%; object-fit:cover;">
+                                        </div>
+                                        <input type="hidden" name="coverImageUrl" id="editChapterCoverUrl" value="{{chapter.imageName}}">
+                                        <button type="button" class="btn btn-outline-primary" onclick="openCoverSelector('editChapterCoverUrl', 'editChapterPreview')">
+                                            <i class="fa-solid fa-images me-2"></i>Select Cover
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- TITLE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Chapter Title
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        class="form-control custom-input"
+                                        name="title"
+                                        id="title"
+                                        value="{{chapter.title}}"
+                                        required
+                                    >
+                                </div>
+
+
+
+                                <!-- COURSE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Select Course
+                                    </label>
+
+                                    <select
+                                        name="package"
+                                        id="chapterCourse"
+                                        class="form-select custom-input"
+                                        required
+                                    >
+                                        {{#each courses}}
+                                        <option
+                                            value="{{this._id}}"
+                                            {{#if (eq this._id ../chapter.courseId)}}selected{{/if}}
+                                        >
+                                            {{this.name}}
+                                        </option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+
+                                <!-- DESCRIPTION -->
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Description
+                                    </label>
+
+                                    <textarea
+                                        class="form-control custom-textarea"
+                                        name="description"
+                                        id="chapterDescription"
+                                        rows="5"
+                                        required
+                                    >{{chapter.description}}</textarea>
+                                </div>
+
+                            </div>
+
+
+                            <!-- RIGHT -->
+                            <div class="col-lg-5">
+
+                                <div class="preview-card sticky-top">
+
+                                    <h5 class="fw-bold mb-4">
+                                        Live Preview
+                                    </h5>
+
+                                    <img
+                                        src="{{resolveImage chapter.imageName 'chapter-images'}}"
+                                        id="summaryImage"
+                                        class="summary-image mb-3"
+                                        onerror="this.src='/chapter-images/default.jpg'"
+                                    >
+
+                                    <h5
+                                        class="fw-bold mb-2"
+                                        id="previewTitle"
+                                    >
+                                        {{chapter.title}}
+                                    </h5>
+
+                                    <div class="d-flex gap-2 flex-wrap mb-3">
+                                        <span
+                                            class="preview-chip"
+                                            id="previewCourse"
+                                        >
+                                            {{chapter.package}}
+                                        </span>
+
+
+                                    </div>
+
+                                    <p
+                                        class="text-muted mb-0"
+                                        id="previewDesc"
+                                    >
+                                        {{chapter.description}}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BUTTON -->
+                        <div class="text-center mt-5">
+                            <button
+                                type="submit"
+                                id="submitBtn"
+                                class="btn btn-success px-5 py-3"
+                            >
+                                <i class="fa-solid fa-floppy-disk me-2"></i>
+                                Update Chapter
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+
+<style>
+.edit-card{
+    border-radius:24px;
+    overflow:hidden;
+}
+.page-header{
+    background:linear-gradient(135deg,#12314c,#1d4e89);
+    padding:28px 32px;
+}
+.custom-input{
+    border-radius:14px;
+    min-height:56px;
+    border:1px solid #dee2e6;
+    padding:12px 18px;
+}
+.custom-textarea{
+    border-radius:14px;
+    padding:18px;
+    border:1px solid #dee2e6;
+    resize:none;
+}
+
+.upload-area{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:24px;
+    overflow:hidden;
+    display:block;
+    cursor:pointer;
+    position:relative;
+}
+.preview-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.upload-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(18,49,76,.45);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    opacity:0;
+    transition:.25s;
+}
+.upload-area:hover .upload-overlay{
+    opacity:1;
+}
+.upload-overlay i{
+    font-size:42px;
+}
+
+.preview-card{
+    background:#f8fafc;
+    border-radius:24px;
+    padding:28px;
+    top:20px;
+}
+.summary-image{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:18px;
+    object-fit:cover;
+}
+.preview-chip{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:#eef5fb;
+    color:#12314c;
+    font-size:13px;
+    font-weight:700;
+}
+.order-chip{
+    background:#fff3d4;
+    color:#b8860b;
+}
+</style>
+
+
+<script>
+const errorMsg=document.getElementById("errorMsg");
+const submitBtn=document.getElementById("submitBtn");
+
+function showError(msg){
+    errorMsg.classList.remove("d-none");
+    errorMsg.innerText=msg;
+}
+function clearError(){
+    errorMsg.classList.add("d-none");
+    errorMsg.innerText="";
+}
+
+function viewImage(event){
+
+    const file=event.target.files[0];
+    if(!file) return;
+
+    clearError();
+
+    const allowed=[
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ];
+
+    if(!allowed.includes(file.type)){
+        showError("Only JPG, PNG, WEBP allowed");
+        event.target.value="";
+        return;
+    }
+
+    if(file.size>2*1024*1024){
+        showError("Image must be below 2MB");
+        event.target.value="";
+        return;
+    }
+
+    const url=URL.createObjectURL(file);
+
+    imgView.src=url;
+    summaryImage.src=url;
+}
+
+function updatePreview(){
+
+    previewTitle.innerText =
+        title.value || "Chapter Title";
+
+    previewDesc.innerText =
+        chapterDescription.value ||
+        "Chapter description preview...";
+
+    const selected =
+        chapterCourse.options[chapterCourse.selectedIndex];
+
+    previewCourse.innerText =
+        selected.text;
+}
+
+title.addEventListener("input",updatePreview);
+chapterDescription.addEventListener("input",updatePreview);
+chapterCourse.addEventListener("change",updatePreview);
+
+document.getElementById("chapterForm")
+.addEventListener("submit",function(){
+
+    submitBtn.disabled=true;
+    submitBtn.innerHTML=
+        '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+});
+</script>
+
+{{> cover-selector-modal}}

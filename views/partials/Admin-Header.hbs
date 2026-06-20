@@ -1,0 +1,560 @@
+<!-- MOBILE OVERLAY -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar" id="adminSidebar">
+
+    <!-- BRAND -->
+    <div class="brand-area">
+        <a href="/" class="brand-link">
+            <img src="/images/logo.png" alt="Zeitnah Logo" class="brand-logo">
+
+            <div class="brand-text">
+                <h5>ZEITNAH</h5>
+                <small>Group of Institutions</small>
+            </div>
+        </a>
+    </div>
+
+    <!-- MENU -->
+    <nav class="sidebar-nav">
+
+        <a href="/" class="{{#ifEquals currentPage 'dashboard'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="/students" class="{{#ifEquals currentPage 'students'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>Students</span>
+        </a>
+
+        <a href="/registered-users" class="{{#ifEquals currentPage 'registered-users'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Registered Users</span>
+        </a>
+
+        <a href="/courses" class="{{#ifEquals currentPage 'courses'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Courses</span>
+        </a>
+
+        <a href="/chapters" class="{{#ifEquals currentPage 'chapters'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Chapters</span>
+        </a>
+
+        <a href="/classes" class="{{#ifEquals currentPage 'classes'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-play-circle"></i>
+            <span>Classes</span>
+        </a>
+
+        <a href="/teachers" class="{{#ifEquals currentPage 'teachers'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            <span>Teachers</span>
+        </a>
+
+        <div class="sidebar-heading mt-3 mb-1 ms-3"
+            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
+        </div>
+        <a href="/cover-images" class="{{#ifEquals currentPage 'cover-images'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-images"></i>
+            <span>Cover Images</span>
+        </a>
+
+        <a href="/settings" class="{{#ifEquals currentPage 'settings'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </a>
+
+        <a href="/audit-logs" class="{{#ifEquals currentPage 'audit-logs'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Audit Logs</span>
+        </a>
+
+        {{#if isSuperuser}}
+        <a href="/admins" class="{{#ifEquals currentPage 'admins'}}active{{/ifEquals}} superuser-nav-item">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Admins</span>
+            <span class="su-badge">SU</span>
+        </a>
+        {{/if}}
+
+    </nav>
+
+    <!-- FOOTER -->
+    <div class="sidebar-footer">
+        <a href="/logout" class="logout-btn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+
+<!-- TOPBAR -->
+<header class="admin-topbar">
+
+    <!-- LEFT -->
+    <div class="topbar-left">
+
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="top-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search here...">
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT -->
+    <div class="topbar-right">
+
+        <!-- notifications -->
+        <button class="top-icon">
+            <i class="fa-regular fa-bell"></i>
+        </button>
+
+        <!-- theme switch -->
+        <label class="theme-toggle-wrap">
+            <span>🌙</span>
+
+            <input type="checkbox" id="themeSwitch" onchange="toggleTheme()">
+
+            <div class="theme-toggle-slider"></div>
+
+            <span>☀️</span>
+        </label>
+
+        <!-- profile -->
+        <div class="profile-box">
+            <img src="/images/logo.png" alt="Admin">
+
+            <div>
+                <strong>{{#if sessionAdmin}}{{sessionAdmin.Name}}{{else}}Admin{{/if}}</strong>
+                <small>{{#if isSuperuser}}Superuser{{else}}Administrator{{/if}}</small>
+            </div>
+        </div>
+
+    </div>
+
+</header>
+
+
+<style>
+    :root {
+        --sidebar-width: 280px;
+    }
+
+    /* SIDEBAR Overlay & Base */
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--sidebar-width);
+        height: 100vh;
+        z-index: 1100;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+
+    .brand-area {
+        padding: 24px 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .brand-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--text);
+    }
+
+    .brand-logo {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: var(--surface-2);
+        padding: 5px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
+        transition: transform 0.2s ease;
+    }
+
+    .brand-link:hover .brand-logo {
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    .brand-text h5 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 850;
+        letter-spacing: 0.8px;
+        color: var(--text);
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* NAVIGATION */
+    .sidebar-nav {
+        padding: 20px 0;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 18px;
+        margin: 5px 14px;
+        border-radius: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+    }
+
+    .sidebar-nav a i {
+        width: 22px;
+        text-align: center;
+        font-size: 16px;
+        transition: transform 0.25s ease;
+    }
+
+    .sidebar-nav a:hover {
+        background: var(--surface-2);
+        color: var(--brand);
+        border-color: var(--border);
+    }
+
+    .sidebar-nav a:hover i {
+        transform: scale(1.15);
+    }
+
+    .sidebar-nav a.active {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: white !important;
+        border-color: transparent;
+        box-shadow: 0 8px 20px var(--shadow-brand);
+    }
+
+    /* Superuser Link */
+    .superuser-nav-item {
+        position: relative;
+        border: 1px solid rgba(245, 158, 11, .15) !important;
+        background: rgba(245, 158, 11, .04) !important;
+        color: var(--text) !important;
+    }
+
+    .superuser-nav-item:hover {
+        background: rgba(245, 158, 11, .08) !important;
+        border-color: rgba(245, 158, 11, .3) !important;
+    }
+
+    .superuser-nav-item.active {
+        background: linear-gradient(135deg, #d97706, #b45309) !important;
+        border-color: transparent !important;
+        color: white !important;
+        box-shadow: 0 8px 20px rgba(217, 119, 6, 0.25) !important;
+    }
+
+    .su-badge {
+        margin-left: auto;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .5px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(245, 158, 11, .15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, .25);
+    }
+
+    /* FOOTER */
+    .sidebar-footer {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .logout-btn {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--surface-2);
+        color: var(--text);
+        font-weight: 700;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .logout-btn:hover {
+        background: var(--red);
+        color: white !important;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    /* TOPBAR */
+    .admin-topbar {
+        position: fixed;
+        left: 280px;
+        right: 0;
+        top: 0;
+        height: 80px;
+        padding: 0 28px;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.01);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-left,
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .menu-btn,
+    .top-icon {
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 16px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .menu-btn:hover,
+    .top-icon:hover {
+        transform: translateY(-2px);
+        background: var(--surface-2);
+        color: var(--brand);
+        box-shadow: var(--shadow);
+    }
+
+    /* search */
+    .top-search {
+        width: 320px;
+        position: relative;
+    }
+
+    .top-search i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .top-search input {
+        width: 100%;
+        height: 44px;
+        padding-left: 40px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        outline: none;
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 14px;
+        transition: all 0.25s ease;
+    }
+
+    .top-search input:focus {
+        border-color: var(--brand);
+        background: var(--surface);
+        box-shadow: 0 0 0 4px var(--shadow-brand) !important;
+    }
+
+    /* THEME TOGGLE */
+    .theme-toggle-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .theme-toggle-wrap input {
+        display: none;
+    }
+
+    .theme-toggle-slider {
+        width: 52px;
+        height: 28px;
+        border-radius: 50px;
+        position: relative;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        transition: .25s;
+    }
+
+    .theme-toggle-slider::after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        position: absolute;
+        left: 3px;
+        top: 3px;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        transition: .25s;
+    }
+
+    #themeSwitch:checked+.theme-toggle-slider::after {
+        left: 27px;
+    }
+
+    /* PROFILE */
+    .profile-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 14px;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+
+    .profile-box img {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: var(--surface-2);
+        padding: 3px;
+        border: 1px solid var(--border);
+    }
+
+    .profile-box strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .profile-box small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* CONTENT */
+    main {
+        margin-left: 280px;
+        padding-top: 100px;
+        padding-left: 28px;
+        padding-right: 28px;
+        padding-bottom: 30px;
+    }
+
+    /* MOBILE Overlay */
+    .sidebar-overlay {
+        display: none;
+    }
+
+    @media(max-width:991px) {
+        .admin-sidebar {
+            left: -300px;
+        }
+
+        .admin-sidebar.show {
+            left: 0;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .4);
+            z-index: 1090;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .admin-topbar {
+            left: 0;
+            padding: 0 16px;
+        }
+
+        main {
+            margin-left: 0;
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .top-search {
+            width: 160px;
+        }
+
+        .profile-box div {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    function toggleSidebar() {
+        document
+            .getElementById("adminSidebar")
+            .classList
+            .toggle("show");
+
+        document
+            .querySelector(".sidebar-overlay")
+            .classList
+            .toggle("show");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        const theme =
+            localStorage.getItem("zeitnah-theme") || "dark";
+
+        const switcher =
+            document.getElementById("themeSwitch");
+
+        if (switcher) {
+            switcher.checked = theme === "light";
+        }
+    });
+</script>

@@ -1,0 +1,700 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                Course Management
+            </h2>
+            <small class="text-muted">
+                Manage courses, students and chapters
+            </small>
+        </div>
+
+        <a href="/add-courses" class="btn btn-success px-4 py-2">
+            <i class="fa-solid fa-plus me-2"></i>
+            Add Course
+        </a>
+    </div>
+
+
+    <!-- DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Courses</small>
+                    <h2>{{courses.length}}</h2>
+                </div>
+                <i class="fa-solid fa-book-open stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Total Students</small>
+                    <h2 id="totalStudents">0</h2>
+                </div>
+                <i class="fa-solid fa-user-graduate stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Total Chapters</small>
+                    <h2 id="totalChapters">0</h2>
+                </div>
+                <i class="fa-solid fa-layer-group stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>Revenue Potential</small>
+                    <h2 id="totalRevenue">₹0</h2>
+                </div>
+                <i class="fa-solid fa-indian-rupee-sign stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH + TOGGLE -->
+    <div class="toolbar-card mb-4">
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="myInput" placeholder="Search course..." onkeyup="searchCourse()">
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- GRID VIEW -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#each courses}}
+            <div class="col-xl-3 col-lg-4 col-md-6 course-card-wrap" data-name="{{this.name}}" id="card-{{this._id}}">
+                <div class="course-card">
+
+                    <img src="{{resolveImage this.image 'course-images'}}" class="course-img" alt="{{this.name}}"
+                        onerror="this.src='/course-images/default.jpg'">
+
+                    <div class="course-body">
+
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold mb-0">
+                                {{this.name}}
+                            </h5>
+
+                            {{#ifEquals this.type "online"}}
+                            <span class="badge bg-success">Online</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Recording</span>
+                            {{/ifEquals}}
+                        </div>
+
+                        <p class="text-muted small mb-3 course-desc">
+                            {{this.description}}
+                        </p>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+
+                            {{#ifEquals this.accessType "free"}}
+
+                            <div class="price-tag text-success">
+                                Free
+                            </div>
+
+                            <span class="badge bg-primary">
+                                Free Access
+                            </span>
+
+                            {{else}}
+
+                            <div class="price-tag">
+                                ₹{{this.Total_Fees}}
+                            </div>
+
+                            <span class="badge bg-warning text-dark">
+                                Paid
+                            </span>
+
+                            {{/ifEquals}}
+
+                        </div>
+                        <div class="mini-stats mb-3">
+                            <a href="/{{this._id}}/students" class="mini-btn green">
+                                👨‍🎓 {{this.studentCount}}
+                            </a>
+
+                            <a href="/{{this._id}}/chapters" class="mini-btn yellow">
+                                📚
+                                {{#if this.chapters}}
+                                {{this.chapters.length}}
+                                {{else}}
+                                0
+                                {{/if}}
+                            </a>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="/edit-course/{{this._id}}" class="btn btn-primary btn-sm w-100">
+                                Edit
+                            </a>
+
+                            <button class="btn btn-danger btn-sm w-100" onclick="deleteCourse('{{this._id}}')">
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+            {{/each}}
+
+        </div>
+    </div>
+
+
+    <!-- TABLE VIEW -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+            <table class="table premium-table align-middle" id="myTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Course</th>
+                        <th>Type</th>
+                        <th>Access</th>
+                        <th>Fees</th>
+                        <th>Students</th>
+                        <th>Chapters</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {{#each courses}}
+                    <tr id="row-{{this._id}}">
+
+                        <td class="si-no"></td>
+
+                        <td>
+                            <img src="{{resolveImage this.image 'course-images'}}" class="table-img"
+                                onerror="this.src='/course-images/default.jpg'">
+                        </td>
+
+                        <td class="course-name fw-bold">
+                            {{this.name}}
+                        </td>
+
+                        <td>
+                            {{#ifEquals this.type "online"}}
+                            <span class="badge bg-success">Online</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Recording</span>
+                            {{/ifEquals}}
+                        </td>
+                        <td>
+
+                            {{#ifEquals this.accessType "free"}}
+
+                            <span class="badge bg-primary">
+                                Free
+                            </span>
+
+                            {{else}}
+
+                            <span class="badge bg-warning text-dark">
+                                Paid
+                            </span>
+
+                            {{/ifEquals}}
+
+                        </td>
+
+                        <td class="course-fee" data-fee="{{this.Total_Fees}}" data-access="{{this.accessType}}">
+
+                            {{#ifEquals this.accessType "free"}}
+
+                            <span class="badge bg-success">
+                                Free
+                            </span>
+
+                            {{else}}
+
+                            <span class="fw-bold text-success">
+                                ₹{{this.Total_Fees}}
+                            </span>
+
+                            {{/ifEquals}}
+
+                        </td>
+                        <td>
+                            <a href="/{{this._id}}/students" class="mini-btn green">
+                                {{this.studentCount}}
+                            </a>
+                        </td>
+
+                        <td class="chapter-count">
+                            <a href="/{{this._id}}/chapters" class="mini-btn yellow">
+                                {{#if this.chapters}}
+                                {{this.chapters.length}}
+                                {{else}}
+                                0
+                                {{/if}}
+                            </a>
+                        </td>
+
+                        <td>
+                            <a href="/edit-course/{{this._id}}" class="btn btn-primary btn-sm">
+                                Edit
+                            </a>
+
+                            <button class="btn btn-danger btn-sm" onclick="deleteCourse('{{this._id}}')">
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+
+    {{#unless courses.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-book-open"></i>
+        <h4>No Courses Found</h4>
+        <a href="/add-courses" class="btn btn-success mt-2">
+            Create First Course
+        </a>
+    </div>
+    {{/unless}}
+
+</div>
+
+
+<style>
+    .stat-card {
+        border-radius: 22px;
+        padding: 28px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-dark {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    }
+
+    .stat-green {
+        background: linear-gradient(135deg, var(--green), #10b981);
+        color: #082032;
+    }
+
+    .stat-yellow {
+        background: linear-gradient(135deg, var(--yellow), #f59e0b);
+        color: #111;
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, #4aa3ff, var(--brand));
+    }
+
+    .stat-icon {
+        font-size: 34px;
+        opacity: .9;
+    }
+
+    .toolbar-card {
+        background: var(--surface);
+        padding: 18px;
+        border-radius: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+
+    .search-box {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        padding: 14px 18px;
+        border-radius: 14px;
+        color: var(--muted);
+    }
+
+    .search-box input {
+        border: none;
+        background: transparent;
+        width: 100%;
+        outline: none;
+        color: var(--text);
+    }
+
+    .search-box input::placeholder {
+        color: var(--muted);
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 10px;
+    }
+
+    .view-toggle button {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        transition: .2s;
+    }
+
+    .view-toggle button.active {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: white;
+        border: none;
+    }
+
+    .course-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: .25s;
+        height: 100%;
+    }
+
+    .course-card:hover {
+        transform: translateY(-6px);
+    }
+
+    .course-img {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+    }
+
+    .course-body {
+        padding: 20px;
+    }
+
+    .course-desc {
+        min-height: 45px;
+        color: var(--muted) !important;
+    }
+
+    .price-tag {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--brand);
+    }
+
+    .mini-stats {
+        display: flex;
+        gap: 10px;
+    }
+
+    .mini-btn {
+        text-decoration: none;
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        display: inline-block;
+        border: 1px solid transparent;
+    }
+
+    .green {
+        background: rgba(52, 211, 153, .15);
+        color: var(--green);
+        border-color: rgba(52, 211, 153, .25);
+    }
+
+    .yellow {
+        background: rgba(250, 204, 21, .15);
+        color: var(--yellow);
+        border-color: rgba(250, 204, 21, .25);
+    }
+
+    .premium-table {
+        background: var(--surface);
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .premium-table thead {
+        background: var(--surface-2);
+        color: var(--text);
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 18px;
+    }
+
+    .table-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        object-fit: cover;
+    }
+
+    .empty-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 70px 20px;
+        border-radius: 24px;
+    }
+
+    .empty-box i {
+        font-size: 55px;
+        color: var(--brand);
+        margin-bottom: 20px;
+    }
+
+    @media(max-width:768px) {
+        .toolbar-card {
+            flex-direction: column;
+        }
+    }
+
+    .price-tag.text-success {
+        color: var(--green) !important;
+    }
+    .course-card-wrap, #myTable tbody tr {
+        cursor: grab;
+    }
+    .course-card-wrap:active, #myTable tbody tr:active {
+        cursor: grabbing;
+    }
+    .sortable-ghost {
+        opacity: 0.4;
+        border: 2px dashed var(--brand) !important;
+    }
+    .sortable-chosen {
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+<script>
+    function updateSerialNumbers() {
+        let rows = document.querySelectorAll("#myTable tbody tr");
+        let count = 1;
+
+        rows.forEach(row => {
+            if (row.style.display !== "none") {
+                row.querySelector(".si-no").innerText = count++;
+            }
+        });
+    }
+
+    function searchCourse() {
+        const input = document.getElementById("myInput").value.toUpperCase();
+
+        // grid
+        document.querySelectorAll(".course-card-wrap").forEach(card => {
+            const name = card.dataset.name.toUpperCase();
+            card.style.display = name.includes(input) ? "" : "none";
+        });
+
+        // table
+        document.querySelectorAll("#myTable tbody tr").forEach(row => {
+            const name = row.querySelector(".course-name").innerText.toUpperCase();
+            row.style.display = name.includes(input) ? "" : "none";
+        });
+
+        updateSerialNumbers();
+    }
+
+    function showGrid() {
+        document.getElementById("gridView").style.display = "block";
+        document.getElementById("tableView").style.display = "none";
+
+        document.getElementById("gridBtn").classList.add("active");
+        document.getElementById("tableBtn").classList.remove("active");
+    }
+
+    function showTable() {
+        document.getElementById("gridView").style.display = "none";
+        document.getElementById("tableView").style.display = "block";
+
+        document.getElementById("tableBtn").classList.add("active");
+        document.getElementById("gridBtn").classList.remove("active");
+    }
+
+    function updateDashboard() {
+        let students = 0;
+        let chapters = 0;
+        let revenue = 0;
+
+        document.querySelectorAll(".course-card-wrap").forEach(card => {
+            const studentBtn = card.querySelector(".green");
+            const chapterBtn = card.querySelector(".yellow");
+            const priceElement = card.querySelector(".price-tag");
+
+            let price = 0;
+
+            if (
+                !priceElement.innerText
+                    .toLowerCase()
+                    .includes("free")
+            ) {
+                price =
+                    Number(
+                        priceElement.innerText
+                            .replace(/[^\d]/g, '')
+                    ) || 0;
+            }
+
+            students += Number(studentBtn.innerText.replace(/[^\d]/g, '')) || 0;
+            chapters += Number(chapterBtn.innerText.replace(/[^\d]/g, '')) || 0;
+            revenue += Number(price) || 0;
+        });
+
+        document.getElementById("totalStudents").innerText =
+            students.toLocaleString('en-IN');
+
+        document.getElementById("totalChapters").innerText =
+            chapters.toLocaleString('en-IN');
+
+        document.getElementById("totalRevenue").innerText =
+            "₹" + revenue.toLocaleString('en-IN');
+    }
+
+    async function deleteCourse(id) {
+
+        const result = await Swal.fire({
+            title: "Delete course?",
+            text: "This action cannot be undone",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Delete"
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch('/delete-course/' + id, {
+                method: 'POST'
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                const row = document.getElementById("row-" + id);
+                const card = document.getElementById("card-" + id);
+
+                if (row) row.remove();
+                if (card) card.remove();
+
+                updateSerialNumbers();
+                updateDashboard();
+
+                Swal.fire("Deleted!", "", "success");
+            }
+
+        } catch (err) {
+            Swal.fire("Error", "Something went wrong", "error");
+        }
+    }
+
+    async function saveNewOrder(ids) {
+        try {
+            const res = await fetch('/courses/update-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Order updated'
+                }).then(() => {
+                    location.reload();
+                });
+            }
+        } catch (err) {
+            console.error('Failed to save order:', err);
+        }
+    }
+
+    window.onload = function () {
+        updateSerialNumbers();
+        updateDashboard();
+
+        // Initialize Sortable on Grid
+        const gridEl = document.querySelector('#gridView .row');
+        if (gridEl) {
+            new Sortable(gridEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const ids = Array.from(gridEl.querySelectorAll('.course-card-wrap')).map(el => el.id.replace('card-', ''));
+                    await saveNewOrder(ids);
+                }
+            });
+        }
+
+        // Initialize Sortable on Table
+        const tableEl = document.querySelector('#myTable tbody');
+        if (tableEl) {
+            new Sortable(tableEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const ids = Array.from(tableEl.querySelectorAll('tr')).map(el => el.id.replace('row-', ''));
+                    await saveNewOrder(ids);
+                }
+            });
+        }
+    };
+</script>

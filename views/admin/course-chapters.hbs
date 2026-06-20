@@ -1,0 +1,649 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <a href="/courses" class="hero-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <div>
+                    <small class="text-light opacity-75 d-block mb-1">
+                        Course Chapters
+                    </small>
+
+                    <h2 class="text-white fw-bold m-0">
+                        {{courseName}}
+                    </h2>
+
+                    <span class="hero-badge mt-2">
+                        Learning Modules
+                    </span>
+                </div>
+
+            </div>
+
+            <a href="/add-chapters" class="btn btn-light px-4 py-2">
+                <i class="fa-solid fa-plus me-2"></i>
+                Add Chapter
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Chapters</small>
+                    <h2>{{chapters.length}}</h2>
+                </div>
+                <i class="fa-solid fa-book stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Total Classes</small>
+                    <h2 id="totalClasses">0</h2>
+                </div>
+                <i class="fa-solid fa-video stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-12">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Total Exercises</small>
+                    <h2 id="totalExercises">0</h2>
+                </div>
+                <i class="fa-solid fa-pen-to-square stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH + TOGGLE -->
+    <div class="toolbar-card mb-4">
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="text"
+                id="myInput"
+                placeholder="Search chapter..."
+                onkeyup="searchChapter()"
+            >
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- GRID VIEW -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#each chapters}}
+            <div
+                class="col-xl-3 col-lg-4 col-md-6 chapter-card-wrap"
+                data-name="{{this.title}}"
+                id="card-{{this.uniqueCode}}"
+            >
+                <div class="chapter-card">
+
+                    <img
+                        src="{{resolveImage this.imageName 'chapter-images'}}"
+                        class="chapter-img"
+                        alt="{{this.title}}"
+                        onerror="this.src='/chapter-images/default.jpg'"
+                    >
+
+                    <div class="chapter-body">
+
+                        <h5 class="fw-bold mb-2">
+                            {{this.title}}
+                        </h5>
+
+                        <span class="course-badge mb-3">
+                            {{this.package}}
+                        </span>
+
+                        <p class="chapter-desc text-muted">
+                            {{this.description}}
+                        </p>
+
+                        <div class="mini-stats mb-3">
+                            <a
+                                href="/chapters/classes/{{this.uniqueCode}}"
+                                class="mini-btn green"
+                            >
+                                🎥
+                                {{#if this.classes}}
+                                    {{this.classes.length}}
+                                {{else}}
+                                    0
+                                {{/if}}
+                            </a>
+
+                            <a
+                                href="/chapters/exercises/{{this.uniqueCode}}"
+                                class="mini-btn yellow"
+                            >
+                                📝
+                                {{#if this.exercises}}
+                                    {{this.exercises.length}}
+                                {{else}}
+                                    0
+                                {{/if}}
+                            </a>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a
+                                href="/edit-chapter/{{this.courseId}}/{{this.uniqueCode}}"
+                                class="btn btn-primary btn-sm w-100"
+                            >
+                                Edit
+                            </a>
+
+                            <button
+                                class="btn btn-danger btn-sm w-100"
+                                onclick="deleteChapter('{{this.courseId}}','{{this.uniqueCode}}')"
+                            >
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+            {{/each}}
+
+        </div>
+    </div>
+
+
+    <!-- TABLE VIEW -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+
+            <table class="table premium-table align-middle" id="myTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>Course</th>
+                        <th>Description</th>
+                        <th>Classes</th>
+                        <th>Exercises</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {{#each chapters}}
+                    <tr id="row-{{this.uniqueCode}}">
+
+                        <td class="si-no"></td>
+
+                        <td>
+                            <img
+                                src="{{resolveImage this.imageName 'chapter-images'}}"
+                                class="table-img"
+                                onerror="this.src='/chapter-images/default.jpg'"
+                            >
+                        </td>
+
+                        <td class="chapter-name fw-bold">
+                            {{this.title}}
+                        </td>
+
+                        <td>
+                            <span class="course-badge">
+                                {{this.package}}
+                            </span>
+                        </td>
+
+                        <td style="max-width:250px;">
+                            <div class="table-desc">
+                                {{this.description}}
+                            </div>
+                        </td>
+
+                        <td class="class-count">
+                            <a
+                                href="/chapters/classes/{{this.uniqueCode}}"
+                                class="mini-btn green"
+                            >
+                                {{#if this.classes}}
+                                    {{this.classes.length}}
+                                {{else}}
+                                    0
+                                {{/if}}
+                            </a>
+                        </td>
+
+                        <td class="exercise-count">
+                            <a
+                                href="/chapters/exercises/{{this.uniqueCode}}"
+                                class="mini-btn yellow"
+                            >
+                                {{#if this.exercises}}
+                                    {{this.exercises.length}}
+                                {{else}}
+                                    0
+                                {{/if}}
+                            </a>
+                        </td>
+
+                        <td>
+                            <a
+                                href="/edit-chapter/{{this.courseId}}/{{this.uniqueCode}}"
+                                class="btn btn-primary btn-sm"
+                            >
+                                Edit
+                            </a>
+
+                            <button
+                                class="btn btn-danger btn-sm"
+                                onclick="deleteChapter('{{this.courseId}}','{{this.uniqueCode}}')"
+                            >
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+
+    {{#unless chapters.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-book"></i>
+        <h4>No Chapters Found</h4>
+        <a href="/add-chapters" class="btn btn-success mt-2">
+            Create First Chapter
+        </a>
+    </div>
+    {{/unless}}
+
+</div>
+
+
+<style>
+.hero-card{
+   background:linear-gradient(135deg,var(--brand),var(--brand-2));
+    border-radius:28px;
+    padding:32px;
+    box-shadow:0 18px 40px rgba(18,49,76,.22);
+}
+.hero-back-btn{
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.18);
+    color:var(--surface);
+    text-decoration:none;
+    font-size:20px;
+}
+.hero-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:rgba(255,255,255,.16);
+    color:var(--surface);
+    font-size:13px;
+    font-weight:600;
+}
+
+.stat-card{
+    border-radius:22px;
+    padding:28px;
+    color:var(--surface);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+.stat-dark{background:linear-gradient(135deg,var(--brand),#0b2237);}
+.stat-green{background:linear-gradient(135deg,#9fd5b2,#70bf8e);}
+.stat-yellow{background:linear-gradient(135deg,#ffd54f,#f6b300);color:#222;}
+.stat-icon{font-size:34px;}
+
+.toolbar-card{
+    background:var(--surface);
+    padding:18px;
+    border-radius:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
+.search-box{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#f7f9fc;
+    padding:14px 18px;
+    border-radius:14px;
+}
+.search-box input{
+    border:none;
+    background:none;
+    width:100%;
+    outline:none;
+}
+
+.view-toggle{
+    display:flex;
+    gap:10px;
+}
+.view-toggle button{
+    width:50px;
+    height:50px;
+    border:none;
+    border-radius:12px;
+    background:#edf2f7;
+}
+.view-toggle button.active{
+    background:var(--brand);
+    color:var(--surface);
+}
+
+.chapter-card{
+    background:var(--surface);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    transition:.25s;
+    height:100%;
+}
+.chapter-card:hover{
+    transform:translateY(-6px);
+}
+.chapter-img{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+}
+.chapter-body{
+    padding:20px;
+}
+.course-badge{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:12px;
+    background:#eef5fb;
+    color:var(--brand);
+    font-weight:600;
+    font-size:13px;
+}
+.chapter-desc{
+    margin-top:12px;
+    min-height:48px;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.mini-stats{
+    display:flex;
+    gap:10px;
+}
+.mini-btn{
+    text-decoration:none;
+    padding:8px 14px;
+    border-radius:12px;
+    font-weight:600;
+    display:inline-block;
+}
+.green{
+    background:#dff7e7;
+    color:#198754;
+}
+.yellow{
+    background:#fff5d6;
+    color:#b8860b;
+}
+
+.premium-table{
+    background:var(--surface);
+    border-radius:18px;
+    overflow:hidden;
+}
+.premium-table thead{
+    background:var(--brand);
+    color:var(--surface);
+}
+.premium-table th,
+.premium-table td{
+    padding:18px;
+}
+.table-img{
+    width:60px;
+    height:60px;
+    border-radius:12px;
+    object-fit:cover;
+}
+.table-desc{
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.empty-box{
+    background:var(--surface);
+    padding:70px 20px;
+    border-radius:24px;
+}
+.empty-box i{
+    font-size:55px;
+    color:var(--brand);
+    margin-bottom:20px;
+}
+
+    @media(max-width:768px){
+        .hero-card,
+        .toolbar-card{
+            padding:20px;
+        }
+        .toolbar-card{
+            flex-direction:column;
+        }
+    }
+    .chapter-card-wrap, #myTable tbody tr {
+        cursor: grab;
+    }
+    .chapter-card-wrap:active, #myTable tbody tr:active {
+        cursor: grabbing;
+    }
+    .sortable-ghost {
+        opacity: 0.4;
+        border: 2px dashed var(--brand) !important;
+    }
+    .sortable-chosen {
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+
+<script>
+function updateSerialNumbers(){
+    let rows=document.querySelectorAll("#myTable tbody tr");
+    let count=1;
+
+    rows.forEach(row=>{
+        if(row.style.display!=="none"){
+            row.querySelector(".si-no").innerText=count++;
+        }
+    });
+}
+
+function searchChapter(){
+    const input=document.getElementById("myInput").value.toUpperCase();
+
+    document.querySelectorAll(".chapter-card-wrap").forEach(card=>{
+        const name=card.dataset.name.toUpperCase();
+        card.style.display=name.includes(input)?"":"none";
+    });
+
+    document.querySelectorAll("#myTable tbody tr").forEach(row=>{
+        const name=row.querySelector(".chapter-name").innerText.toUpperCase();
+        row.style.display=name.includes(input)?"":"none";
+    });
+
+    updateSerialNumbers();
+}
+
+function showGrid(){
+    document.getElementById("gridView").style.display="block";
+    document.getElementById("tableView").style.display="none";
+
+    gridBtn.classList.add("active");
+    tableBtn.classList.remove("active");
+}
+
+function showTable(){
+    document.getElementById("gridView").style.display="none";
+    document.getElementById("tableView").style.display="block";
+
+    tableBtn.classList.add("active");
+    gridBtn.classList.remove("active");
+}
+
+function updateDashboard(){
+    let totalClasses=0;
+    let totalExercises=0;
+
+    document.querySelectorAll(".chapter-card-wrap").forEach(card=>{
+        const stats=card.querySelectorAll(".mini-btn");
+
+        totalClasses += Number(stats[0].innerText.replace(/[^\d]/g,'')) || 0;
+        totalExercises += Number(stats[1].innerText.replace(/[^\d]/g,'')) || 0;
+    });
+
+    document.getElementById("totalClasses").innerText=
+        totalClasses.toLocaleString('en-IN');
+
+    document.getElementById("totalExercises").innerText=
+        totalExercises.toLocaleString('en-IN');
+}
+
+async function deleteChapter(courseId,uniqueCode){
+
+    const result=await Swal.fire({
+        title:"Delete chapter?",
+        text:"This action cannot be undone",
+        icon:"warning",
+        showCancelButton:true,
+        confirmButtonColor:"#dc3545",
+        confirmButtonText:"Delete"
+    });
+
+    if(!result.isConfirmed) return;
+
+    const response=await fetch(
+        `/delete-chapter/${courseId}/${uniqueCode}`,
+        {method:"POST"}
+    );
+    if(response.ok) location.reload();
+}
+
+    async function saveNewOrder(uniqueCodes) {
+        try {
+            const res = await fetch('/courses/{{courseId}}/chapters/update-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uniqueCodes })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Order updated'
+                }).then(() => {
+                    location.reload();
+                });
+            }
+        } catch (err) {
+            console.error('Failed to save order:', err);
+        }
+    }
+
+    window.onload=function(){
+        updateSerialNumbers();
+        updateDashboard();
+
+        // Initialize Sortable on Grid
+        const gridEl = document.querySelector('#gridView .row');
+        if (gridEl) {
+            new Sortable(gridEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const uniqueCodes = Array.from(gridEl.querySelectorAll('.chapter-card-wrap')).map(el => el.id.replace('card-', ''));
+                    await saveNewOrder(uniqueCodes);
+                }
+            });
+        }
+
+        // Initialize Sortable on Table
+        const tableEl = document.querySelector('#myTable tbody');
+        if (tableEl) {
+            new Sortable(tableEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const uniqueCodes = Array.from(tableEl.querySelectorAll('tr')).map(el => el.id.replace('row-', ''));
+                    await saveNewOrder(uniqueCodes);
+                }
+            });
+        }
+    };
+</script>

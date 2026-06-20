@@ -1,0 +1,607 @@
+<section class="container-fluid mt-4 mb-5">
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-11">
+
+            <div class="card border-0 shadow-lg add-course-card">
+
+                <!-- HEADER -->
+                <div class="card-header course-header border-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                        <div>
+                            <h2 class="m-0 fw-bold text-white">
+                                Add Course
+                            </h2>
+                            <small class="text-light opacity-75">
+                                Create a premium learning package
+                            </small>
+                        </div>
+
+                        <a href="/courses" class="btn btn-light">
+                            <i class="fa-solid fa-arrow-left me-2"></i>
+                            Back
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-lg-5">
+
+                    <!-- ERROR -->
+                    <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                    <form id="courseForm" enctype="multipart/form-data">
+
+                        <div class="row g-5">
+
+                            <!-- LEFT -->
+                            <div class="col-lg-7">
+
+                                <!-- IMAGE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Course Cover <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+
+                                        <img id="imgView" class="course-preview" style="display:none">
+
+                                        <!-- placeholder -->
+                                        <div class="upload-placeholder" id="uploadPlaceholder">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <h5 class="mb-2">Upload Course Cover</h5>
+                                            <small>
+                                                JPG / PNG / WEBP • Max 2MB
+                                            </small>
+                                        </div>
+
+                                        <input type="file" name="image" id="imageInput"
+                                            accept="image/jpeg,image/png,image/webp" hidden onchange="viewImage(event)"
+                                            onclick="event.stopPropagation()" required>
+                                    </div>
+                                </div>
+
+                                <!-- TITLE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        Course Title
+                                    </label>
+
+                                    <input type="text" class="form-control custom-input" name="name" id="courseName"
+                                        placeholder="Enter course title" required>
+                                </div>
+                                <!-- ACCESS -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Access Type
+                                    </label>
+
+                                    <div class="type-grid">
+
+                                        <label class="type-card active access-card">
+                                            <input type="radio" name="accessType" value="free" checked hidden>
+                                            <i class="fa-solid fa-gift"></i>
+                                            <span>Free</span>
+                                        </label>
+
+                                        <label class="type-card access-card">
+                                            <input type="radio" name="accessType" value="paid" hidden>
+                                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                                            <span>Paid</span>
+                                        </label>
+
+                                    </div>
+                                </div>
+                                <!-- FEES -->
+                                <div class="mb-4 d-none" id="feeWrap">
+                                    <label class="form-label fw-semibold">
+                                        Course Fee
+                                    </label>
+
+                                    <input type="number" min="0" class="form-control custom-input" name="Total_Fees"
+                                        id="courseFee" placeholder="Enter fee amount" value="0">
+                                </div>
+
+                                <!-- TYPE -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-3">
+                                        Course Type
+                                    </label>
+
+                                    <div class="type-grid">
+
+                                        <label class="type-card active">
+                                            <input type="radio" name="type" value="online" checked hidden>
+                                            <i class="fa-solid fa-globe"></i>
+                                            <span>Online</span>
+                                        </label>
+
+                                        <label class="type-card">
+                                            <input type="radio" name="type" value="Recording" hidden>
+                                            <i class="fa-solid fa-school"></i>
+                                            <span>Recording</span>
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                                <!-- DESCRIPTION -->
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Description
+                                    </label>
+
+                                    <textarea class="form-control custom-textarea" name="description"
+                                        id="courseDescription" rows="5" placeholder="Describe the course..."
+                                        required></textarea>
+                                </div>
+
+                            </div>
+
+
+                            <!-- RIGHT -->
+                            <div class="col-lg-5">
+
+                                <div class="summary-card sticky-top">
+
+                                    <h5 class="fw-bold mb-4">
+                                        Live Preview
+                                    </h5>
+
+                                    <div class="summary-placeholder mb-3" id="summaryPlaceholder">
+                                        No image selected
+                                    </div>
+
+                                    <img id="summaryImage" class="summary-image mb-3" style="display:none">
+
+                                    <h5 class="fw-bold mb-2" id="previewName">
+                                        Course Title
+                                    </h5>
+                                    <div class="mb-3 d-flex gap-2 flex-wrap">
+
+                                        <span class="badge bg-success" id="previewType">
+                                            Online
+                                        </span>
+
+                                        <span class="badge bg-primary" id="previewAccess">
+                                            Free
+                                        </span>
+
+                                    </div>
+                                    <h3 class="fw-bold mb-3" style="color:var(--brand);" id="previewFee">
+                                        ₹0
+                                    </h3>
+
+                                    <p class="text-muted mb-0" id="previewDesc">
+                                        Course description preview...
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BUTTON -->
+                        <div class="text-center mt-5">
+                            <button type="submit" id="submitBtn" class="btn btn-success px-5 py-3" disabled>
+                                <i class="fa-solid fa-check me-2"></i>
+                                Create Course
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+
+<style>
+    .add-course-card {
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    .course-header {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        padding: 28px 32px;
+    }
+
+    .custom-input {
+        border-radius: 14px;
+        min-height: 56px;
+        border: 1px solid #dee2e6;
+        padding: 12px 18px;
+    }
+
+    .custom-textarea {
+        border-radius: 14px;
+        padding: 18px;
+        border: 1px solid #dee2e6;
+        resize: none;
+    }
+
+    .upload-area {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1/1;
+        border-radius: 24px;
+        overflow: hidden;
+        cursor: pointer;
+        background: var(--surface-2);
+        border: 2px dashed #cfd8e3;
+    }
+
+    .upload-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--brand);
+        text-align: center;
+    }
+
+    .upload-placeholder i {
+        font-size: 50px;
+        margin-bottom: 15px;
+    }
+
+    .course-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .type-card {
+        background: var(--surface-2);
+        border: 2px solid transparent;
+        border-radius: 18px;
+        padding: 28px 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .type-card.active {
+        border-color: var(--brand);
+        background: #eef5fb;
+        color: var(--brand);
+    }
+
+    .type-card i {
+        font-size: 30px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .summary-card {
+        background: var(--surface-2);
+        border-radius: 24px;
+        padding: 28px;
+        top: 20px;
+    }
+
+    .summary-placeholder,
+    .summary-image {
+        width: 100%;
+        aspect-ratio: 1/1;
+        border-radius: 18px;
+    }
+
+    .summary-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e9eef5;
+        color: #777;
+    }
+
+    .summary-image {
+        object-fit: cover;
+    }
+</style>
+
+
+<script>
+
+    // ACCESS TYPE
+    document.querySelectorAll(".access-card").forEach(card => {
+        card.addEventListener("click", function () {
+
+            document.querySelectorAll(".access-card")
+                .forEach(c => c.classList.remove("active"));
+
+            this.classList.add("active");
+            this.querySelector('input[type="radio"]').checked = true;
+
+            const value = this.querySelector("input").value;
+
+            if (value === "paid") {
+
+                document
+                    .getElementById("feeWrap")
+                    .classList.remove("d-none");
+
+                document
+                    .getElementById("courseFee")
+                    .required = true;
+
+                const badge =
+                    document.getElementById("previewAccess");
+
+                badge.innerText = "Paid";
+                badge.className =
+                    "badge bg-warning text-dark";
+                updatePreview();
+                validateForm();
+            } else {
+
+                document
+                    .getElementById("feeWrap")
+                    .classList.add("d-none");
+
+                const feeInput =
+                    document.getElementById("courseFee");
+
+                feeInput.required = false;
+                feeInput.value = 0;
+
+                const badge =
+                    document.getElementById("previewAccess");
+
+                badge.innerText = "Free";
+                badge.className =
+                    "badge bg-primary";
+
+                updatePreview();
+                validateForm();
+            }
+        });
+    });
+    let isImageValid = false;
+
+    const submitBtn = document.getElementById("submitBtn");
+    const errorMsg = document.getElementById("errorMsg");
+
+    function showError(msg) {
+        errorMsg.classList.remove("d-none");
+        errorMsg.innerText = msg;
+    }
+
+    function clearError() {
+        errorMsg.classList.add("d-none");
+        errorMsg.innerText = "";
+    }
+
+    function validateForm() {
+
+        const name =
+            document.getElementById("courseName").value.trim();
+
+        const desc =
+            document.getElementById("courseDescription").value.trim();
+
+        const accessType =
+            document.querySelector('input[name="accessType"]:checked')?.value;
+
+        const fee =
+            Number(document.getElementById("courseFee").value || 0);
+
+        if (accessType === "paid") {
+            submitBtn.disabled =
+                !(name && desc && isImageValid && fee > 0);
+        } else {
+            submitBtn.disabled =
+                !(name && desc && isImageValid);
+        }
+    }
+    document.getElementById("courseName")
+        .addEventListener("input", validateForm);
+
+    document.getElementById("courseDescription")
+        .addEventListener("input", validateForm);
+    function viewImage(event) {
+
+        const file = event.target.files[0];
+
+        // Helper shortcuts
+        const imgView          = document.getElementById("imgView");
+        const summaryImage     = document.getElementById("summaryImage");
+        const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+        const summaryPlaceholder = document.getElementById("summaryPlaceholder");
+
+        if (!file) {
+            // Reset to placeholder state
+            imgView.style.display          = "none";
+            imgView.src                    = "";
+            summaryImage.style.display     = "none";
+            summaryImage.src               = "";
+            uploadPlaceholder.style.display = "";
+            summaryPlaceholder.style.display = "";
+            isImageValid = false;
+            validateForm();
+            return;
+        }
+
+        // Reset valid flag while we validate
+        isImageValid = false;
+        clearError();
+
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+
+        if (!allowed.includes(file.type)) {
+            showError("Only JPG, PNG, WEBP allowed");
+            validateForm();
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            showError("Image must be below 2MB");
+            validateForm();
+            return;
+        }
+
+        // File is valid — build the preview URL
+        if (window.previewUrl) {
+            URL.revokeObjectURL(window.previewUrl);
+        }
+        window.previewUrl = URL.createObjectURL(file);
+        const url = window.previewUrl;
+
+        // Show the image in the upload box
+        uploadPlaceholder.style.display = "none";
+        imgView.src                     = url;
+        imgView.style.display           = "block";
+
+        // Show the image in the Live Preview panel
+        summaryPlaceholder.style.display = "none";
+        summaryImage.src                 = url;
+        summaryImage.style.display       = "block";
+
+        // Mark valid and unlock submit
+        isImageValid = true;
+        validateForm();
+    }
+
+    function updatePreview() {
+
+        document.getElementById("previewName").innerText =
+            document.getElementById("courseName").value || "Course Title";
+
+        const fee =
+            Number(document.getElementById("courseFee").value || 0);
+
+        document.getElementById("previewFee").innerText =
+            "₹" + fee.toLocaleString("en-IN");
+
+        document.getElementById("previewDesc").innerText =
+            document.getElementById("courseDescription").value ||
+            "Course description preview...";
+    }
+
+    document.getElementById("courseName").addEventListener("input", updatePreview);
+    document.getElementById("courseFee")
+        .addEventListener("input", () => {
+            updatePreview();
+            validateForm();
+        });
+    document.getElementById("courseDescription").addEventListener("input", updatePreview);
+
+    document.querySelectorAll('input[name="type"]').forEach(input => {
+        const card = input.closest(".type-card");
+
+        card.addEventListener("click", function () {
+
+            document.querySelectorAll('input[name="type"]')
+                .forEach(i => i.closest(".type-card").classList.remove("active"));
+
+            this.classList.add("active");
+            input.checked = true;
+
+            const type = input.value === "online"
+                ? "Online"
+                : "Recording";
+
+            const badge = document.getElementById("previewType");
+
+            badge.innerText = type;
+            badge.className =
+                type === "Online"
+                    ? "badge bg-success"
+                    : "badge bg-secondary";
+        });
+    });
+
+    document.getElementById("courseForm")
+        .addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+            clearError();
+
+            if (!isImageValid) {
+                showError("Please upload a valid course image");
+                return;
+            }
+
+            submitBtn.disabled = true;
+
+            submitBtn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+            try {
+
+                const formData = new FormData(this);
+
+                const response = await fetch("/add-courses", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                console.log("Status:", response.status);
+
+                const text = await response.clone().text();
+
+                console.log("Server Response:", text);
+
+                let data;
+
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    throw new Error("Server returned invalid JSON");
+                }
+
+                if (data.success) {
+
+                    await Swal.fire({
+                        icon: "success",
+                        title: "Course Created Successfully",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    window.location.href = "/courses";
+
+                } else {
+
+                    showError(data.message || "Failed to create course");
+
+                    submitBtn.disabled = false;
+
+                    submitBtn.innerHTML =
+                        '<i class="fa-solid fa-check me-2"></i>Create Course';
+                }
+
+            } catch (err) {
+
+                console.error(err);
+
+                showError(err.message || "Upload failed");
+
+                submitBtn.disabled = false;
+
+                submitBtn.innerHTML =
+                    '<i class="fa-solid fa-check me-2"></i>Create Course';
+            }
+
+        });
+</script>

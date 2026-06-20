@@ -1,0 +1,867 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <a href="javascript:history.back()" class="hero-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <div class="ml-3">
+                    <small class="text-light opacity-75 d-block mb-1">
+                        Chapter Classes
+                    </small>
+
+                    <h2 class="text-white fw-bold m-0">
+                        {{class.title}}
+                    </h2>
+
+                    <span class="hero-badge mt-2">
+                        Secure Video Learning
+                    </span>
+                </div>
+
+            </div>
+
+            <a href="/add-class/{{chapter.uniqueCode}}" class="btn btn-light px-4 py-2">
+                <i class="fa-solid fa-plus me-2"></i>
+                Add Class
+            </a>
+
+        </div>
+    </div>
+
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Classes</small>
+                    <h2>{{chapter.classes.length}}</h2>
+                </div>
+                <i class="fa-solid fa-video stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Total Duration</small>
+                    <h2 id="totalDuration">0 min</h2>
+                </div>
+                <i class="fa-solid fa-clock stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>Uploaded</small>
+                    <h2>{{chapter.classes.length}}</h2>
+                </div>
+                <i class="fa-solid fa-cloud-arrow-up stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card stat-orange">
+                <div>
+                    <small>Latest Order</small>
+                    <h2 id="latestOrder">0</h2>
+                </div>
+                <i class="fa-solid fa-layer-group stat-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH -->
+    <div class="toolbar-card mb-4">
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input type="text" id="myInput" placeholder="Search class..." onkeyup="searchClass()">
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- GRID -->
+    <div id="gridView">
+        <div class="row g-4">
+
+            {{#if chapter.classes.length}}
+            {{#each chapter.classes}}
+            <div class="col-xl-3 col-lg-4 col-md-6 class-card-wrap" data-name="{{this.title}}"
+                data-order="{{this.order}}" data-duration="{{this.duration}}" id="card-{{this._id}}">
+
+                <div class="class-card">
+
+                    <!-- IMAGE -->
+                    <div class="class-thumb-wrap">
+
+                        <img src="{{resolveImage this.thumbnail 'class-images'}}" class="class-thumb">
+
+                        <div class="thumb-overlay">
+                            {{#if (eq this.videoSource 's3')}}
+                            <span class="video-badge s3-badge">
+                                <i class="fa-brands fa-aws me-1"></i>
+                                S3 Cloud
+                            </span>
+                            {{else}}
+                            <span class="video-badge">
+                                <i class="fa-solid fa-shield-halved me-1"></i>
+                                VdoCipher
+                            </span>
+                            {{/if}}
+                        </div>
+
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="class-body">
+
+                        <div class="d-flex gap-2 mb-3 flex-wrap">
+                            <span class="order-chip">
+                                #{{this.order}}
+                            </span>
+
+                            <span class="duration-chip" data-duration="{{this.duration}}">
+                                {{this.duration}}
+                            </span>
+                        </div>
+
+                        <h5 class="class-title fw-bold">
+                            {{this.title}}
+                        </h5>
+
+                        <p class="class-desc text-muted">
+                            {{this.description}}
+                        </p>
+
+                        <div class="mt-auto">
+
+                            <!-- TOP ACTION -->
+                            <a href="/chapters/exercises/{{../chapter.uniqueCode}}/{{this._id}}"
+                                class="btn btn-dark btn-sm w-100 mb-2">
+
+                                <i class="fa-solid fa-file-lines me-2"></i>
+
+                                Exercises
+
+                                <span class="badge bg-light text-dark ms-2">
+                                    {{this.exercises.length}}
+                                </span>
+                            </a>
+
+                            <!-- PREVIEW -->
+                            {{#if (eq this.videoSource 's3')}}
+                            <button class="btn btn-success btn-sm w-100 mb-2"
+                                onclick="previewS3Video('{{this.videoUrl}}')">
+                                Preview
+                            </button>
+                            {{else}}
+                            <button class="btn btn-success btn-sm w-100 mb-2"
+                                onclick="previewVideo('{{this.videoId}}')">
+                                Preview
+                            </button>
+                            {{/if}}
+
+                            <!-- EDIT DELETE -->
+                            <div class="d-flex gap-2">
+
+                                <a href="/edit-class/{{../chapter.uniqueCode}}/{{this._id}}"
+                                    class="btn btn-primary btn-sm w-100">
+
+                                    Edit
+                                </a>
+
+                                <button class="btn btn-danger btn-sm w-100"
+                                    onclick="deleteClass('{{../chapter.uniqueCode}}','{{this._id}}')">
+
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+            {{/each}}
+            {{/if}}
+
+        </div>
+    </div>
+
+
+    <!-- TABLE -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+
+            <table class="table premium-table align-middle" id="myTable">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Thumbnail</th>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Video</th>
+                        <th>Exercises</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {{#if chapter.classes.length}}
+                    {{#each chapter.classes}}
+                    <tr id="row-{{this._id}}">
+
+                        <td class="si-no"></td>
+
+                        <td>
+                            <img src="{{resolveImage this.thumbnail 'class-images'}}" class="table-thumb">
+                        </td>
+
+                        <td class="class-name">
+                            <strong>{{this.title}}</strong>
+
+                            <small class="d-block text-muted">
+                                #{{this.order}}
+                            </small>
+                        </td>
+
+                        <td>
+                            <span class="duration-chip" data-duration="{{this.duration}}">
+                                {{this.duration}}
+                            </span>
+                        </td>
+                        <td>
+
+                            <a href="/chapters/exercises/{{../chapter.uniqueCode}}/{{this._id}}"
+                                class="btn btn-dark btn-sm">
+
+                                <i class="fa-solid fa-file-lines me-1"></i>
+
+                                {{#if this.exercises.length}}
+                                {{this.exercises.length}}
+                                {{else}}
+                                0
+                                {{/if}}
+                            </a>
+
+                        </td>
+
+                        <td>
+                            {{#if (eq this.videoSource 's3')}}
+                            <span class="video-badge s3-badge">
+                                S3 Cloud
+                            </span>
+                            {{else}}
+                            <span class="video-badge">
+                                VdoCipher
+                            </span>
+                            {{/if}}
+                        </td>
+
+                        <td>
+                            {{#if (eq this.videoSource 's3')}}
+                            <button class="btn btn-success btn-sm" onclick="previewS3Video('{{this.videoUrl}}')">
+                                Preview
+                            </button>
+                            {{else}}
+                            <button class="btn btn-success btn-sm" onclick="previewVideo('{{this.videoId}}')">
+                                Preview
+                            </button>
+                            {{/if}}
+                            <a href="/edit-class/{{../chapter.uniqueCode}}/{{this._id}}" class="btn btn-primary btn-sm">
+                                Edit
+                            </a>
+
+                            <button class="btn btn-danger btn-sm"
+                                onclick="deleteClass('{{../chapter.uniqueCode}}','{{this._id}}')">
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                    {{/each}}
+                    {{/if}}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+
+    {{#unless chapter.classes.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-video"></i>
+        <h4>No Classes Added</h4>
+
+        <a href="/add-class/{{chapter.uniqueCode}}" class="btn btn-success mt-2">
+            Add First Class
+        </a>
+    </div>
+    {{/unless}}
+    <div id="videoModal" class="video-modal">
+        <div class="video-box">
+
+            <button class="close-video" onclick="closeVideo()">
+                ×
+            </button>
+
+            <iframe id="videoFrame" allowfullscreen allow="encrypted-media; autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
+            <video id="s3VideoPlayer" controls playsinline disablepictureinpicture controlsList="nodownload nofullscreen noremoteplayback" style="width:100%;height:100%;display:none;"></video>
+
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+    .video-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 30px;
+    }
+
+    .video-box {
+        width: 100%;
+        max-width: 1100px;
+        aspect-ratio: 16/9;
+        background: black;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    #videoFrame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .close-video {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 50%;
+        background: white;
+        font-size: 24px;
+        z-index: 2;
+    }
+
+    .hero-card {
+        background: linear-gradient(135deg, #12314c, #1d4e89);
+        border-radius: 28px;
+        padding: 32px;
+        box-shadow: 0 18px 40px rgba(18, 49, 76, .22);
+    }
+
+    .hero-back-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, .16);
+        color: white;
+        text-decoration: none;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, .16);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .stat-card {
+        border-radius: 22px;
+        padding: 28px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-dark {
+        background: linear-gradient(135deg, #12314c, #0b2237);
+    }
+
+    .stat-green {
+        background: linear-gradient(135deg, #9fd5b2, #70bf8e);
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, #6cbcff, #1976d2);
+    }
+
+    .stat-orange {
+        background: linear-gradient(135deg, #ffc46b, #f59e0b);
+    }
+
+    .stat-icon {
+        font-size: 34px;
+    }
+
+    .toolbar-card {
+        background: white;
+        padding: 18px;
+        border-radius: 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .search-box {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        background: #f7f9fc;
+    }
+
+    .search-box input {
+        border: none;
+        outline: none;
+        width: 100%;
+        background: none;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 10px;
+    }
+
+    .view-toggle button {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .view-toggle .active {
+        background: #12314c;
+        color: white;
+    }
+
+    .class-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .class-thumb-wrap {
+        position: relative;
+        height: 220px;
+    }
+
+    .class-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .thumb-overlay {
+        position: absolute;
+        inset: auto 15px 15px 15px;
+    }
+
+    .video-badge {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 12px;
+        background: white;
+        color: #12314c;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .class-body {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .order-chip,
+    .duration-chip {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .order-chip {
+        background: #eaf2ff;
+        color: #12314c;
+    }
+
+    .duration-chip {
+        background: #dff7e7;
+        color: #198754;
+    }
+
+    .class-title {
+        min-height: 58px;
+    }
+
+    .class-desc {
+        min-height: 65px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .premium-table {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .premium-table thead {
+        background: #12314c;
+        color: white;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 18px;
+    }
+
+    .table-thumb {
+        width: 90px;
+        height: 60px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .empty-box {
+        background: white;
+        padding: 70px 20px;
+        border-radius: 24px;
+    }
+
+    .empty-box i {
+        font-size: 55px;
+        color: #12314c;
+        margin-bottom: 20px;
+    }
+
+    .class-card-wrap, #myTable tbody tr {
+        cursor: grab;
+    }
+    .class-card-wrap:active, #myTable tbody tr:active {
+        cursor: grabbing;
+    }
+    .sortable-ghost {
+        opacity: 0.4;
+        border: 2px dashed var(--brand) !important;
+    }
+    .sortable-chosen {
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+
+<script>
+    async function previewVideo(videoId) {
+        try {
+            if (!videoId) throw new Error('Invalid video ID');
+            const res = await fetch('/class-video/' + encodeURIComponent(videoId));
+            const data = await res.json();
+            if (!data.otp || !data.playbackInfo) {
+                alert('Preview failed');
+                return;
+            }
+            const videoFrame = document.getElementById('videoFrame');
+            const videoModal = document.getElementById('videoModal');
+            const s3Player = document.getElementById('s3VideoPlayer');
+
+            s3Player.pause();
+            s3Player.src = '';
+            s3Player.style.display = 'none';
+            videoFrame.style.display = 'block';
+            videoFrame.src = `https://player.vdocipher.com/v2/?otp=${encodeURIComponent(data.otp)}&playbackInfo=${encodeURIComponent(data.playbackInfo)}`;
+            videoModal.style.display = 'flex';
+        } catch (err) {
+            console.error('previewVideo error', err);
+            alert('Preview failed');
+        }
+    }
+
+    function closeVideo() {
+        const videoModal = document.getElementById('videoModal');
+        const videoFrame = document.getElementById('videoFrame');
+        const s3Player = document.getElementById('s3VideoPlayer');
+
+        videoModal.style.display = 'none';
+        videoFrame.src = '';
+        videoFrame.style.display = 'block';
+
+        s3Player.pause();
+        s3Player.src = '';
+        s3Player.style.display = 'none';
+    }
+
+    function previewS3Video(url) {
+        if (!url) {
+            alert('No video URL available');
+            return;
+        }
+
+        try {
+            const parsed = new URL(url);
+            if (!['https:'].includes(parsed.protocol)) {
+                throw new Error('Invalid URL');
+            }
+        } catch (err) {
+            alert('Invalid video source');
+            return;
+        }
+
+        const s3Player = document.getElementById('s3VideoPlayer');
+        const videoFrame = document.getElementById('videoFrame');
+        const videoModal = document.getElementById('videoModal');
+
+        videoFrame.style.display = 'none';
+        s3Player.style.display = 'block';
+        s3Player.src = url;
+        videoModal.style.display = 'flex';
+    }
+
+    function formatDuration(seconds) {
+        seconds = Number(seconds) || 0;
+
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+
+        if (minutes > 0) {
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+
+        return `${remainingSeconds}s`;
+    }
+
+    function formatDurationChips() {
+        document.querySelectorAll(".duration-chip")
+            .forEach(el => {
+                el.innerText = formatDuration(el.dataset.duration);
+            });
+    }
+
+    function formatTotalMinutes(seconds) {
+        const minutes = (Number(seconds) || 0) / 60;
+        const rounded = Number(minutes.toFixed(1));
+
+        return rounded + " min";
+    }
+
+    function updateSerialNumbers() {
+        let rows = document.querySelectorAll("#myTable tbody tr");
+        let count = 1;
+
+        rows.forEach(row => {
+            if (row.style.display !== "none") {
+                let cell = row.querySelector(".si-no");
+                if (cell) cell.innerText = count++;
+            }
+        });
+    }
+
+    function searchClass() {
+        let input = myInput.value.toUpperCase();
+
+        document.querySelectorAll(".class-card-wrap")
+            .forEach(card => {
+                let name = card.dataset.name.toUpperCase();
+
+                card.style.display =
+                    name.includes(input)
+                        ? ""
+                        : "none";
+            });
+
+        document.querySelectorAll("#myTable tbody tr")
+            .forEach(row => {
+                let name = row.querySelector(".class-name")
+                    .innerText.toUpperCase();
+
+                row.style.display =
+                    name.includes(input)
+                        ? ""
+                        : "none";
+            });
+
+        updateSerialNumbers();
+    }
+
+    function showGrid() {
+        gridView.style.display = "block";
+        tableView.style.display = "none";
+
+        gridBtn.classList.add("active");
+        tableBtn.classList.remove("active");
+    }
+
+    function showTable() {
+        gridView.style.display = "none";
+        tableView.style.display = "block";
+
+        tableBtn.classList.add("active");
+        gridBtn.classList.remove("active");
+    }
+
+    function updateStats() {
+        let total = 0;
+        let latest = 0;
+
+        document.querySelectorAll(".class-card-wrap")
+            .forEach(card => {
+                let order = Number(card.dataset.order) || 0;
+                let duration = Number(card.dataset.duration) || 0;
+
+                if (order > latest) latest = order;
+                total += duration;
+            });
+
+        totalDuration.innerText = formatTotalMinutes(total);
+        latestOrder.innerText = latest;
+    }
+
+    async function deleteClass(chapterCode, classId) {
+
+        const result = await Swal.fire({
+            title: "Delete class?",
+            text: "Video will be removed from storage",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Delete"
+        });
+
+        if (!result.isConfirmed) return;
+
+        const response = await fetch(
+            `/delete-class/${chapterCode}/${classId}`,
+            { method: "POST" }
+        );
+        if (response.ok) location.reload();
+    }
+
+    async function saveNewOrder(classIds) {
+        try {
+            const res = await fetch('/chapters/{{chapter.uniqueCode}}/classes/update-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ classIds })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Order updated'
+                }).then(() => {
+                    location.reload();
+                });
+            }
+        } catch (err) {
+            console.error('Failed to save order:', err);
+        }
+    }
+
+    window.onload = function () {
+        formatDurationChips();
+        updateSerialNumbers();
+        updateStats();
+
+        // Initialize Sortable on Grid
+        const gridEl = document.querySelector('#gridView .row');
+        if (gridEl) {
+            new Sortable(gridEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const classIds = Array.from(gridEl.querySelectorAll('.class-card-wrap')).map(el => el.id.replace('card-', ''));
+                    await saveNewOrder(classIds);
+                }
+            });
+        }
+
+        // Initialize Sortable on Table
+        const tableEl = document.querySelector('#myTable tbody');
+        if (tableEl) {
+            new Sortable(tableEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const classIds = Array.from(tableEl.querySelectorAll('tr')).map(el => el.id.replace('row-', ''));
+                    await saveNewOrder(classIds);
+                }
+            });
+        }
+    };
+</script>

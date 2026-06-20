@@ -1,0 +1,153 @@
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <a href="/teacher/courses/{{course._id}}" class="tcl-back-link mb-2 d-inline-flex">
+                <i class="fa-solid fa-arrow-left me-2"></i>{{course.name}}
+            </a>
+            <h3 class="mb-0 fw-800">{{chapter.title}}</h3>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="tcl-count">{{chapter.classes.length}} class(es)</span>
+            <a href="/teacher/chapters/add-class/{{chapter.uniqueCode}}" class="btn btn-primary fw-bold" style="border-radius:12px; padding: 10px 20px; background:linear-gradient(135deg,var(--brand),var(--brand-2)); border:none;">
+                <i class="fa-solid fa-plus me-2"></i> Add Class
+            </a>
+        </div>
+    </div>
+
+    {{#if chapter.classes.length}}
+    <div class="row g-3" id="classesContainer">
+        {{#each chapter.classes}}
+        <div class="col-md-6 col-xl-4 class-item" id="card-{{this._id}}">
+            <article class="card tcl-card h-100">
+                <div class="tcl-image">
+                    {{#if this.thumbnail}}
+                    <img src="{{resolveImage this.thumbnail 'class-images'}}" alt="{{this.title}}">
+                    {{else}}
+                    <div class="tcl-placeholder"><i class="fa-solid fa-play"></i></div>
+                    {{/if}}
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between gap-3">
+                        <h6 class="mb-2">{{this.title}}</h6>
+                        <span class="tcl-order">#{{this.order}}</span>
+                    </div>
+                    <p class="text-muted mb-2">{{this.description}}</p>
+                    <small class="text-muted">
+                        <i class="fa-regular fa-clock me-1"></i><span class="duration-value">{{this.duration}}</span>
+                    </small>
+                    <div class="mt-2">
+                        {{#if (eq this.videoSource 's3')}}
+                        <span class="badge" style="background:#ff9900;color:white;font-size:11px;padding:4px 8px;border-radius:6px;">
+                            <i class="fa-brands fa-aws me-1"></i>S3 Cloud
+                        </span>
+                        {{else}}
+                        <span class="badge" style="background:#12314c;color:white;font-size:11px;padding:4px 8px;border-radius:6px;">
+                            <i class="fa-solid fa-shield-halved me-1"></i>VdoCipher
+                        </span>
+                        {{/if}}
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <a href="/teacher/watch-class/{{../chapter.uniqueCode}}/{{this._id}}" class="btn btn-info btn-sm w-100">
+                            <i class="fa-solid fa-eye me-1"></i>Watch
+                        </a>
+                        <a href="/teacher/chapters/exercises/{{../chapter.uniqueCode}}/{{this._id}}" class="btn btn-dark btn-sm w-100">
+                            <i class="fa-solid fa-file-lines me-2"></i>Exercises
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </div>
+        {{/each}}
+    </div>
+    {{else}}
+    <div class="card tcl-empty">
+        <i class="fa-solid fa-circle-play"></i>
+        <p class="mb-0">No classes have been added to this chapter.</p>
+    </div>
+    {{/if}}
+</div>
+
+<style>
+.tcl-back-link{color:var(--muted);font-size:14px;font-weight:600}
+.tcl-back-link:hover{color:#6dbf96}
+.tcl-count{padding:8px 12px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px}
+.tcl-card{border-radius:8px;overflow:hidden}
+.tcl-image{aspect-ratio:16/9;background:var(--surface-2);overflow:hidden}
+.tcl-image img{width:100%;height:100%;object-fit:cover}
+.tcl-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px}
+.tcl-order{color:var(--muted);font-size:12px;white-space:nowrap}
+.tcl-card p{font-size:13px;min-height:40px}
+.tcl-empty{padding:56px 20px;text-align:center;color:var(--muted);border-radius:8px}
+.tcl-empty i{display:block;font-size:36px;margin-bottom:12px;opacity:.45}
+.class-item {
+    cursor: grab;
+}
+.class-item:active {
+    cursor: grabbing;
+}
+.sortable-ghost {
+    opacity: 0.4;
+    border: 2px dashed var(--brand) !important;
+}
+.sortable-chosen {
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+    function formatDuration(seconds) {
+        seconds = Number(seconds) || 0;
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+        if (minutes > 0) return `${minutes}m ${secs}s`;
+        return `${secs}s`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Format all duration values
+        document.querySelectorAll('.duration-value').forEach(el => {
+            el.textContent = formatDuration(el.textContent);
+        });
+
+        const classesEl = document.getElementById('classesContainer');
+        if (classesEl) {
+            new Sortable(classesEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    const classIds = Array.from(classesEl.querySelectorAll('.class-item')).map(el => el.id.replace('card-', ''));
+                    try {
+                        const res = await fetch('/teacher/chapters/{{chapter.uniqueCode}}/classes/update-order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ classIds })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1000,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Order updated'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to save order:', err);
+                    }
+                }
+            });
+        }
+    });
+</script>

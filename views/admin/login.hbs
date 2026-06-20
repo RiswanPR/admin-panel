@@ -1,0 +1,536 @@
+<!-- ========================================
+     ZEITNAH ADMIN — LOGIN PAGE
+     Injected into Layout.hbs <main> body
+     admins: false → no sidebar rendered
+     ======================================== -->
+
+<div class="zn-login-bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<div class="zn-login-wrapper">
+
+  <!-- ── CARD ── -->
+  <div class="zn-login-card">
+
+    <!-- brand -->
+    <div class="zn-brand">
+      <div class="zn-brand-icon">
+        <img src="/images/logo.png" alt="Zeitnah Logo"
+             onerror="this.style.display='none';document.getElementById('bfallback').style.display='flex';" />
+        <span id="bfallback" style="display:none;align-items:center;justify-content:center;width:100%;height:100%;">
+          <i class="fa-solid fa-shield-halved" style="font-size:26px;color:#27ef9f;"></i>
+        </span>
+      </div>
+      <div class="zn-brand-text">
+        <h1>ZEITNAH</h1>
+        <small>Admin Portal</small>
+      </div>
+    </div>
+
+    <!-- ─── STEP 1: Email + Password ─── -->
+    {{#unless otpPending}}
+    <div class="zn-form-section">
+      <h2 class="zn-form-title">Welcome back</h2>
+      <p class="zn-form-sub">Sign in to access the admin dashboard</p>
+
+      {{#if loginErr}}
+      <div class="zn-alert zn-alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{loginErr}}</span>
+      </div>
+      {{/if}}
+
+      <form action="/login" method="POST" id="znLoginForm" autocomplete="off" novalidate>
+
+        <div class="zn-field">
+          <label for="znEmail">Email Address</label>
+          <div class="zn-input-wrap">
+            <i class="fa-regular fa-envelope"></i>
+            <input
+              type="email"
+              id="znEmail"
+              name="Email"
+              placeholder="admin@zeitnah.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="zn-field">
+          <label for="znPassword">Password</label>
+          <div class="zn-input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input
+              type="password"
+              id="znPassword"
+              name="Password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="zn-eye" onclick="znTogglePwd()" aria-label="Toggle password">
+              <i class="fa-regular fa-eye" id="znEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="zn-btn-primary" id="znLoginBtn">
+          <span id="znBtnLabel">Continue</span>
+          <i class="fa-solid fa-arrow-right" id="znBtnIcon"></i>
+        </button>
+
+      </form>
+    </div>
+    {{/unless}}
+
+    <!-- ─── STEP 2: OTP Verification ─── -->
+    {{#if otpPending}}
+    <div class="zn-form-section">
+      <div class="zn-otp-icon">
+        <i class="fa-solid fa-envelope-open-text"></i>
+      </div>
+      <h2 class="zn-form-title">Check your email</h2>
+      <p class="zn-form-sub">
+        We sent a 6-digit code to<br />
+        <strong style="color:#0DB8DE;">{{pendingEmail}}</strong>
+      </p>
+
+      {{#if otpErr}}
+      <div class="zn-alert zn-alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{otpErr}}</span>
+      </div>
+      {{/if}}
+
+      {{#if otpInfo}}
+      <div class="zn-alert zn-alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>{{otpInfo}}</span>
+      </div>
+      {{/if}}
+
+      <form action="/login/verify-otp" method="POST" id="znOtpForm" autocomplete="off">
+
+        <div class="zn-field">
+          <label for="znOtpInput">6-Digit OTP</label>
+          <div class="zn-input-wrap">
+            <i class="fa-solid fa-key"></i>
+            <input
+              type="text"
+              id="znOtpInput"
+              name="otp"
+              placeholder="000000"
+              maxlength="6"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              autocomplete="one-time-code"
+              class="zn-otp-input"
+              required
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="zn-btn-primary">
+          <span>Verify &amp; Sign In</span>
+          <i class="fa-solid fa-shield-check"></i>
+        </button>
+
+      </form>
+
+      <div class="zn-otp-actions">
+        <form action="/login/resend-otp" method="POST" style="display:inline;">
+          <button type="submit" class="zn-link-btn">
+            <i class="fa-solid fa-rotate-right"></i> Resend OTP
+          </button>
+        </form>
+        <span class="zn-sep">·</span>
+        <a href="/login" class="zn-link-btn">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- footer -->
+    <p class="zn-login-footer">
+      <i class="fa-solid fa-shield-halved"></i>
+      Secured &amp; encrypted &nbsp;·&nbsp; Zeitnah LMS
+    </p>
+
+  </div><!-- /card -->
+
+</div><!-- /wrapper -->
+
+<style>
+/* ─── reset body for login ─────────────────── */
+body {
+  background: #080c14 !important;
+  overflow-x: hidden;
+}
+
+/* ─── BG blobs ─────────────────────────────── */
+.zn-login-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 20% 20%, #0d2137 0%, #080c14 60%);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: znFloat 8s ease-in-out infinite;
+}
+
+.blob-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #1a6b9a, transparent);
+  top: -100px; left: -100px;
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, #0d4a6e, transparent);
+  bottom: -80px; right: -60px;
+  animation-delay: 3s;
+}
+
+.blob-3 {
+  width: 250px; height: 250px;
+  background: radial-gradient(circle, rgba(39,239,159,0.35), transparent);
+  top: 50%; left: 60%;
+  animation-delay: 5s;
+}
+
+@keyframes znFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-30px) scale(1.05); }
+}
+
+/* ─── WRAPPER ──────────────────────────────── */
+.zn-login-wrapper {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  /* override layout's margin-left (sidebar) */
+  margin-left: 0 !important;
+}
+
+/* ─── CARD ─────────────────────────────────── */
+.zn-login-card {
+  width: 100%;
+  max-width: 456px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 28px;
+  padding: 44px 40px 36px;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  animation: znCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes znCardIn {
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── BRAND ─────────────────────────────────── */
+.zn-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.zn-brand-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #12496b, #1a6b9a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 12px 30px rgba(13,184,222,0.25);
+}
+
+.zn-brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+}
+
+.zn-brand-text h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  background: linear-gradient(135deg, #ffffff, #a0c8e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.zn-brand-text small {
+  font-size: 12px;
+  color: rgba(255,255,255,0.42);
+  font-weight: 500;
+}
+
+/* ─── FORM SECTION ──────────────────────────── */
+.zn-form-section { animation: znFadeUp 0.35s ease both; }
+
+@keyframes znFadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.zn-form-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 6px;
+}
+
+.zn-form-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.42);
+  margin: 0 0 26px;
+  line-height: 1.6;
+}
+
+/* ─── ALERTS ─────────────────────────────────── */
+.zn-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 22px;
+}
+
+.zn-alert-error {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+}
+
+.zn-alert-success {
+  background: rgba(39,239,159,0.1);
+  border: 1px solid rgba(39,239,159,0.25);
+  color: #6ee7b7;
+}
+
+/* ─── FIELDS ─────────────────────────────────── */
+.zn-field { margin-bottom: 20px; }
+
+.zn-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 8px;
+}
+
+.zn-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.zn-input-wrap > i:first-child {
+  position: absolute;
+  left: 16px;
+  color: rgba(255,255,255,0.28);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.zn-input-wrap input {
+  width: 100%;
+  height: 52px;
+  padding: 0 48px 0 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: rgba(255,255,255,0.05) !important;
+  color: #fff !important;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  box-shadow: none !important;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.zn-input-wrap input::placeholder { color: rgba(255,255,255,0.2); }
+
+.zn-input-wrap input:focus {
+  border-color: rgba(13,184,222,0.55) !important;
+  background: rgba(13,184,222,0.07) !important;
+  box-shadow: 0 0 0 4px rgba(13,184,222,0.12) !important;
+}
+
+.zn-eye {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.zn-eye:hover { color: rgba(255,255,255,0.7); }
+
+/* OTP field */
+.zn-otp-input {
+  font-size: 24px !important;
+  letter-spacing: 10px !important;
+  font-weight: 700 !important;
+  text-align: center;
+  padding: 0 16px !important;
+}
+
+/* ─── PRIMARY BUTTON ─────────────────────────── */
+.zn-btn-primary {
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #0d8fa8, #0DB8DE);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 12px 30px rgba(13,184,222,0.3);
+}
+
+.zn-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 35px rgba(13,184,222,0.42);
+}
+
+.zn-btn-primary:active { transform: scale(0.98); }
+
+/* ─── OTP ACTIONS ────────────────────────────── */
+.zn-otp-icon {
+  font-size: 38px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #27ef9f, #0DB8DE);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.zn-otp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.zn-link-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.38);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+
+.zn-link-btn:hover { color: #0DB8DE; }
+
+.zn-sep { color: rgba(255,255,255,0.18); }
+
+/* ─── FOOTER ─────────────────────────────────── */
+.zn-login-footer {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.18);
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+/* override layout main margin */
+main { margin-left: 0 !important; padding-top: 0 !important; }
+</style>
+
+<script>
+function znTogglePwd() {
+  const input = document.getElementById('znPassword');
+  const icon  = document.getElementById('znEyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa-regular fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa-regular fa-eye';
+  }
+}
+
+// Loading state on submit
+const znLoginForm = document.getElementById('znLoginForm');
+if (znLoginForm) {
+  znLoginForm.addEventListener('submit', () => {
+    const btn   = document.getElementById('znLoginBtn');
+    const label = document.getElementById('znBtnLabel');
+    const icon  = document.getElementById('znBtnIcon');
+    if (btn) {
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.7';
+      if (label) label.textContent = 'Verifying...';
+      if (icon)  icon.className = 'fa-solid fa-circle-notch fa-spin';
+    }
+  });
+}
+
+// OTP auto-format + auto-submit
+const znOtpInput = document.getElementById('znOtpInput');
+if (znOtpInput) {
+  znOtpInput.focus();
+  znOtpInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    if (e.target.value.length === 6) {
+      setTimeout(() => document.getElementById('znOtpForm')?.submit(), 200);
+    }
+  });
+}
+</script>

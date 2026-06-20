@@ -1,0 +1,406 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <small class="text-light opacity-75 d-block mb-1">
+                    Teacher Portal
+                </small>
+                <h2 class="text-white fw-bold m-0">
+                    My Students
+                </h2>
+                <span class="hero-badge mt-2">
+                    Learner Progress & Enrolment
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD STATS -->
+    <div class="row g-4 mb-4 justify-content-center">
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Students</small>
+                    <h2>{{students.length}}</h2>
+                </div>
+                <i class="fa-solid fa-users stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Active Students</small>
+                    <h2 id="activeCount">0</h2>
+                </div>
+                <i class="fa-solid fa-circle-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Blocked/Inactive</small>
+                    <h2 id="blockedCount">0</h2>
+                </div>
+                <i class="fa-solid fa-ban stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH + VIEW TOGGLE -->
+    <div class="toolbar-card mb-4">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="myInput" placeholder="Search student name or course..." onkeyup="searchStudent()">
+        </div>
+
+        <div class="view-toggle">
+            <button id="gridBtn" class="active" onclick="showGrid()">
+                <i class="fa-solid fa-table-cells-large"></i>
+            </button>
+            <button id="tableBtn" onclick="showTable()">
+                <i class="fa-solid fa-table-list"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- GRID VIEW -->
+    <div id="gridView">
+        <div class="row g-4">
+            {{#each students}}
+            <div class="col-xl-3 col-lg-4 col-md-6 student-card-wrap" data-name="{{this.name}} {{this.Name}} {{this.displayCourse}}">
+                <div class="student-card">
+                    <div class="student-top">
+                        <img src="/student-images/{{this._id}}.jpg" class="student-avatar" onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+
+                        <span class="status-pill {{#if this.isActive}}active-pill{{else}}blocked-pill{{/if}}">
+                            {{#if this.isActive}}Active{{else}}Inactive{{/if}}
+                        </span>
+                    </div>
+
+                    <div class="student-body text-center">
+                        <h5 class="fw-bold mb-1 text-truncate">{{#if this.Name}}{{this.Name}}{{else}}{{this.name}}{{/if}}</h5>
+                        <small class="text-muted d-block mb-3 text-truncate">{{this.email}}</small>
+
+                        <div class="course-chip w-100 mb-3 text-truncate" title="{{this.displayCourse}}">
+                            {{this.displayCourse}}
+                        </div>
+
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-muted" style="font-size: 0.85em;">Course Progress</span>
+                            <strong style="font-size: 0.9em;">{{this.displayProgress}}%</strong>
+                        </div>
+
+                        <div class="progress progress-custom mb-3">
+                            <div class="progress-bar" style="width:{{this.displayProgress}}%;background:linear-gradient(90deg,var(--teacher-accent-dark),var(--teacher-accent));"></div>
+                        </div>
+
+                        <small class="text-muted d-block mt-3 border-top pt-3">
+                            Last seen: <strong>{{this.lastSeenDisplay}}</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="tableView" style="display:none;">
+        <div class="table-responsive">
+            <table class="table premium-table align-middle" id="myTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Profile</th>
+                        <th>Student Name</th>
+                        <th>Enrolled Course</th>
+                        <th>Progress</th>
+                        <th>Last Active</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each students}}
+                    <tr>
+                        <td class="si-no"></td>
+                        <td>
+                            <img src="/student-images/{{this._id}}.jpg" class="table-avatar" onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+                        </td>
+                        <td class="student-name">
+                            <strong>{{#if this.Name}}{{this.Name}}{{else}}{{this.name}}{{/if}}</strong>
+                            <small class="d-block text-muted">{{this.email}}</small>
+                        </td>
+                        <td>
+                            <span class="course-chip">{{this.displayCourse}}</span>
+                        </td>
+                        <td style="min-width:180px;">
+                            <div class="mb-1">
+                                <strong style="font-size: 0.9em;">{{this.displayProgress}}%</strong>
+                            </div>
+                            <div class="progress mt-1" style="height:6px;border-radius:30px;">
+                                <div class="progress-bar" style="width:{{this.displayProgress}}%;background:linear-gradient(90deg,var(--teacher-accent-dark),var(--teacher-accent));"></div>
+                            </div>
+                        </td>
+                        <td>{{this.lastSeenDisplay}}</td>
+                        <td class="student-status-cell">
+                            <span class="status-pill {{#if this.isActive}}active-pill{{else}}blocked-pill{{/if}}">
+                                {{#if this.isActive}}Active{{else}}Inactive{{/if}}
+                            </span>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{#unless students.length}}
+    <div class="empty-box text-center">
+        <i class="fa-solid fa-users fa-3x text-muted mb-3"></i>
+        <h4>No Students Found</h4>
+        <p class="text-muted">You do not have any students enrolled in your assigned courses yet.</p>
+    </div>
+    {{/unless}}
+
+</div>
+
+<style>
+/* Same CSS structure as admin students but using teacher accent colors */
+.hero-card{
+    background:linear-gradient(135deg,var(--teacher-accent-dark),#1d4e89);
+    border-radius:28px;
+    padding:32px;
+    box-shadow:0 18px 40px rgba(18,49,76,.22);
+}
+.hero-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:rgba(255,255,255,.16);
+    color:white;
+    font-size:13px;
+    font-weight:600;
+}
+
+.stat-card{
+    border-radius:22px;
+    padding:28px;
+    color:white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+.stat-dark{background:linear-gradient(135deg,var(--teacher-accent-dark),#0b2237);}
+.stat-green{background:linear-gradient(135deg,var(--teacher-accent),#70bf8e); color:#12314c;}
+.stat-red{background:linear-gradient(135deg,#ff8a8a,#dc3545);}
+.stat-icon{font-size:34px; opacity: 0.8;}
+
+.toolbar-card{
+    background:white;
+    padding:18px;
+    border-radius:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
+.search-box{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#f7f9fc;
+    padding:14px 18px;
+    border-radius:14px;
+}
+.search-box input{
+    border:none;
+    background:none;
+    width:100%;
+    outline:none;
+}
+
+.view-toggle{
+    display:flex;
+    gap:10px;
+}
+.view-toggle button{
+    width:50px;
+    height:50px;
+    border:none;
+    border-radius:12px;
+    background:#edf2f7;
+}
+.view-toggle button.active{
+    background:var(--teacher-accent-dark);
+    color:white;
+}
+
+.student-card{
+    background:white;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    transition:.25s;
+    height:100%;
+}
+.student-card:hover{
+    transform:translateY(-6px);
+}
+.student-top{
+    padding:25px;
+    text-align:center;
+    background:#f8fafc;
+    position: relative;
+}
+.student-avatar{
+    width:95px;
+    height:95px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:14px;
+    border:4px solid white;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+.student-body{
+    padding:22px;
+}
+
+.status-pill{
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+.active-pill{
+    background:#dff7e7;
+    color:#198754;
+}
+.blocked-pill{
+    background:#ffe3e3;
+    color:#dc3545;
+}
+
+.course-chip{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:12px;
+    background:rgba(159,213,178,.15);
+    color:var(--teacher-accent-dark);
+    font-weight:600;
+    font-size:13px;
+}
+
+.progress-custom{
+    height:8px;
+    border-radius:30px;
+    background:#edf2f7;
+}
+
+.premium-table{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+}
+.premium-table thead{
+    background:var(--teacher-accent-dark);
+    color:white;
+}
+.premium-table th,
+.premium-table td{
+    padding:18px;
+}
+.table-avatar{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.empty-box{
+    background:white;
+    padding:70px 20px;
+    border-radius:24px;
+}
+
+@media(max-width:768px){
+    .hero-card,
+    .toolbar-card{
+        padding:20px;
+    }
+    .toolbar-card{
+        flex-direction:column;
+    }
+}
+</style>
+
+<script>
+function updateSerialNumbers(){
+    let rows=document.querySelectorAll("#myTable tbody tr");
+    let count=1;
+
+    rows.forEach(row=>{
+        if(row.style.display!=="none"){
+            row.querySelector(".si-no").innerText=count++;
+        }
+    });
+}
+
+function searchStudent(){
+    let input=document.getElementById("myInput").value.toUpperCase();
+
+    document.querySelectorAll(".student-card-wrap").forEach(card=>{
+        let name=card.dataset.name.toUpperCase();
+        card.style.display=name.includes(input)?"":"none";
+    });
+
+    document.querySelectorAll("#myTable tbody tr").forEach(row=>{
+        let text=row.innerText.toUpperCase();
+        row.style.display=text.includes(input)?"":"none";
+    });
+
+    updateSerialNumbers();
+}
+
+function showGrid(){
+    document.getElementById("gridView").style.display="block";
+    document.getElementById("tableView").style.display="none";
+
+    document.getElementById("gridBtn").classList.add("active");
+    document.getElementById("tableBtn").classList.remove("active");
+}
+
+function showTable(){
+    document.getElementById("gridView").style.display="none";
+    document.getElementById("tableView").style.display="block";
+
+    document.getElementById("tableBtn").classList.add("active");
+    document.getElementById("gridBtn").classList.remove("active");
+}
+
+function updateDashboardStats(){
+    let active=0;
+    let blocked=0;
+
+    // We can count from the grid view pills
+    document.querySelectorAll("#gridView .status-pill").forEach(pill=>{
+        if(pill.innerText.includes("Active")) active++;
+        else blocked++;
+    });
+
+    document.getElementById("activeCount").innerText=active;
+    document.getElementById("blockedCount").innerText=blocked;
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    updateSerialNumbers();
+    updateDashboardStats();
+});
+</script>

@@ -1,0 +1,687 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO -->
+    <div class="hero-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <small class="text-light opacity-75 d-block mb-1">
+                    Chapter Classes
+                </small>
+
+                <h2 class="text-white fw-bold m-0">
+                    Add New Class
+                </h2>
+
+                <span class="hero-badge mt-2">
+                    {{#if (eq courseType 'online')}}Amazon S3 Video Upload{{else}}VdoCipher Secure Video Upload{{/if}}
+                </span>
+            </div>
+
+            <a href="javascript:history.back()" class="btn btn-light px-4 py-2">
+                <i class="fa-solid fa-arrow-left me-2"></i>
+                Back
+            </a>
+
+        </div>
+    </div>
+
+
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+
+            <div class="upload-card">
+
+                <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                <form id="classForm" action="/add-class" method="POST" enctype="multipart/form-data">
+
+                    <input type="hidden" name="chapterId" value="{{chapterCode}}">
+                    <input type="hidden" name="courseType" value="{{courseType}}">
+
+                    <div class="row g-5">
+
+                        <!-- LEFT -->
+                        <div class="col-lg-8">
+
+                            <div class="row g-4">
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold mb-2">
+                                        Class Title
+                                    </label>
+
+                                    <input type="text" name="title" id="title" class="form-control custom-input"
+                                        placeholder="Enter class title..." required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold mb-2">
+                                        Duration
+                                    </label>
+
+                                    <input type="text" class="form-control custom-input"
+                                        value="Auto-detected upon upload" readonly>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold mb-2">
+                                        Chapter
+                                    </label>
+
+                                    <input type="text" class="form-control custom-input"
+                                        value="{{chapterCode}}" readonly>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold mb-2">
+                                        Description
+                                    </label>
+
+                                    <textarea name="description" id="description" rows="4"
+                                        class="form-control custom-input" placeholder="Enter class description..."
+                                        required></textarea>
+                                </div>
+
+                            </div>
+
+
+                            <!-- UPLOADS -->
+                            <div class="row g-4 mt-2">
+
+                                <!-- THUMBNAIL -->
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold mb-3">
+                                        Thumbnail *
+                                    </label>
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div id="addClassPreview" style="width:100%; max-width:200px; aspect-ratio:16/9; background:var(--surface-2); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--muted); border: 2px dashed var(--border); overflow:hidden;">
+                                            <i class="fa-solid fa-image fa-2x"></i>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="coverImageUrl" id="addClassCoverUrl">
+                                    <button type="button" class="btn btn-outline-primary mt-3 w-100" onclick="openCoverSelector('addClassCoverUrl', 'addClassPreview')">
+                                        <i class="fa-solid fa-images me-2"></i>Select Cover
+                                    </button>
+
+                                </div>
+
+
+                                <!-- VIDEO -->
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold mb-3">
+                                        Class Video *
+                                    </label>
+
+                                    <label class="upload-area">
+
+                                        <div id="videoPlaceholder" class="upload-placeholder">
+                                            <i class="fa-solid fa-video"></i>
+                                            <h5>Upload Class Video</h5>
+                                            <small>MP4 / MOV / MKV</small>
+                                        </div>
+
+                                        <div id="videoPreview" class="file-preview d-none">
+                                            <div class="file-icon-big">
+                                                <i class="fa-solid fa-file-video"></i>
+                                            </div>
+
+                                            <h6 id="videoName" class="fw-bold mt-3"></h6>
+
+                                            <p id="videoSize" class="text-muted"></p>
+                                        </div>
+
+                                        <input type="file" name="video" id="videoInput" hidden
+                                            accept=".mp4,.mov">
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- RIGHT -->
+                        <div class="col-lg-4">
+
+                            <div class="summary-card sticky-top">
+
+                                <h5 class="fw-bold mb-4">
+                                    Class Summary
+                                </h5>
+
+                                <div class="summary-box">
+
+                                    <p class="text-muted mb-2">Title</p>
+                                    <h5 id="summaryTitle" class="fw-bold mb-4">
+                                        -
+                                    </h5>
+
+                                    <p class="text-muted mb-2">Duration</p>
+                                    <h6 id="summaryDuration" class="fw-bold mb-4">
+                                        -
+                                    </h6>
+
+                                    <p class="text-muted mb-2">Thumbnail</p>
+                                    <h6 id="thumbStatus" class="mb-4 text-warning">
+                                        Waiting...
+                                    </h6>
+
+                                    <p class="text-muted mb-2">Video</p>
+                                    <h6 id="videoStatus" class="mb-4 text-warning">
+                                        Waiting...
+                                    </h6>
+
+                                    <hr>
+
+                                    <div id="uploadStatus" class="fw-bold text-primary">
+                                        Ready to upload
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="text-center mt-5">
+                        <button type="submit" id="submitBtn" class="btn btn-success px-5 py-3" disabled>
+                            <i class="fa-solid fa-upload me-2"></i>
+                            Upload Class
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+    <div id="uploadOverlay">
+        <div class="loader-card">
+
+            <div class="loader-circle mb-4"></div>
+
+            <h3 class="fw-bold mb-2">
+                Uploading Class
+            </h3>
+
+            <p id="loaderStage" class="mb-0 text-white-50">
+                Preparing upload...
+            </p>
+
+            <div class="progress-shell">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+
+            <div id="progressText" class="progress-text">
+                0%
+            </div>
+
+            <div class="loader-note">
+                Large videos may take a few minutes.
+                Please keep this page open.
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .hero-card {
+        background: linear-gradient(135deg, #12314c, #1d4e89);
+        border-radius: 28px;
+        padding: 32px;
+        box-shadow: 0 18px 40px rgba(18, 49, 76, .22);
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, .16);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .upload-card {
+        background: var(--surface);
+        border-radius: 28px;
+        padding: 35px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, .08);
+        border: 1px solid rgba(159, 213, 178, .12);
+    }
+
+    .custom-input {
+        min-height: 56px;
+        border-radius: 14px;
+        padding: 14px 18px;
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+
+    .custom-input::placeholder {
+        color: var(--muted);
+        opacity: 1;
+    }
+
+    .upload-area {
+        width: 100%;
+        aspect-ratio: 1/1;
+        border: 2px dashed rgba(159, 213, 178, .5);
+        border-radius: 24px;
+        background: var(--surface);
+        overflow: hidden;
+        cursor: pointer;
+        transition: background .2s, border-color .2s, box-shadow .2s;
+    }
+
+    .upload-area:hover {
+        background: rgba(159, 213, 178, .05);
+        border-color: rgba(159, 213, 178, .8);
+        box-shadow: 0 15px 30px rgba(18, 49, 76, .08);
+    }
+
+    .upload-placeholder,
+    .file-preview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 30px;
+        color: var(--text);
+    }
+
+    .upload-placeholder i {
+        font-size: 50px;
+        margin-bottom: 15px;
+        color: var(--brand);
+    }
+
+    .upload-placeholder h5,
+    .upload-placeholder small,
+    .file-preview h6,
+    .file-preview p {
+        color: var(--text);
+    }
+
+    .upload-placeholder small,
+    .file-preview p {
+        color: var(--muted);
+    }
+
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .file-icon-big {
+        width: 90px;
+        height: 90px;
+        border-radius: 22px;
+        background: var(--brand);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+    }
+
+    .summary-card {
+        background: var(--surface-2);
+        border-radius: 24px;
+        padding: 28px;
+        top: 20px;
+        border: 1px solid var(--border);
+    }
+
+    .summary-box {
+        background: var(--surface);
+        border-radius: 18px;
+        padding: 22px;
+        border: 1px solid rgba(159, 213, 178, .12);
+    }
+
+    html[data-theme="dark"] .hero-card {
+        box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
+    }
+
+    html[data-theme="dark"] .hero-badge {
+        background: rgba(255, 255, 255, .1);
+    }
+
+    html[data-theme="dark"] .upload-card {
+        box-shadow: 0 12px 35px rgba(0, 0, 0, .35);
+    }
+
+    html[data-theme="dark"] .upload-area {
+        border-color: rgba(159, 213, 178, .3);
+        background: rgba(255, 255, 255, .03);
+    }
+
+    html[data-theme="dark"] .summary-card,
+    html[data-theme="dark"] .summary-box {
+        border-color: rgba(255, 255, 255, .08);
+    }
+</style>
+<style>
+    #uploadOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 18, 32, .82);
+        backdrop-filter: blur(8px);
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .loader-card {
+        width: 100%;
+        max-width: 520px;
+        background: rgba(23, 37, 54, .95);
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 28px;
+        padding: 40px;
+        text-align: center;
+        color: var(--text);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    }
+
+    .loader-circle {
+        width: 80px;
+        height: 80px;
+        margin: auto;
+        border-radius: 50%;
+        border: 5px solid rgba(255, 255, 255, .18);
+        border-top: 5px solid var(--brand);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .progress-shell {
+        width: 100%;
+        height: 12px;
+        background: rgba(255, 255, 255, .1);
+        border-radius: 30px;
+        overflow: hidden;
+        margin-top: 25px;
+    }
+
+    .progress-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: 30px;
+        background: linear-gradient(90deg, var(--brand), var(--brand-2));
+        transition: width .35s;
+    }
+
+    .progress-text {
+        margin-top: 14px;
+        font-size: 15px;
+        color: var(--text);
+        opacity: .9;
+    }
+
+    .loader-note {
+        margin-top: 14px;
+        font-size: 14px;
+        color: var(--muted);
+        opacity: .75;
+    }
+</style>
+<script>
+    const classForm = document.getElementById("classForm");
+    const videoInput = document.getElementById("videoInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const errorMsg = document.getElementById("errorMsg");
+
+    const uploadOverlay = document.getElementById("uploadOverlay");
+    const loaderStage = document.getElementById("loaderStage");
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
+
+    const title = document.getElementById("title");
+    const summaryTitle = document.getElementById("summaryTitle");
+    const summaryDuration = document.getElementById("summaryDuration");
+    const thumbStatus = document.getElementById("thumbStatus");
+    const videoPlaceholder = document.getElementById("videoPlaceholder");
+    const videoPreview = document.getElementById("videoPreview");
+    const videoName = document.getElementById("videoName");
+    const videoSize = document.getElementById("videoSize");
+    const videoStatus = document.getElementById("videoStatus");
+    const uploadStatus = document.getElementById("uploadStatus");
+
+    const courseType = '{{courseType}}';
+    let videoReady = false;
+
+    function showError(msg) {
+        errorMsg.classList.remove("d-none");
+        errorMsg.innerText = msg;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearError() {
+        errorMsg.classList.add("d-none");
+        errorMsg.innerText = "";
+    }
+
+    function checkReady() {
+        submitBtn.disabled = !videoReady;
+    }
+
+    function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function formatTime(seconds) {
+        if (seconds < 60) return Math.ceil(seconds) + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm ' + Math.ceil(seconds % 60) + 's';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    // title summary
+    title.addEventListener("input", () => {
+        summaryTitle.innerText = title.value || "-";
+    });
+
+    // video file selection
+    videoInput.addEventListener("change", (e) => {
+        clearError();
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024 * 1024) {
+            videoReady = false;
+            summaryDuration.innerText = "-";
+            checkReady();
+            showError("Video max 5GB");
+            videoInput.value = "";
+            return;
+        }
+
+        videoPlaceholder.classList.add("d-none");
+        videoPreview.classList.remove("d-none");
+        videoName.innerText = file.name;
+        videoSize.innerText = formatBytes(file.size);
+        videoStatus.className = "text-success";
+        videoStatus.innerText = "Ready";
+        videoReady = true;
+        summaryDuration.innerText = "Detecting...";
+        checkReady();
+
+        const previewVideo = document.createElement("video");
+        previewVideo.preload = "metadata";
+        previewVideo.src = URL.createObjectURL(file);
+        previewVideo.addEventListener("loadedmetadata", () => {
+            const seconds = Math.ceil(previewVideo.duration);
+            summaryDuration.innerText = `${seconds}s`;
+            URL.revokeObjectURL(previewVideo.src);
+        });
+        previewVideo.addEventListener("error", () => {
+            summaryDuration.innerText = "Unable to detect";
+            URL.revokeObjectURL(previewVideo.src);
+        });
+    });
+
+    // cover selected callback
+    window.onCoverSelected = function (url, targetId) {
+        if (targetId === "addClassCoverUrl") {
+            const ts = document.getElementById("thumbStatus");
+            if (ts) {
+                ts.className = "text-success";
+                ts.innerText = "Ready";
+            }
+        }
+    };
+
+    // ═══════════════════════════════════════
+    // REAL UPLOAD via XHR
+    // ═══════════════════════════════════════
+    classForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const coverUrl = document.getElementById("addClassCoverUrl").value;
+        if (!coverUrl) {
+            showError("Please select a class cover image");
+            return;
+        }
+
+        if (!videoInput.files[0]) {
+            showError("Please select a video file");
+            return;
+        }
+
+        clearError();
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+        uploadOverlay.style.display = "flex";
+        loaderStage.innerText = "Preparing upload...";
+        progressFill.style.width = "0%";
+        progressText.innerText = "0%";
+        uploadStatus.innerText = "Uploading...";
+
+        const formData = new FormData(classForm);
+        const xhr = new XMLHttpRequest();
+        let uploadStartTime = Date.now();
+
+        // ── REAL UPLOAD PROGRESS (browser → server) ──
+        xhr.upload.addEventListener("progress", (ev) => {
+            if (!ev.lengthComputable) return;
+
+            const pct = (ev.loaded / ev.total) * 85; // 0–85% = upload phase
+            const elapsed = (Date.now() - uploadStartTime) / 1000;
+            const speed = ev.loaded / elapsed;
+            const remaining = (ev.total - ev.loaded) / speed;
+
+            progressFill.style.width = pct.toFixed(1) + "%";
+            progressText.innerText = Math.floor(pct) + "%";
+
+            if (pct < 5) {
+                loaderStage.innerText = "Starting upload...";
+            } else if (pct < 40) {
+                loaderStage.innerText = `Uploading video — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)}  ·  ${formatBytes(speed)}/s`;
+            } else if (pct < 80) {
+                loaderStage.innerText = `Uploading video — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)}  ·  ~${formatTime(remaining)} left`;
+            } else {
+                loaderStage.innerText = "Almost done uploading...";
+            }
+        });
+
+        // ── UPLOAD COMPLETE → Server processing phase ──
+        xhr.upload.addEventListener("load", () => {
+            progressFill.style.width = "85%";
+            progressText.innerText = "85%";
+            const dest = courseType === 'online' ? 'Amazon S3' : 'VdoCipher';
+            loaderStage.innerText = `Upload complete · Server is processing & uploading to ${dest}...`;
+
+            // Slow tick from 85% → 95% while server processes
+            let serverPct = 85;
+            window._serverTimer = setInterval(() => {
+                serverPct += Math.random() * 1.5;
+                if (serverPct > 95) serverPct = 95;
+                progressFill.style.width = serverPct.toFixed(1) + "%";
+                progressText.innerText = Math.floor(serverPct) + "%";
+            }, 1200);
+        });
+
+        // ── SERVER RESPONSE ──
+        xhr.addEventListener("load", () => {
+            clearInterval(window._serverTimer);
+
+            let data;
+            try {
+                data = JSON.parse(xhr.responseText);
+            } catch {
+                data = null;
+            }
+
+            if (xhr.status >= 200 && xhr.status < 300 && data?.success) {
+                progressFill.style.width = "100%";
+                progressText.innerText = "100%";
+                loaderStage.innerText = "✅ Class uploaded successfully!";
+                progressFill.style.background = "linear-gradient(90deg, #34d399, #10b981)";
+
+                setTimeout(() => {
+                    window.location.href = data.redirect || '/chapters';
+                }, 800);
+            } else {
+                uploadOverlay.style.display = "none";
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
+                showError(data?.error || 'Upload failed. Please try again.');
+            }
+        });
+
+        // ── NETWORK ERROR ──
+        xhr.addEventListener("error", () => {
+            clearInterval(window._serverTimer);
+            uploadOverlay.style.display = "none";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
+            showError("Network error. Please check your connection and try again.");
+        });
+
+        // ── ABORT ──
+        xhr.addEventListener("abort", () => {
+            clearInterval(window._serverTimer);
+            uploadOverlay.style.display = "none";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
+        });
+
+        xhr.open("POST", classForm.action);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send(formData);
+    });
+</script>
+
+{{> cover-selector-modal}}

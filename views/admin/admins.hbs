@@ -1,0 +1,441 @@
+<div class="container-fluid">
+
+  <!-- PAGE HEADER -->
+  <div class="admins-header">
+    <div>
+      <h2 class="admins-title">
+        <i class="fa-solid fa-user-shield me-2"></i> Admin Management
+      </h2>
+      <p class="admins-sub">Only the superuser can view and manage admin accounts</p>
+    </div>
+    <a href="/superuser/add-admin" class="btn-add-admin">
+      <i class="fa-solid fa-user-plus"></i>
+      <span>Add Admin</span>
+    </a>
+  </div>
+
+  <!-- STATS STRIP -->
+  <div class="admins-stats">
+    <div class="astat-box">
+      <i class="fa-solid fa-users"></i>
+      <div>
+        <strong>{{adminList.length}}</strong>
+        <small>Total Admins</small>
+      </div>
+    </div>
+    <div class="astat-box">
+      <i class="fa-solid fa-crown"></i>
+      <div>
+        <strong>1</strong>
+        <small>Superuser</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMINS TABLE -->
+  <div class="admins-card">
+
+    {{#if adminList.length}}
+
+      <table class="admins-table" id="adminsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Admin</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each adminList}}
+          <tr id="admin-row-{{this._id}}">
+            <td class="row-num">{{inc @index}}</td>
+
+            <td>
+              <div class="admin-identity">
+                <div class="admin-avatar">
+                  {{#if this.Name}}{{this.Name.[0]}}{{else}}A{{/if}}
+                </div>
+                <div>
+                  <strong>{{#if this.Name}}{{this.Name}}{{else}}—{{/if}}</strong>
+                  <small>Admin</small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="email-cell">
+                <i class="fa-regular fa-envelope"></i>
+                {{this.Email}}
+              </span>
+            </td>
+
+            <td>
+              <span class="phone-cell">
+                {{#if this.Phone_Number}}
+                  <i class="fa-solid fa-phone"></i>
+                  {{this.Phone_Number}}
+                {{else}}
+                  <span class="text-muted">—</span>
+                {{/if}}
+              </span>
+            </td>
+
+            <td>
+              <span class="role-badge">
+                <i class="fa-solid fa-user-tie"></i>
+                Admin
+              </span>
+            </td>
+
+            <td>
+              <span class="date-cell">
+                {{#if this.createdAt}}
+                  {{formatDateTime this.createdAt}}
+                {{else}}
+                  —
+                {{/if}}
+              </span>
+            </td>
+
+            <td>
+              <button
+                class="btn-delete-admin"
+                onclick="confirmDeleteAdmin('{{this._id}}', '{{this.Name}}')"
+                title="Delete admin"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+    {{else}}
+
+      <div class="empty-admins">
+        <i class="fa-solid fa-users-slash"></i>
+        <h4>No admins yet</h4>
+        <p>Use the "Add Admin" button to create the first admin account.</p>
+        <a href="/superuser/add-admin" class="btn-add-admin">
+          <i class="fa-solid fa-user-plus"></i> Add Admin
+        </a>
+      </div>
+
+    {{/if}}
+
+  </div><!-- /card -->
+
+</div>
+
+
+<style>
+/* ── PAGE HEADER ──────────────────────────────── */
+.admins-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.admins-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.admins-sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── ADD BUTTON ───────────────────────────────── */
+.btn-add-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-add-admin:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+/* ── STATS STRIP ──────────────────────────────── */
+.admins-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.astat-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 24px;
+  box-shadow: var(--shadow);
+  min-width: 160px;
+}
+
+.astat-box i {
+  font-size: 22px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.astat-box strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.astat-box small {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ── TABLE CARD ───────────────────────────────── */
+.admins-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ── TABLE ────────────────────────────────────── */
+.admins-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admins-table thead tr {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.admins-table th {
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admins-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.admins-table tbody tr:last-child td { border-bottom: none; }
+
+.admins-table tbody tr {
+  transition: background 0.15s;
+}
+
+.admins-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.row-num {
+  color: var(--muted);
+  font-weight: 600;
+  width: 40px;
+}
+
+/* Admin identity cell */
+.admin-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.admin-identity strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.admin-identity small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Cells */
+.email-cell,
+.phone-cell,
+.date-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+}
+
+.email-cell i, .phone-cell i { color: var(--muted); font-size: 13px; }
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(59,130,246,0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59,130,246,0.2);
+}
+
+/* Delete button */
+.btn-delete-admin {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(239,68,68,0.08);
+  color: #f87171;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-delete-admin:hover {
+  background: rgba(239,68,68,0.18);
+  transform: scale(1.08);
+}
+
+/* ── EMPTY STATE ──────────────────────────────── */
+.empty-admins {
+  text-align: center;
+  padding: 70px 30px;
+}
+
+.empty-admins i {
+  font-size: 52px;
+  margin-bottom: 16px;
+  color: var(--muted);
+}
+
+.empty-admins h4 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.empty-admins p {
+  color: var(--muted);
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+
+/* ── RESPONSIVE ───────────────────────────────── */
+@media (max-width: 768px) {
+  .admins-table th:nth-child(4),
+  .admins-table td:nth-child(4),
+  .admins-table th:nth-child(6),
+  .admins-table td:nth-child(6) {
+    display: none;
+  }
+}
+</style>
+
+<script>
+function confirmDeleteAdmin(adminId, adminName) {
+  Swal.fire({
+    title: 'Delete Admin?',
+    html: `Are you sure you want to delete <strong>${adminName || 'this admin'}</strong>?<br><small style="color:#9ca3af">This action cannot be undone.</small>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#374151',
+    confirmButtonText: 'Yes, delete',
+    cancelButtonText: 'Cancel',
+    background: 'var(--surface)',
+    color: 'var(--text)'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/admin/delete/${adminId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(r => { if(!r.ok) throw new Error("Network error"); return r.json(); })
+      .then(data => {
+        if (data.status) {
+          const row = document.getElementById(`admin-row-${adminId}`);
+          if (row) {
+            row.style.transition = 'opacity 0.3s, transform 0.3s';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => row.remove(), 320);
+          }
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Admin has been removed.',
+            icon: 'success',
+            background: 'var(--surface)',
+            color: 'var(--text)',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: data.message || 'Could not delete admin.',
+            icon: 'error',
+            background: 'var(--surface)',
+            color: 'var(--text)'
+          });
+        }
+      });
+    }
+  });
+}
+</script>
