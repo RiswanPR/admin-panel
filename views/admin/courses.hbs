@@ -93,8 +93,8 @@
             <div class="col-xl-3 col-lg-4 col-md-6 course-card-wrap" data-name="{{this.name}}" id="card-{{this._id}}">
                 <div class="course-card">
 
-                    <img src="{{resolveImage this.image 'course-images'}}" class="course-img" alt="{{this.name}}"
-                        onerror="this.src='/course-images/default.jpg'">
+                    <img src="{{this.imageUrl}}" class="course-img" alt="{{this.name}}"
+                        onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
 
                     <div class="course-body">
 
@@ -199,8 +199,8 @@
                         <td class="si-no"></td>
 
                         <td>
-                            <img src="{{resolveImage this.image 'course-images'}}" class="table-img"
-                                onerror="this.src='/course-images/default.jpg'">
+                            <img src="{{this.imageUrl}}" class="table-img"
+                                onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                         </td>
 
                         <td class="course-name fw-bold">

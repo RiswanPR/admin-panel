@@ -138,8 +138,12 @@ app.engine(
       },
 
       resolveImage: function(imagePath, folderName) {
-        if (!imagePath) return `/${folderName}/default.jpg`;
+        const placeholder = folderName && folderName.includes('teacher')
+          ? '/img/placeholders/profile.svg'
+          : '/img/placeholders/course-cover.svg';
+        if (!imagePath) return placeholder;
         if (imagePath.startsWith('http')) return imagePath;
+        if (imagePath.includes('/')) return placeholder;
         return `/${folderName}/${imagePath}`;
       },
 

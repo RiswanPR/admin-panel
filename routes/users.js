@@ -40,6 +40,7 @@ const {
 } = require('../config/multer');
 const { uploadToS3, extractPathFromUrl, deleteFromS3 } = require('../config/s3-storage');
 const mediaHelper = require('../Helpers/media-helper');
+const { decorateClass, decorateCourse } = require('../Helpers/image-url-helper');
 
 const logAudit = (req, data) => {
   auditHelper.logAction({ req, ...data });
@@ -390,7 +391,7 @@ router.post(
             // Upload student image to Firebase if provided
             if (req.file) {
               const ext = path.extname(req.file.originalname) || '.jpg';
-              const destPath = `student-images/${id}${ext}`;
+              const destPath = `profiles/students/${id}${ext}`;
               const imageUrl = await uploadToS3(
                 req.file.buffer,
                 destPath,
@@ -492,7 +493,7 @@ router.post(
       // Upload new student image to Firebase if provided
       if (req.file) {
         const ext = path.extname(req.file.originalname) || '.jpg';
-        const destPath = `student-images/${req.params.id}${ext}`;
+        const destPath = `profiles/students/${req.params.id}${ext}`;
         const imageUrl = await uploadToS3(
           req.file.buffer,
           destPath,
@@ -867,6 +868,8 @@ router.get(
         }
       ]).toArray();
 
+      await Promise.all(classes.map(decorateClass));
+
       res.render('admin/all-classes', {
         admins: true,
         currentPage: 'classes',
@@ -1087,6 +1090,9 @@ router.get(
         return res.status(404).render('error', { message: 'Class not found.' });
       }
 
+      await decorateCourse(course);
+      await decorateClass(classData);
+
       res.render('admin/watch-class', {
         admins: true,
         currentPage: 'classes',
@@ -1200,7 +1206,7 @@ router.post(
       }
 
       // Upload exercise file to Firebase
-      const destPath = `exercise-files/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+      const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
       const fileUrl = await uploadToS3(
         req.file.buffer,
         destPath,
@@ -1361,7 +1367,7 @@ router.post(
       let filePayload = null;
       if (req.file) {
         const ext = path.extname(req.file.originalname).replace('.', '').toLowerCase();
-        const destPath = `exercise-files/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+        const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
         const newUrl = await uploadToS3(
           req.file.buffer,
           destPath,
@@ -1471,7 +1477,7 @@ router.post(
       // Upload course cover image to Firebase if provided
       if (req.file) {
         const ext = path.extname(req.file.originalname) || '.jpg';
-        const destPath = `course-images/${id}${ext}`;
+        const destPath = `courses/${id}${ext}`;
         const imageUrl = await uploadToS3(
           req.file.buffer,
           destPath,
@@ -1550,7 +1556,7 @@ router.post(
       // Upload new course image to Firebase if provided
       if (req.file) {
         const ext = path.extname(req.file.originalname) || '.jpg';
-        const destPath = `course-images/${req.params.id}_${Date.now()}${ext}`;
+        const destPath = `courses/${req.params.id}_${Date.now()}${ext}`;
         const imageUrl = await uploadToS3(
           req.file.buffer,
           destPath,
@@ -2246,7 +2252,7 @@ router.post('/teachers/add', verifyLogin, uploadTeacher.single('profileImage'), 
     // Upload teacher profile image to Firebase if provided
     if (req.file) {
       const ext = path.extname(req.file.originalname) || '.jpg';
-      const destPath = `teacher-images/${teacher._id}${ext}`;
+      const destPath = `profiles/teachers/${teacher._id}${ext}`;
       const imageUrl = await uploadToS3(
         req.file.buffer,
         destPath,
@@ -2299,7 +2305,7 @@ router.post('/teachers/:id/edit', verifyLogin, validateObjectIds(['id']), upload
     // Upload new teacher image to Firebase if provided
     if (req.file) {
       const ext = path.extname(req.file.originalname) || '.jpg';
-      const destPath = `teacher-images/${req.params.id}_${Date.now()}${ext}`;
+      const destPath = `profiles/teachers/${req.params.id}_${Date.now()}${ext}`;
       const imageUrl = await uploadToS3(
         req.file.buffer,
         destPath,
@@ -2458,7 +2464,7 @@ router.post('/cover-images', verifyLogin, uploadCover.single('image'), async (re
 
     // Upload to Firebase
     const ext = require('path').extname(req.file.originalname) || '.jpg';
-    const destPath = `cover-images/cover_${Date.now()}${ext}`;
+    const destPath = `covers/cover_${Date.now()}${ext}`;
     const imageUrl = await uploadToS3(req.file.buffer, destPath, req.file.mimetype);
 
     // Save to DB

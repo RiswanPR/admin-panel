@@ -54,9 +54,9 @@
 
                                     <div class="d-flex align-items-center gap-3">
                                         <div id="editChapterPreview" style="width:180px; height:101px; background:var(--surface-2); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--muted); border: 2px dashed var(--border); overflow:hidden;">
-                                            <img src="{{chapter.imageName}}" onerror="this.src='/chapter-images/default.jpg'" style="width:100%; height:100%; object-fit:cover;">
+                                            <img src="{{chapter.imageUrl}}" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'" style="width:100%; height:100%; object-fit:cover;">
                                         </div>
-                                        <input type="hidden" name="coverImageUrl" id="editChapterCoverUrl" value="{{chapter.imageName}}">
+                                        <input type="hidden" name="coverImageUrl" id="editChapterCoverUrl" value="{{chapter.imageKey}}">
                                         <button type="button" class="btn btn-outline-primary" onclick="openCoverSelector('editChapterCoverUrl', 'editChapterPreview')">
                                             <i class="fa-solid fa-images me-2"></i>Select Cover
                                         </button>
@@ -132,10 +132,10 @@
                                     </h5>
 
                                     <img
-                                        src="{{resolveImage chapter.imageName 'chapter-images'}}"
+                                        src="{{chapter.imageUrl}}"
                                         id="summaryImage"
                                         class="summary-image mb-3"
-                                        onerror="this.src='/chapter-images/default.jpg'"
+                                        onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'"
                                     >
 
                                     <h5

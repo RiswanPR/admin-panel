@@ -167,7 +167,7 @@
 
         <button
             class="btn btn-success btn-sm w-100 mb-2"
-            onclick="openFile('{{this.file}}','{{this.type}}')"
+            onclick="openFile('{{#if this.fileUrl}}{{this.fileUrl}}{{else}}{{this.file}}{{/if}}','{{this.type}}')"
         >
             View File
         </button>
@@ -277,7 +277,7 @@
                         <td>
                             <button
                                 class="btn btn-success btn-sm"
-                                onclick="openFile('{{this.file}}','{{this.type}}')"
+                                onclick="openFile('{{#if this.fileUrl}}{{this.fileUrl}}{{else}}{{this.file}}{{/if}}','{{this.type}}')"
                             >
                                 View
                             </button>

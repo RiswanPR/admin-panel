@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             {{#if teacher.profileImage}}
-            <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid #9FD5B2">
+            <img src="{{teacher.profileImageUrl}}" alt="{{teacher.name}}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid #9FD5B2" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
             {{else}}
             <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#9FD5B2,#12314C);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px">{{teacher.name.[0]}}</div>
             {{/if}}

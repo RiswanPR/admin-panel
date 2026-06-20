@@ -2,6 +2,7 @@ const db = require('../config/connection');
 const collection = require('../config/collections');
 const { ObjectId } = require('mongodb');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
+const { decorateCoverImage } = require('./image-url-helper');
 
 module.exports = {
 
@@ -53,6 +54,7 @@ module.exports = {
                 .sort({ createdAt: -1 })
                 .toArray();
 
+            await Promise.all(images.map(decorateCoverImage));
             return images;
         } catch (err) {
             throw err;
@@ -63,9 +65,11 @@ module.exports = {
         try {
             if (!ObjectId.isValid(id)) return null;
 
-            return await db.get()
+            const image = await db.get()
                 .collection(collection.COVER_IMAGES_COLLECTION)
                 .findOne({ _id: new ObjectId(id) });
+
+            return decorateCoverImage(image);
         } catch (err) {
             throw err;
         }

@@ -117,7 +117,7 @@
                     <!-- IMAGE -->
                     <div class="class-thumb-wrap">
 
-                        <img src="{{resolveImage this.thumbnail 'class-images'}}" class="class-thumb">
+                        <img src="{{this.thumbnailUrl}}" class="class-thumb" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
 
                         <div class="thumb-overlay">
                             {{#if (eq this.videoSource 's3')}}
@@ -174,7 +174,7 @@
                             <!-- PREVIEW -->
                             {{#if (eq this.videoSource 's3')}}
                             <button class="btn btn-success btn-sm w-100 mb-2"
-                                onclick="previewS3Video('{{this.videoUrl}}')">
+                                onclick="previewS3Video('{{#if this.videoDisplayUrl}}{{this.videoDisplayUrl}}{{else}}{{this.videoUrl}}{{/if}}')">
                                 Preview
                             </button>
                             {{else}}
@@ -242,7 +242,7 @@
                         <td class="si-no"></td>
 
                         <td>
-                            <img src="{{resolveImage this.thumbnail 'class-images'}}" class="table-thumb">
+                            <img src="{{this.thumbnailUrl}}" class="table-thumb" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                         </td>
 
                         <td class="class-name">
@@ -288,7 +288,7 @@
 
                         <td>
                             {{#if (eq this.videoSource 's3')}}
-                            <button class="btn btn-success btn-sm" onclick="previewS3Video('{{this.videoUrl}}')">
+                            <button class="btn btn-success btn-sm" onclick="previewS3Video('{{#if this.videoDisplayUrl}}{{this.videoDisplayUrl}}{{else}}{{this.videoUrl}}{{/if}}')">
                                 Preview
                             </button>
                             {{else}}

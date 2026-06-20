@@ -94,7 +94,7 @@
                         <td>
                             <div class="t-teacher-cell">
                                 {{#if this.profileImage}}
-                                <img src="{{resolveImage this.profileImage 'teacher-images'}}" alt="{{this.name}}" class="t-avatar-img">
+                                <img src="{{this.profileImageUrl}}" alt="{{this.name}}" class="t-avatar-img" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
                                 {{else}}
                                 <div class="t-avatar-placeholder">{{this.name.[0]}}</div>
                                 {{/if}}

@@ -16,7 +16,7 @@
             <!-- Course Thumbnail -->
             <div class="tc-img-wrap">
                 {{#if this.image}}
-                <img src="{{resolveImage this.image 'course-images'}}" alt="{{this.name}}">
+                <img src="{{this.imageUrl}}" alt="{{this.name}}" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                 {{else}}
                 <div class="tc-img-placeholder">
                     <i class="fa-solid fa-layer-group"></i>

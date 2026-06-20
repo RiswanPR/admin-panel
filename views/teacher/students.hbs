@@ -74,7 +74,7 @@
             <div class="col-xl-3 col-lg-4 col-md-6 student-card-wrap" data-name="{{this.name}} {{this.Name}} {{this.displayCourse}}">
                 <div class="student-card">
                     <div class="student-top">
-                        <img src="/student-images/{{this._id}}.jpg" class="student-avatar" onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+                        <img src="{{this.imageUrl}}" class="student-avatar" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
 
                         <span class="status-pill {{#if this.isActive}}active-pill{{else}}blocked-pill{{/if}}">
                             {{#if this.isActive}}Active{{else}}Inactive{{/if}}
@@ -128,7 +128,7 @@
                     <tr>
                         <td class="si-no"></td>
                         <td>
-                            <img src="/student-images/{{this._id}}.jpg" class="table-avatar" onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+                            <img src="{{this.imageUrl}}" class="table-avatar" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
                         </td>
                         <td class="student-name">
                             <strong>{{#if this.Name}}{{this.Name}}{{else}}{{this.name}}{{/if}}</strong>

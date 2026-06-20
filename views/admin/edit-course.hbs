@@ -46,8 +46,8 @@
 
                                     <div class="upload-area" onclick="document.getElementById('imageInput').click()">
 
-                                        <img src="{{resolveImage course.image 'course-images'}}" id="imgView" class="course-preview"
-                                            onerror="this.src='/course-images/default.jpg'">
+                                        <img src="{{course.imageUrl}}" id="imgView" class="course-preview"
+                                            onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
 
                                         <div class="upload-overlay">
                                             <i class="fa-solid fa-camera"></i>
@@ -157,8 +157,8 @@
                                         Live Preview
                                     </h5>
 
-                                    <img src="{{resolveImage course.image 'course-images'}}" id="summaryImage"
-                                        class="summary-image mb-3" onerror="this.src='/course-images/default.jpg'">
+                                    <img src="{{course.imageUrl}}" id="summaryImage"
+                                        class="summary-image mb-3" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
 
                                     <h5 class="fw-bold mb-2" id="previewName">
                                         {{course.name}}

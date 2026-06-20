@@ -82,7 +82,7 @@
                                                 {{exercise.title}}
                                             </h6>
                                             <small class="text-muted text-break">
-                                                {{exercise.file}}
+                                                {{#if exercise.fileUrl}}{{exercise.fileUrl}}{{else}}{{exercise.file}}{{/if}}
                                             </small>
 
                                             <span class="type-chip" id="currentType">
@@ -92,7 +92,7 @@
 
                                     </div>
 
-                                    <a href="{{exercise.file}}" target="_blank" class="btn btn-primary">
+                                    <a href="{{#if exercise.fileUrl}}{{exercise.fileUrl}}{{else}}{{exercise.file}}{{/if}}" target="_blank" class="btn btn-primary">
                                         View File
                                     </a>
 

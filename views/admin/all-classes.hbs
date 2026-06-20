@@ -109,8 +109,8 @@
 
                     <!-- THUMBNAIL -->
                     <div class="class-thumb-wrap">
-                        {{#if this.thumbnail}}
-                        <img src="{{resolveImage this.thumbnail 'class-images'}}" alt="{{this.title}}" class="class-thumb">
+                        {{#if this.thumbnailUrl}}
+                        <img src="{{this.thumbnailUrl}}" alt="{{this.title}}" class="class-thumb" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                         {{else}}
                         <div class="class-thumb-placeholder">
                             <i class="fa-solid fa-play"></i>
@@ -170,7 +170,7 @@
 
                             <!-- Preview -->
                             {{#if (eq this.videoSource 's3')}}
-                            <button class="btn btn-success btn-sm w-100 mb-2" onclick="previewS3Video('{{this.videoUrl}}')">
+                            <button class="btn btn-success btn-sm w-100 mb-2" onclick="previewS3Video('{{#if this.videoDisplayUrl}}{{this.videoDisplayUrl}}{{else}}{{this.videoUrl}}{{/if}}')">
                                 <i class="fa-solid fa-play me-1"></i>Preview
                             </button>
                             {{else}}
@@ -237,7 +237,7 @@
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
                                 {{#if (eq this.videoSource 's3')}}
-                                <button class="btn btn-success btn-sm" onclick="previewS3Video('{{this.videoUrl}}')">
+                                <button class="btn btn-success btn-sm" onclick="previewS3Video('{{#if this.videoDisplayUrl}}{{this.videoDisplayUrl}}{{else}}{{this.videoUrl}}{{/if}}')">
                                     <i class="fa-solid fa-play"></i>
                                 </button>
                                 {{else}}

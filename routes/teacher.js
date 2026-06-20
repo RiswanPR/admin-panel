@@ -17,6 +17,7 @@ const { uploadToS3 } = require('../config/s3-storage');
 const mediaHelper = require('../Helpers/media-helper');
 const ffprobeStatic = require('ffprobe-static');
 const { getVideoDurationInSeconds } = require('get-video-duration');
+const { decorateClass, decorateCourse, decorateProfileImage } = require('../Helpers/image-url-helper');
 
 // ═══════════════════════════════════════════════════
 // GUARDS
@@ -70,7 +71,14 @@ const validateObjectIds = (paramNames) => {
 // ═══════════════════════════════════════════════════
 // INJECT TEACHER INTO ALL TEMPLATES
 // ═══════════════════════════════════════════════════
-router.use((req, res, next) => {
+router.use(async (req, res, next) => {
+  try {
+    if (req.session.teacher) {
+      await decorateProfileImage(req.session.teacher, 'profileImage');
+    }
+  } catch (err) {
+    logger.warn('Teacher session image signing warning:', err.message);
+  }
   res.locals.sessionTeacher = req.session.teacher || null;
   res.locals.teacherPanel = true;
   next();
@@ -492,7 +500,7 @@ router.post('/profile/update', verifyTeacherLogin, uploadTeacher.single('profile
     if (req.file) {
       // Upload to Firebase
       const ext = path.extname(req.file.originalname) || '.jpg';
-      const destPath = `teacher-images/${teacher._id}_${Date.now()}${ext}`;
+      const destPath = `profiles/teachers/${teacher._id}_${Date.now()}${ext}`;
       profileImage = await uploadToS3(
         req.file.buffer,
         destPath,
@@ -543,6 +551,9 @@ router.get('/watch-class/:chapterCode/:classId', verifyTeacherLogin, validateObj
     if (!classData) {
       return res.status(404).render('error', { message: 'Class not found.' });
     }
+
+    await decorateCourse(course);
+    await decorateClass(classData);
 
     res.render('teacher/watch-class', {
       teacherPanel: true,
@@ -736,7 +747,7 @@ router.post(
         return res.status(400).send('Unsupported exercise file type');
       }
 
-      const destPath = `exercise-files/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+      const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
       const fileUrl = await uploadToS3(
         req.file.buffer,
         destPath,
@@ -821,7 +832,7 @@ router.post(
       let filePayload = null;
       if (req.file) {
         const ext = path.extname(req.file.originalname).replace('.', '').toLowerCase();
-        const destPath = `exercise-files/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+        const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
         const newUrl = await uploadToS3(
           req.file.buffer,
           destPath,

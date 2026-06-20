@@ -18,7 +18,7 @@
     <!-- TEACHER PROFILE CHIP -->
     <div class="teacher-profile-chip">
         {{#if sessionTeacher.profileImage}}
-        <img src="{{resolveImage sessionTeacher.profileImage 'teacher-images'}}" alt="{{sessionTeacher.name}}" class="teacher-chip-img">
+        <img src="{{sessionTeacher.profileImageUrl}}" alt="{{sessionTeacher.name}}" class="teacher-chip-img" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
         {{else}}
         <div class="teacher-chip-avatar">{{#if sessionTeacher.name}}{{sessionTeacher.name.[0]}}{{else}}T{{/if}}</div>
         {{/if}}
@@ -102,7 +102,7 @@
         <!-- profile -->
         <div class="profile-box">
             {{#if sessionTeacher.profileImage}}
-            <img src="{{resolveImage sessionTeacher.profileImage 'teacher-images'}}" alt="{{sessionTeacher.name}}">
+            <img src="{{sessionTeacher.profileImageUrl}}" alt="{{sessionTeacher.name}}" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
             {{else}}
             <div class="teacher-chip-avatar topbar-avatar">{{#if sessionTeacher.name}}{{sessionTeacher.name.[0]}}{{else}}T{{/if}}</div>
             {{/if}}

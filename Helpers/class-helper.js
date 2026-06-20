@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { deleteFromS3, extractPathFromUrl, uploadFileToS3 } = require('../config/s3-storage');
+const { decorateChapter } = require('./image-url-helper');
 
 const vdocipherHelper = require('./vdocipher-helper');
 
@@ -49,7 +50,7 @@ module.exports = {
                 // ─── ONLINE COURSE → Upload to Amazon S3 ───
 
                 const ext = path.extname(files.video[0].originalname) || '.mp4';
-                const destPath = `class-videos/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+                const destPath = `classes/videos/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
                 const mimeType = files.video[0].mimetype || 'video/mp4';
 
                 videoUrl = await uploadFileToS3(videoPath, destPath, mimeType);
@@ -285,7 +286,7 @@ module.exports = {
                     (b.order || 0)
             );
 
-            return chapter;
+            return decorateChapter(chapter);
 
         } catch (err) {
             console.error(

@@ -3,6 +3,7 @@ const collection = require('../config/collections');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
+const { decorateCourse, decorateProfileImage } = require('./image-url-helper');
 
 const SALT_ROUNDS = 10;
 
@@ -77,9 +78,11 @@ const getTeacherById = async (id) => {
   try {
     if (!ObjectId.isValid(id)) return null;
 
-    return await db.get()
+    const teacher = await db.get()
       .collection(collection.TEACHER_COLLECTION)
       .findOne({ _id: new ObjectId(id) });
+
+    return decorateProfileImage(teacher, 'profileImage');
   } catch (err) {
     console.error('getTeacherById Error:', err.message);
     return null;
@@ -118,6 +121,8 @@ const getAllTeachers = async () => {
 
     const courseMap = {};
     allCourses.forEach(c => { courseMap[c._id.toString()] = c.name; });
+
+    await Promise.all(teachers.map(teacher => decorateProfileImage(teacher, 'profileImage')));
 
     teachers.forEach(teacher => {
       teacher.assignedCourseNames = (teacher.assignedCourses || [])
@@ -293,6 +298,8 @@ const getTeacherCourses = async (teacherId) => {
       course.lastUpdatedDisplay = lastUpdate
         ? new Date(lastUpdate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
         : '—';
+
+      await decorateCourse(course);
     }));
 
     return courses;
@@ -320,6 +327,8 @@ const getTeacherStudents = async (teacherId) => {
       .toArray();
 
     // Attach the relevant course name for display
+    await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
+
     students.forEach(student => {
       const enrolledCourse = (student.course || []).find(
         c => courseIdStrings.includes(c.courseId)

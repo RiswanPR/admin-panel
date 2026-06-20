@@ -21,7 +21,7 @@
                     <div class="t-image-upload-area mb-4">
                         <div class="t-image-preview" id="imagePreview">
                             {{#if teacher.profileImage}}
-                            <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}">
+                            <img src="{{teacher.profileImageUrl}}" alt="{{teacher.name}}" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
                             {{else}}
                             <i class="fa-solid fa-camera"></i>
                             <span>Upload Photo</span>

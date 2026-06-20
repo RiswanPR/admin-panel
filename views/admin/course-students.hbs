@@ -112,8 +112,8 @@
 
                     <div class="student-top">
 
-                        <img src="/student-images/{{this._id}}.jpg" class="student-avatar"
-                            onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+                        <img src="{{this.imageUrl}}" class="student-avatar"
+                            onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
 
                         <span class="status-pill {{#if this.status}}active-pill{{else}}blocked-pill{{/if}}">
                             {{#if this.status}}Active{{else}}Blocked{{/if}}
@@ -264,8 +264,8 @@
                         <td class="si-no"></td>
 
                         <td>
-                            <img src="/student-images/{{this._id}}.jpg" class="table-avatar"
-                                onerror="this.onerror=null;this.src='/student-images/default-image.jpg';">
+                            <img src="{{this.imageUrl}}" class="table-avatar"
+                                onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
                         </td>
 
                         <td class="student-name">

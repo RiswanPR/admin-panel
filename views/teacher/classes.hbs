@@ -20,8 +20,8 @@
         <div class="col-md-6 col-xl-4 class-item" id="card-{{this._id}}">
             <article class="card tcl-card h-100">
                 <div class="tcl-image">
-                    {{#if this.thumbnail}}
-                    <img src="{{resolveImage this.thumbnail 'class-images'}}" alt="{{this.title}}">
+                    {{#if this.thumbnailUrl}}
+                    <img src="{{this.thumbnailUrl}}" alt="{{this.title}}" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                     {{else}}
                     <div class="tcl-placeholder"><i class="fa-solid fa-play"></i></div>
                     {{/if}}

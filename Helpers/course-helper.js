@@ -4,6 +4,13 @@ var collection = require('../config/collections');
 const vdocipherHelper = require('./vdocipher-helper');
 const { ObjectId } = require('mongodb');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
+const {
+    decorateCourse,
+    decorateChapter,
+    decorateClass,
+    decorateExercise,
+    decorateProfileImage
+} = require('./image-url-helper');
 
 // Helper to delete all S3 & VdoCipher assets associated with a chapter recursively
 const deleteChapterFiles = async (chapter) => {
@@ -140,6 +147,7 @@ module.exports = {
                 ])
                 .toArray();
 
+            await Promise.all(courses.map(decorateCourse));
             return courses;
 
         } catch (err) {
@@ -205,7 +213,7 @@ module.exports = {
                         _id: new ObjectId(courseId)
                     });
 
-                resolve(course);
+                resolve(await decorateCourse(course));
 
             } catch (err) {
                 reject(err);
@@ -268,6 +276,8 @@ module.exports = {
                 // SORT CHAPTERS
                 let chapters = (course.chapters || [])
                     .sort((a, b) => a.order - b.order);
+
+                await Promise.all(chapters.map(decorateChapter));
 
                 resolve({
                     courseName: course.name,
@@ -362,6 +372,7 @@ module.exports = {
                 // SORT BY ORDER ASC
                 allChapters.sort((a, b) => a.order - b.order);
 
+                await Promise.all(allChapters.map(decorateChapter));
                 resolve(allChapters);
 
             } catch (err) {
@@ -594,7 +605,7 @@ module.exports = {
         if (!course) return null;
         let chapter = (course.chapters || []).find(ch => ch.uniqueCode == uniqueCode);
 
-        return chapter;
+        return decorateChapter(chapter);
     },
     getChaptersByCourseId: async (courseId) => {
         try {
@@ -609,6 +620,7 @@ module.exports = {
             // 🔥 sort chapters by order
             let chapters = (course.chapters || []).sort((a, b) => a.order - b.order);
 
+            await Promise.all(chapters.map(decorateChapter));
             return chapters;
 
         } catch (err) {
@@ -622,7 +634,7 @@ module.exports = {
                 .collection(collection.COURSE_COLLECTION)
                 .findOne({ _id: new ObjectId(courseId) });
 
-            return course;
+            return decorateCourse(course);
 
         } catch (err) {
             return null;
@@ -643,7 +655,7 @@ module.exports = {
 
             let chapter = course.chapters.find(ch => ch.uniqueCode === uniqueCode);
 
-            resolve(chapter);
+            resolve(await decorateChapter(chapter));
         });
     },
 
@@ -879,7 +891,7 @@ module.exports = {
                 if (!exercise) return resolve(null);
 
                 resolve({
-                    exercise
+                    exercise: await decorateExercise(exercise)
                 });
 
             } catch (err) {
@@ -1077,6 +1089,9 @@ module.exports = {
                     classData.exercises = [];
                 }
 
+                await decorateChapter(chapter);
+                await decorateClass(classData);
+
                 resolve({
                     chapter,
                     classData
@@ -1141,6 +1156,8 @@ module.exports = {
                         createdAt: -1
                     })
                     .toArray();
+
+                await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
 
                 resolve({
                     students,

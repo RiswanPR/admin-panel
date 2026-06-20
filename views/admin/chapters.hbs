@@ -93,10 +93,10 @@
                 <div class="chapter-card">
 
                     <img
-                        src="{{resolveImage this.imageName 'chapter-images'}}"
+                        src="{{this.imageUrl}}"
                         class="chapter-img"
                         alt="{{this.title}}"
-                        onerror="this.src='/chapter-images/default.jpg'"
+                        onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'"
                     >
 
                     <div class="chapter-body">
@@ -191,9 +191,9 @@
 
                         <td>
                             <img
-                                src="{{resolveImage this.imageName 'chapter-images'}}"
+                                src="{{this.imageUrl}}"
                                 class="table-img"
-                                onerror="this.src='/chapter-images/default.jpg'"
+                                onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'"
                             >
                         </td>
 

@@ -13,7 +13,7 @@
             <div class="card tp-profile-card p-4 text-center">
                 <div class="tp-avatar-wrap mb-3">
                     {{#if teacher.profileImage}}
-                    <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" class="tp-avatar-img" id="profilePreview">
+                    <img src="{{teacher.profileImageUrl}}" alt="{{teacher.name}}" class="tp-avatar-img" id="profilePreview" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
                     {{else}}
                     <div class="tp-avatar-fallback" id="profileFallback">{{teacher.name.[0]}}</div>
                     <img class="tp-avatar-img d-none" id="profilePreview" src="#" alt="">

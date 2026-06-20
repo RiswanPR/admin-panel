@@ -119,22 +119,26 @@ function renderCoverImages(images) {
         return;
     }
     
-    grid.innerHTML = images.map(img => `
+    grid.innerHTML = images.map(img => {
+        const displayUrl = img.imageUrl || img.image || '/img/placeholders/course-cover.svg';
+        const storageKey = img.imageKey || img.image || '';
+        return `
         <div class="col-6 col-md-4 col-lg-3">
-            <div class="cover-select-card" onclick="selectCover('${img.image}')">
-                <img src="${img.image}" class="cover-select-img" loading="lazy">
+            <div class="cover-select-card" onclick='selectCover(${JSON.stringify(storageKey)}, ${JSON.stringify(displayUrl)})'>
+                <img src="${displayUrl}" class="cover-select-img" loading="lazy" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg';">
                 <div class="cover-select-info">
                     <h6>${img.title}</h6>
                     <small>${img.category}</small>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
-function selectCover(imageUrl) {
+function selectCover(imageKey, imageUrl) {
     if (currentCoverTargetId) {
-        document.getElementById(currentCoverTargetId).value = imageUrl;
+        document.getElementById(currentCoverTargetId).value = imageKey || '';
     }
     if (currentCoverTargetPreview) {
         const preview = document.getElementById(currentCoverTargetPreview);
@@ -150,7 +154,7 @@ function selectCover(imageUrl) {
     $('#coverSelectorModal').modal('hide');
     
     if (typeof window.onCoverSelected === 'function') {
-        window.onCoverSelected(imageUrl, currentCoverTargetId);
+        window.onCoverSelected(imageKey, currentCoverTargetId, imageUrl);
     }
 }
 

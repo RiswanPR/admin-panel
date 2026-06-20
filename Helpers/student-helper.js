@@ -3,6 +3,7 @@ var collection = require('../config/collections');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
+const { decorateProfileImage } = require('./image-url-helper');
 
 const SALT_ROUNDS = 10;
 
@@ -153,6 +154,7 @@ module.exports = {
                     course: { $exists: true, $not: { $size: 0 } }
                 })
                 .toArray();
+            await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
             resolve(students);
         });
     },
@@ -171,6 +173,7 @@ module.exports = {
                 })
                 .sort({ createdAt: -1 })
                 .toArray();
+            await Promise.all(users.map(user => decorateProfileImage(user, 'image')));
             resolve(users);
         });
     },
@@ -245,9 +248,10 @@ module.exports = {
 
     getStudentById: async (id) => {
         if (!ObjectId.isValid(id)) return null;
-        return await db.get()
+        const student = await db.get()
             .collection(collection.STUDENTS_COLLECTION)
             .findOne({ _id: new ObjectId(id) });
+        return decorateProfileImage(student, 'image');
     },
 
     updateStudent: async (id, data) => {

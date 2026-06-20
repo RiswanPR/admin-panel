@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Profile placeholder</title>
+  <desc id="desc">A neutral profile avatar placeholder.</desc>
+  <rect width="320" height="320" rx="160" fill="#f3f6f4"/>
+  <circle cx="160" cy="124" r="54" fill="#9fd5b2"/>
+  <path d="M64 276c12-58 52-92 96-92s84 34 96 92" fill="#12314c" opacity=".18"/>
+</svg>

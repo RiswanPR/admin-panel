@@ -5,7 +5,7 @@
         <div>
             <div class="d-flex align-items-center gap-3 mb-2">
                 {{#if teacher.profileImage}}
-                <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" class="ac-teacher-img">
+                <img src="{{teacher.profileImageUrl}}" alt="{{teacher.name}}" class="ac-teacher-img" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
                 {{else}}
                 <div class="ac-teacher-avatar">{{teacher.name.[0]}}</div>
                 {{/if}}
@@ -63,7 +63,7 @@
                             >
                             <div class="ac-course-img-wrap">
                                 {{#if this.image}}
-                                <img src="{{resolveImage this.image 'course-images'}}" alt="{{this.name}}">
+                                <img src="{{this.imageUrl}}" alt="{{this.name}}" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                                 {{else}}
                                 <div class="ac-course-img-placeholder">
                                     <i class="fa-solid fa-layer-group"></i>

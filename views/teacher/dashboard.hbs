@@ -68,7 +68,7 @@
                     <a href="/teacher/courses/{{this._id}}" class="td-course-card">
                         <div class="td-course-img">
                             {{#if this.image}}
-                            <img src="{{resolveImage this.image 'course-images'}}" alt="{{this.name}}">
+                            <img src="{{this.imageUrl}}" alt="{{this.name}}" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
                             {{else}}
                             <div class="td-course-placeholder">
                                 <i class="fa-solid fa-layer-group"></i>
@@ -157,7 +157,7 @@
                 <h5 class="mb-3">Your Profile</h5>
                 <div class="td-profile-summary">
                     {{#if teacher.profileImage}}
-                    <img src="{{resolveImage teacher.profileImage 'teacher-images'}}" alt="{{teacher.name}}" class="td-profile-img">
+                    <img src="{{teacher.profileImageUrl}}" alt="{{teacher.name}}" class="td-profile-img" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
                     {{else}}
                     <div class="td-profile-avatar">{{teacher.name.[0]}}</div>
                     {{/if}}
