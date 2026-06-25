@@ -29,7 +29,8 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
+console.log("REGION:", process.env.AWS_REGION);
+console.log("BUCKET:", process.env.AWS_S3_BUCKET_NAME);
 const bucketName = process.env.AWS_S3_BUCKET_NAME;
 const bucketRegion = process.env.AWS_REGION;
 const signedUrlExpiresIn = Number(process.env.AWS_S3_SIGNED_URL_EXPIRES || 60 * 60);
