@@ -132,16 +132,16 @@ module.exports = {
 
             if (existing) {
                 await users.updateOne({ _id: existing._id }, { $set: update });
-                return callback(existing._id);
+                return callback(existing._id, false); // isNew = false
             }
 
             const result = await users.insertOne({
                 ...update,
                 createdAt: new Date()
             });
-            callback(result.insertedId);
+            callback(result.insertedId, true); // isNew = true
         } catch (err) {
-            callback(false);
+            callback(false, false);
         }
     },
 

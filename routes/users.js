@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 var courseHelpers = require('../Helpers/course-helper');
 var studentHelpers = require('../Helpers/student-helper');
 var mailHelpers = require('../Helpers/mail-helper');
+const emailService = require('../Helpers/email-service');
 var auditHelper = require('../Helpers/audit-helper');
 const dashboardHelper = require('../Helpers/dashboard-helper');
 const settingsHelper = require('../Helpers/settings-helper');
@@ -341,6 +342,11 @@ router.post('/assign-course', verifyLogin, async function (req, res) {
       message: 'Courses assigned to registered user'
     });
 
+    // Fire and forget email
+    emailService.sendCourseAssignedEmail(existingUser, courseData).catch(err => {
+      logger.error('Error sending course assigned email (async):', err);
+    });
+
     res.json({ status: true });
   } catch (err) {
     logger.info('Assign Course Error:', err);
@@ -382,7 +388,7 @@ router.post(
 
       studentHelpers.addStudents(
         req.body,
-        async (id) => {
+        async (id, isNew) => {
           try {
             if (!id) {
               return res.status(400).send('Invalid student or course data');
@@ -407,6 +413,13 @@ router.post(
               entityName: req.body.Name,
               message: 'Student added'
             });
+
+            if (isNew) {
+              // Fire and forget email
+              emailService.sendWelcomeEmail(req.body).catch(err => {
+                logger.error('Error sending welcome email (async):', err);
+              });
+            }
 
             if (req.body.redirectCourseId) {
               return res.redirect('/' + req.body.redirectCourseId + '/students');
