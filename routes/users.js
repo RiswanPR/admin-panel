@@ -883,6 +883,74 @@ router.get(
 );
 
 router.get(
+  '/edit-class/:chapterCode/:classId',
+  verifyLogin,
+  async (req, res) => {
+    try {
+      const { chapterCode, classId } = req.params;
+      const classData = await classHelper.getClass(chapterCode, classId);
+
+      if (!classData) {
+        return res.redirect('/chapters');
+      }
+
+      const course = await db.get()
+        .collection(collection.COURSE_COLLECTION)
+        .findOne({ 'chapters.uniqueCode': chapterCode });
+
+      const courseType = course?.type || 'recording';
+
+      res.render('admin/edit-class', {
+        admins: true,
+        chapterCode,
+        classData,
+        courseType
+      });
+    } catch (err) {
+      logger.info('Edit Class Page Error:', err.message);
+      res.redirect('/chapters');
+    }
+  }
+);
+
+router.post(
+  '/edit-class/:chapterCode/:classId',
+  verifyLogin,
+  uploadClass.fields([
+    { name: 'video', maxCount: 1 }
+  ]),
+  async (req, res) => {
+    try {
+      const { chapterCode, classId } = req.params;
+      const data = req.body;
+      const files = req.files;
+
+      // Extract new thumbnail if selected from Cover Images
+      let newThumbnailUrl = req.body.coverImageUrl || null;
+
+      if (newThumbnailUrl) {
+          data.thumbnailUrl = newThumbnailUrl;
+      }
+
+      await classHelper.updateClass(chapterCode, classId, data, files);
+      
+      logAudit(req, {
+        action: 'class.update',
+        entityType: 'class',
+        entityId: classId,
+        entityName: data.title,
+        message: 'Class updated'
+      });
+
+      res.redirect(`/chapters/classes/${chapterCode}`);
+    } catch (err) {
+      logger.info('Edit Class Error:', err.message);
+      res.redirect(`/chapters/classes/${req.params.chapterCode}`);
+    }
+  }
+);
+
+router.get(
   '/add-class/:chapterCode',
   verifyLogin,
   async (req, res) => {

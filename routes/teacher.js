@@ -190,6 +190,88 @@ router.get('/chapters/classes/:uniqueCode', verifyTeacherLogin, async (req, res)
 });
 
 // ═══════════════════════════════════════════════════
+// EDIT CLASS (teacher)
+// ═══════════════════════════════════════════════════
+router.get('/chapters/edit-class/:chapterCode/:classId', verifyTeacherLogin, async (req, res) => {
+  try {
+    const { chapterCode, classId } = req.params;
+    
+    const course = await db.get()
+      .collection(collection.COURSE_COLLECTION)
+      .findOne({ 'chapters.uniqueCode': chapterCode });
+
+    if (!course) {
+      return res.redirect('/teacher/courses');
+    }
+
+    const owns = await teacherHelper.teacherOwnsCourse(req.session.teacher._id, course._id);
+    if (!owns) {
+      return res.status(403).render('error', { message: 'Access Denied - This course is not assigned to you.' });
+    }
+
+    const classData = await classHelper.getClass(chapterCode, classId);
+    if (!classData) {
+      return res.redirect(`/teacher/chapters/classes/${chapterCode}`);
+    }
+
+    const courseType = course?.type || 'recording';
+
+    res.render('teacher/edit-class', {
+      teachers: true,
+      teacher: req.session.teacher,
+      chapterCode,
+      classData,
+      courseType
+    });
+  } catch (err) {
+    logger.error('Teacher Edit Class Page Error:', err.message);
+    res.redirect('/teacher/courses');
+  }
+});
+
+router.post('/chapters/edit-class/:chapterCode/:classId', verifyTeacherLogin, uploadClass.fields([{ name: 'video', maxCount: 1 }]), async (req, res) => {
+  try {
+    const { chapterCode, classId } = req.params;
+    
+    const course = await db.get()
+      .collection(collection.COURSE_COLLECTION)
+      .findOne({ 'chapters.uniqueCode': chapterCode });
+
+    if (!course) {
+      return res.redirect('/teacher/courses');
+    }
+
+    const owns = await teacherHelper.teacherOwnsCourse(req.session.teacher._id, course._id);
+    if (!owns) {
+      return res.status(403).send('Access Denied');
+    }
+
+    const data = req.body;
+    const files = req.files;
+
+    let newThumbnailUrl = req.body.coverImageUrl || null;
+    if (newThumbnailUrl) {
+        data.thumbnailUrl = newThumbnailUrl;
+    }
+
+    await classHelper.updateClass(chapterCode, classId, data, files);
+
+    logAudit(req, {
+      action: 'teacher.class.update',
+      entityType: 'class',
+      entityId: classId,
+      entityName: data.title,
+      message: 'Class updated by teacher'
+    });
+
+    res.redirect(`/teacher/chapters/classes/${chapterCode}`);
+  } catch (err) {
+    logger.error('Teacher Edit Class Error:', err.message);
+    res.redirect(`/teacher/chapters/classes/${req.params.chapterCode}`);
+  }
+});
+
+// ═══════════════════════════════════════════════════
 // ADD CLASS (teacher)
 // ═══════════════════════════════════════════════════
 router.get('/chapters/add-class/:chapterCode', verifyTeacherLogin, async (req, res) => {

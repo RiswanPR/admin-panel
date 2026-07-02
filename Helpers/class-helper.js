@@ -340,5 +340,92 @@ module.exports = {
             console.error('updateClassesOrder Error:', err.message);
             throw err;
         }
+    },
+
+    getClass: async (chapterCode, classId) => {
+        try {
+            const course = await db.get()
+                .collection(collection.COURSE_COLLECTION)
+                .findOne({ "chapters.uniqueCode": chapterCode });
+
+            if (!course) return null;
+
+            const chapter = course.chapters.find(ch => ch.uniqueCode === chapterCode);
+            if (!chapter) return null;
+
+            const classData = (chapter.classes || []).find(c => String(c._id) === String(classId));
+            if (!classData) return null;
+
+            const { decorateClass } = require('./image-url-helper');
+            return await decorateClass(classData);
+        } catch (err) {
+            console.error('getClass error:', err);
+            return null;
+        }
+    },
+
+    updateClass: async (chapterCode, classId, data, files) => {
+        try {
+            if (!String(data.title || '').trim()) {
+                throw new Error('Class title is required');
+            }
+
+            const course = await db.get()
+                .collection(collection.COURSE_COLLECTION)
+                .findOne({ "chapters.uniqueCode": chapterCode });
+
+            if (!course) throw new Error('Course not found');
+
+            const chapterIdx = course.chapters.findIndex(ch => ch.uniqueCode === chapterCode);
+            if (chapterIdx === -1) throw new Error('Chapter not found');
+
+            const chapter = course.chapters[chapterIdx];
+            const classIdx = (chapter.classes || []).findIndex(c => String(c._id) === String(classId));
+            if (classIdx === -1) throw new Error('Class not found');
+
+            const existingClass = chapter.classes[classIdx];
+            const courseType = data.courseType || 'recording';
+
+            let newThumbnail = data.thumbnailUrl || existingClass.thumbnail;
+            
+            // Video update logic if provided
+            if (files?.video?.[0]) {
+                const videoPath = files.video[0].path;
+                
+                if (courseType === 'online') {
+                    // Upload to S3
+                    const videoExt = path.extname(files.video[0].originalname) || '.mp4';
+                    const videoDest = `class-videos/${new ObjectId().toString()}${videoExt}`;
+                    const uploadedKey = await uploadFileToS3(videoPath, videoDest, files.video[0].mimetype);
+                    existingClass.videoUrl = uploadedKey;
+                    existingClass.videoId = null;
+                    existingClass.videoSource = 's3';
+                } else {
+                    // Upload to Vdocipher
+                    const vdoResponse = await vdocipherHelper.uploadVideo(videoPath, data.title);
+                    existingClass.videoId = vdoResponse.videoId;
+                    existingClass.videoUrl = null;
+                    existingClass.videoSource = 'vdocipher';
+                }
+                
+                if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+            }
+            
+            existingClass.title = data.title;
+            existingClass.description = data.description;
+            existingClass.thumbnail = newThumbnail;
+
+            const updatePath = `chapters.${chapterIdx}.classes.${classIdx}`;
+            
+            await db.get().collection(collection.COURSE_COLLECTION).updateOne(
+                { _id: course._id },
+                { $set: { [updatePath]: existingClass } }
+            );
+
+            return true;
+        } catch (err) {
+            console.error('updateClass Error:', err.message);
+            throw err;
+        }
     }
 };
