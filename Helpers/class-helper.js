@@ -199,14 +199,15 @@ module.exports = {
             }
 
             // delete thumbnail from Firebase
-            if (classData.thumbnail) {
-                try {
-                    const storagePath = extractPathFromUrl(classData.thumbnail);
-                    if (storagePath) await deleteFromS3(storagePath);
-                } catch (e) {
-                    console.warn('⚠️ Could not delete class thumbnail from Firebase:', e.message);
-                }
-            }
+            // (Disabled by request: don't delete the cover image when deleting a class)
+            // if (classData.thumbnail) {
+            //     try {
+            //         const storagePath = extractPathFromUrl(classData.thumbnail);
+            //         if (storagePath) await deleteFromS3(storagePath);
+            //     } catch (e) {
+            //         console.warn('⚠️ Could not delete class thumbnail from Firebase:', e.message);
+            //     }
+            // }
 
             // delete exercises from S3
             if (classData.exercises && Array.isArray(classData.exercises)) {
