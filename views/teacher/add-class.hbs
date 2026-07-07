@@ -255,10 +255,11 @@
     }
 
     .upload-card {
-        background: white;
+        background: var(--surface);
         border-radius: 28px;
         padding: 35px;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, .06);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
     .custom-input {
@@ -270,9 +271,9 @@
     .upload-area {
         width: 100%;
         aspect-ratio: 1/1;
-        border: 2px dashed #d3dce6;
+        border: 2px dashed var(--border);
         border-radius: 24px;
-        background: #f8fafc;
+        background: var(--surface-2);
         overflow: hidden;
         cursor: pointer;
     }
@@ -292,7 +293,7 @@
     .upload-placeholder i {
         font-size: 50px;
         margin-bottom: 15px;
-        color: #12314c;
+        color: var(--brand);
     }
 
     .preview-image {
@@ -314,14 +315,16 @@
     }
 
     .summary-card {
-        background: #f8fafc;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
         border-radius: 24px;
         padding: 28px;
         top: 20px;
     }
 
     .summary-box {
-        background: white;
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 18px;
         padding: 22px;
     }
