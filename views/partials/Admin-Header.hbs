@@ -254,7 +254,7 @@
 
     .sidebar-nav a.active {
         background: linear-gradient(135deg, var(--brand), var(--brand-2));
-        color: white !important;
+        color: var(--btn-primary-text) !important;
         border-color: transparent;
         box-shadow: 0 8px 20px var(--shadow-brand);
     }
@@ -547,8 +547,12 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-        const theme =
+        let theme =
             localStorage.getItem("zeitnah-theme") || "dark";
+            
+        if (theme === "auto") {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+        }
 
         const switcher =
             document.getElementById("themeSwitch");

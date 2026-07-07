@@ -466,16 +466,25 @@
   <script>
     (() => {
       const savedTheme = localStorage.getItem("zeitnah-theme") || "dark";
-      document.documentElement.setAttribute("data-theme", savedTheme);
+      let activeTheme = savedTheme;
+      
+      if (savedTheme === "auto") {
+        activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+      }
+      
+      document.documentElement.setAttribute("data-theme", activeTheme);
 
       window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("themeMeta").content =
-          savedTheme === "dark" ? "#0b1220" : "#f6f8fb";
+          activeTheme === "dark" ? "#0b1220" : "#f6f8fb";
       });
     })();
 
     function toggleTheme(){
-      const current = document.documentElement.getAttribute("data-theme");
+      let current = document.documentElement.getAttribute("data-theme");
+      if (current === "auto") {
+        current = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+      }
       const next = current === "dark" ? "light" : "dark";
 
       document.documentElement.setAttribute("data-theme", next);

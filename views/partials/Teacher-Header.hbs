@@ -500,7 +500,6 @@ main {
     .profile-box div { display: none; }
 }
 </style>
-</style>
 
 <script>
 function toggleTeacherSidebar(){
@@ -509,7 +508,10 @@ function toggleTeacherSidebar(){
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    const theme = localStorage.getItem("zeitnah-theme") || "dark";
+    let theme = localStorage.getItem("zeitnah-theme") || "dark";
+    if (theme === "auto") {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+    }
     const switcher = document.getElementById("themeSwitch");
     if(switcher) switcher.checked = theme === "light";
 });
