@@ -272,6 +272,43 @@ router.post('/chapters/edit-class/:chapterCode/:classId', verifyTeacherLogin, up
 });
 
 // ═══════════════════════════════════════════════════
+// DELETE CLASS (teacher)
+// ═══════════════════════════════════════════════════
+router.post('/chapters/delete-class/:chapterCode/:classId', verifyTeacherLogin, async (req, res) => {
+  try {
+    const { chapterCode, classId } = req.params;
+    
+    const course = await db.get()
+      .collection(collection.COURSE_COLLECTION)
+      .findOne({ 'chapters.uniqueCode': chapterCode });
+
+    if (!course) {
+      return res.redirect('/teacher/courses');
+    }
+
+    const owns = await teacherHelper.teacherOwnsCourse(req.session.teacher._id, course._id);
+    if (!owns) {
+      return res.status(403).send('Access Denied');
+    }
+
+    await classHelper.deleteClass(chapterCode, classId);
+
+    logAudit(req, {
+      action: 'teacher.class.delete',
+      entityType: 'class',
+      entityId: classId,
+      message: 'Class deleted by teacher',
+      metadata: { chapterId: chapterCode }
+    });
+
+    res.redirect(`/teacher/chapters/classes/${chapterCode}`);
+  } catch (err) {
+    logger.error('Teacher Delete Class Error:', err.message);
+    res.redirect(`/teacher/chapters/classes/${req.params.chapterCode}`);
+  }
+});
+
+// ═══════════════════════════════════════════════════
 // ADD CLASS (teacher)
 // ═══════════════════════════════════════════════════
 router.get('/chapters/add-class/:chapterCode', verifyTeacherLogin, async (req, res) => {
