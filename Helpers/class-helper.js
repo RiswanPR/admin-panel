@@ -18,6 +18,14 @@ module.exports = {
 
             // files.thumbnailUrl is the Firebase URL (set by route after upload)
             // files.video[0] is the multer disk file for VdoCipher
+            if (!data.thumbnailUrl) {
+                throw new Error('Thumbnail is required');
+            }
+
+            if (!files?.video?.[0]) {
+                throw new Error('Video is required');
+            }
+
             if (!data.chapterId || !String(data.title || '').trim()) {
                 throw new Error('Class title and chapter are required');
             }
@@ -30,47 +38,45 @@ module.exports = {
                 throw new Error('Chapter not found');
             }
 
-            const thumbnail = data.thumbnailUrl;   // Cover URL
+            const thumbnail = data.thumbnailUrl;   // Firebase URL
+            const videoPath = files.video[0].path;
+            const courseType = data.courseType || 'recording';
 
             let videoId = null;
             let videoUrl = null;
-            let videoSource = null;
+            let videoSource = 'vdocipher';
 
-            if (files?.video?.[0]) {
-                const videoPath = files.video[0].path;
-                const courseType = data.courseType || 'recording';
-                videoSource = 'vdocipher';
+            if (courseType === 'online') {
+                // ─── ONLINE COURSE → Upload to Amazon S3 ───
 
-                if (courseType === 'online') {
-                    // ─── ONLINE COURSE → Upload to Amazon S3 ───
-                    const ext = path.extname(files.video[0].originalname) || '.mp4';
-                    const destPath = `classes/videos/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-                    const mimeType = files.video[0].mimetype || 'video/mp4';
+                const ext = path.extname(files.video[0].originalname) || '.mp4';
+                const destPath = `classes/videos/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+                const mimeType = files.video[0].mimetype || 'video/mp4';
 
-                    videoUrl = await uploadFileToS3(videoPath, destPath, mimeType);
-                    videoSource = 's3';
-                } else {
-                    // ─── RECORDING COURSE → Upload to VdoCipher ───
-                    const uploadRes = await vdocipherHelper.uploadVideo(
-                        videoPath,
-                        data.title
+                videoUrl = await uploadFileToS3(videoPath, destPath, mimeType);
+                videoSource = 's3';
+
+            } else {
+                // ─── RECORDING COURSE → Upload to VdoCipher ───
+                const uploadRes = await vdocipherHelper.uploadVideo(
+                    videoPath,
+                    data.title
+                );
+
+                if (!uploadRes.success) {
+                    throw new Error(
+                        uploadRes.error ||
+                        'Video upload failed'
                     );
-
-                    if (!uploadRes.success) {
-                        throw new Error(
-                            uploadRes.error ||
-                            'Video upload failed'
-                        );
-                    }
-
-                    videoId = uploadRes.videoId;
-                    videoSource = 'vdocipher';
                 }
 
-                // remove temp uploaded video
-                if (fs.existsSync(videoPath)) {
-                    fs.unlinkSync(videoPath);
-                }
+                videoId = uploadRes.videoId;
+                videoSource = 'vdocipher';
+            }
+
+            // remove temp uploaded video
+            if (fs.existsSync(videoPath)) {
+                fs.unlinkSync(videoPath);
             }
 
             const chapter = targetCourse.chapters.find(ch => ch.uniqueCode === data.chapterId);
