@@ -203,9 +203,19 @@
 
             </div>
 
+    </div>
+    <div id="uploadOverlay">
+        <div class="loader-card">
+            <div class="loader-circle mb-4"></div>
+            <h3 class="fw-bold mb-2 text-white">Updating Exercise</h3>
+            <p id="loaderStage" class="mb-0 text-white-50">Preparing update...</p>
+            <div class="progress-shell">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text">0%</div>
+            <div class="loader-note">Large exercise files may take a few moments. Please keep this page open.</div>
         </div>
     </div>
-
 </div>
 
 
@@ -329,6 +339,68 @@
         background: #f3e5f5;
         color: #6f42c1;
     }
+#uploadOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 18, 32, .82);
+    backdrop-filter: blur(8px);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.loader-card {
+    width: 100%;
+    max-width: 520px;
+    background: rgba(23, 37, 54, .95);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 28px;
+    padding: 40px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+}
+.loader-circle {
+    width: 80px;
+    height: 80px;
+    margin: auto;
+    border-radius: 50%;
+    border: 5px solid rgba(255, 255, 255, .18);
+    border-top: 5px solid #6f42c1;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.progress-shell {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, .1);
+    border-radius: 30px;
+    overflow: hidden;
+    margin-top: 25px;
+}
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #a855f7, #6f42c1);
+    transition: width .35s;
+}
+.progress-text {
+    margin-top: 14px;
+    font-size: 15px;
+    color: white;
+    opacity: .9;
+    font-weight: 700;
+}
+.loader-note {
+    margin-top: 18px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, .6);
+}
 </style>
 
 
@@ -467,9 +539,116 @@
         uploadStatus.innerText = "New file selected";
     });
 
-    exerciseForm.addEventListener("submit", function () {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML =
-            '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatTime(secs) {
+    if (!secs || secs < 0 || !isFinite(secs)) return '0s';
+    if (secs < 60) return Math.ceil(secs) + 's';
+    const mins = Math.floor(secs / 60);
+    const rem = Math.ceil(secs % 60);
+    return `${mins}m ${rem}s`;
+}
+
+const exerciseForm = document.getElementById("exerciseForm");
+const uploadOverlay = document.getElementById("uploadOverlay");
+const loaderStage = document.getElementById("loaderStage");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+
+exerciseForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    clearError();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+    uploadOverlay.style.display = "flex";
+    loaderStage.innerText = "Preparing update...";
+    progressFill.style.width = "0%";
+    progressText.innerText = "0%";
+
+    const formData = new FormData(exerciseForm);
+    const xhr = new XMLHttpRequest();
+    let uploadStartTime = Date.now();
+
+    xhr.upload.addEventListener("progress", (ev) => {
+        if (!ev.lengthComputable) return;
+
+        const pct = (ev.loaded / ev.total) * 85;
+        const elapsed = (Date.now() - uploadStartTime) / 1000;
+        const speed = ev.loaded / (elapsed || 0.001);
+        const remaining = (ev.total - ev.loaded) / (speed || 1);
+
+        progressFill.style.width = pct.toFixed(1) + "%";
+        progressText.innerText = Math.floor(pct) + "%";
+
+        if (pct < 5) {
+            loaderStage.innerText = "Starting update...";
+        } else if (pct < 40) {
+            loaderStage.innerText = `Uploading file — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)} · ${formatBytes(speed)}/s`;
+        } else if (pct < 80) {
+            loaderStage.innerText = `Uploading file — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)} · ~${formatTime(remaining)} left`;
+        } else {
+            loaderStage.innerText = "Almost done uploading...";
+        }
     });
+
+    xhr.upload.addEventListener("load", () => {
+        progressFill.style.width = "85%";
+        progressText.innerText = "85%";
+        loaderStage.innerText = "Upload complete · Server is processing & updating Amazon S3...";
+
+        let serverPct = 85;
+        window._serverTimer = setInterval(() => {
+            serverPct += Math.random() * 1.5;
+            if (serverPct > 95) serverPct = 95;
+            progressFill.style.width = serverPct.toFixed(1) + "%";
+            progressText.innerText = Math.floor(serverPct) + "%";
+        }, 800);
+    });
+
+    xhr.addEventListener("load", () => {
+        clearInterval(window._serverTimer);
+
+        let data;
+        try {
+            data = JSON.parse(xhr.responseText);
+        } catch {
+            data = null;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300 && (data?.success || !data)) {
+            progressFill.style.width = "100%";
+            progressText.innerText = "100%";
+            loaderStage.innerText = "✅ Exercise updated successfully!";
+            progressFill.style.background = "linear-gradient(90deg, #34d399, #10b981)";
+
+            setTimeout(() => {
+                window.location.href = data?.redirect || window.location.href;
+            }, 600);
+        } else {
+            uploadOverlay.style.display = "none";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Update Exercise';
+            showError(data?.error || 'Update failed. Please try again.');
+        }
+    });
+
+    xhr.addEventListener("error", () => {
+        clearInterval(window._serverTimer);
+        uploadOverlay.style.display = "none";
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Update Exercise';
+        showError("Network error. Please check your connection and try again.");
+    });
+
+    xhr.open("POST", exerciseForm.action);
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    xhr.send(formData);
+});
 </script>

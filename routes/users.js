@@ -1321,13 +1321,18 @@ router.post(
         }
       });
 
-      res.redirect(
-        '/chapters/exercises/' +
-        req.body.chapterId + '/' + req.body.classId
-      );
+      const redirectUrl = '/chapters/exercises/' + req.body.chapterId + '/' + req.body.classId;
+      if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        return res.json({ success: true, redirect: redirectUrl });
+      }
+
+      res.redirect(redirectUrl);
 
     } catch (err) {
       logger.info('Add Exercise Error:', err.message);
+      if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        return res.status(500).json({ success: false, error: err.message || 'Failed to add exercise' });
+      }
       res.send('Failed to add exercise');
     }
   }
@@ -1482,13 +1487,18 @@ router.post(
         }
       });
 
-      res.redirect(
-        '/chapters/exercises/' +
-        req.body.chapterId + '/' + req.body.classId
-      );
+      const redirectUrl = '/chapters/exercises/' + req.body.chapterId + '/' + req.body.classId;
+      if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        return res.json({ success: true, redirect: redirectUrl });
+      }
+
+      res.redirect(redirectUrl);
 
     } catch (err) {
       logger.info('Edit Exercise Error:', err.message);
+      if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        return res.status(500).json({ success: false, error: err.message || 'Failed to edit exercise' });
+      }
       res.redirect(
         '/chapters/exercises/' +
         req.body.chapterId + '/' + req.body.classId
