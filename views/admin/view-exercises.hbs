@@ -44,7 +44,7 @@
     <!-- DASHBOARD -->
     <div class="row g-4 mb-4">
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card stat-dark">
                 <div>
                     <small>Total Files</small>
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card stat-red">
                 <div>
                     <small>PDF</small>
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card stat-green">
                 <div>
                     <small>Excel</small>
@@ -74,13 +74,23 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card stat-blue">
                 <div>
                     <small>AutoCAD</small>
                     <h2 id="cadCount">0</h2>
                 </div>
                 <i class="fa-solid fa-drafting-compass stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg col-md-6">
+            <div class="stat-card stat-purple">
+                <div>
+                    <small>ZIP</small>
+                    <h2 id="zipCount">0</h2>
+                </div>
+                <i class="fa-solid fa-file-zipper stat-icon"></i>
             </div>
         </div>
 
@@ -132,6 +142,7 @@
                             {{#if (eq this.type 'pdf')}}pdf-bg{{/if}}
                             {{#if (eq this.type 'excel')}}excel-bg{{/if}}
                             {{#if (eq this.type 'autocad')}}cad-bg{{/if}}
+                            {{#if (eq this.type 'zip')}}zip-bg{{/if}}
                         ">
                             {{#if (eq this.type "pdf")}}
                                 <i class="fa-solid fa-file-pdf"></i>
@@ -143,6 +154,10 @@
 
                             {{#if (eq this.type "autocad")}}
                                 <i class="fa-solid fa-drafting-compass"></i>
+                            {{/if}}
+
+                            {{#if (eq this.type "zip")}}
+                                <i class="fa-solid fa-file-zipper"></i>
                             {{/if}}
                         </div>
 
@@ -158,6 +173,7 @@
             {{#if (eq this.type 'pdf')}}pdf-chip{{/if}}
             {{#if (eq this.type 'excel')}}excel-chip{{/if}}
             {{#if (eq this.type 'autocad')}}cad-chip{{/if}}
+            {{#if (eq this.type 'zip')}}zip-chip{{/if}}
         ">
             {{this.type}}
         </span>
@@ -269,6 +285,7 @@
                                 {{#if (eq this.type 'pdf')}}pdf-chip{{/if}}
                                 {{#if (eq this.type 'excel')}}excel-chip{{/if}}
                                 {{#if (eq this.type 'autocad')}}cad-chip{{/if}}
+                                {{#if (eq this.type 'zip')}}zip-chip{{/if}}
                             ">
                                 {{this.type}}
                             </span>
@@ -399,6 +416,7 @@
 .stat-red{background:linear-gradient(135deg,#ff8a8a,#dc3545);}
 .stat-green{background:linear-gradient(135deg,#9fd5b2,#70bf8e);}
 .stat-blue{background:linear-gradient(135deg,#6cbcff,#1976d2);}
+.stat-purple{background:linear-gradient(135deg,#c084fc,#6f42c1);}
 .stat-icon{font-size:34px;}
 
 .toolbar-card{
@@ -468,6 +486,7 @@
 .pdf-bg{background:#dc3545;}
 .excel-bg{background:#198754;}
 .cad-bg{background:#1976d2;}
+.zip-bg{background:#6f42c1;}
 
 .exercise-body{
     padding:22px;
@@ -491,6 +510,10 @@
 .cad-chip{
     background:#e3f2ff;
     color:#1976d2;
+}
+.zip-chip{
+    background:#f3e5f5;
+    color:#6f42c1;
 }
 
 .premium-table{
@@ -622,6 +645,7 @@ function updateDashboard(){
     let pdf=0;
     let excel=0;
     let cad=0;
+    let zip=0;
 
     document.querySelectorAll(".exercise-card-wrap").forEach(card=>{
         let type=card.dataset.type;
@@ -629,11 +653,13 @@ function updateDashboard(){
         if(type==="pdf") pdf++;
         if(type==="excel") excel++;
         if(type==="autocad") cad++;
+        if(type==="zip") zip++;
     });
 
     pdfCount.innerText=pdf;
     excelCount.innerText=excel;
     cadCount.innerText=cad;
+    if(document.getElementById("zipCount")) document.getElementById("zipCount").innerText=zip;
 }
 
 function openFile(filePath,type){

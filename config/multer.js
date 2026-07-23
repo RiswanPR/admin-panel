@@ -58,11 +58,11 @@ const videoFilter = (req, file, cb) => {
 };
 
 const exerciseFilter = (req, file, cb) => {
-    const allowed = /pdf|xls|xlsx|dwg/i;
+    const allowed = /pdf|xls|xlsx|dwg|zip/i;
     const ext     = path.extname(file.originalname).replace('.', '').toLowerCase();
 
     if (allowed.test(ext)) return cb(null, true);
-    cb(new Error('Only PDF / Excel / DWG allowed'));
+    cb(new Error('Only PDF / Excel / DWG / ZIP allowed'));
 };
 
 

@@ -33,7 +33,7 @@
     <!-- DASHBOARD STATS -->
     <div class="row g-4 mb-4">
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card-premium stat-total">
                 <div class="stat-info">
                     <small>Total Files</small>
@@ -45,7 +45,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card-premium stat-pdf">
                 <div class="stat-info">
                     <small>PDF Documents</small>
@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card-premium stat-excel">
                 <div class="stat-info">
                     <small>Excel Sheets</small>
@@ -69,7 +69,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg col-md-6">
             <div class="stat-card-premium stat-cad">
                 <div class="stat-info">
                     <small>AutoCAD Drawings</small>
@@ -77,6 +77,18 @@
                 </div>
                 <div class="stat-icon-wrap">
                     <i class="fa-solid fa-drafting-compass"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg col-md-6">
+            <div class="stat-card-premium stat-zip">
+                <div class="stat-info">
+                    <small>ZIP Archives</small>
+                    <h2 id="zipCount">0</h2>
+                </div>
+                <div class="stat-icon-wrap">
+                    <i class="fa-solid fa-file-zipper"></i>
                 </div>
             </div>
         </div>
@@ -116,6 +128,7 @@
                             {{#if (eq this.type 'pdf')}}pdf-bg{{/if}}
                             {{#if (eq this.type 'excel')}}excel-bg{{/if}}
                             {{#if (eq this.type 'autocad')}}cad-bg{{/if}}
+                            {{#if (eq this.type 'zip')}}zip-bg{{/if}}
                         ">
                             {{#if (eq this.type "pdf")}}
                                 <i class="fa-solid fa-file-pdf"></i>
@@ -125,6 +138,9 @@
                             {{/if}}
                             {{#if (eq this.type "autocad")}}
                                 <i class="fa-solid fa-drafting-compass"></i>
+                            {{/if}}
+                            {{#if (eq this.type "zip")}}
+                                <i class="fa-solid fa-file-zipper"></i>
                             {{/if}}
                         </div>
                     </div>
@@ -138,6 +154,7 @@
                                 {{#if (eq this.type 'pdf')}}pdf-badge{{/if}}
                                 {{#if (eq this.type 'excel')}}excel-badge{{/if}}
                                 {{#if (eq this.type 'autocad')}}cad-badge{{/if}}
+                                {{#if (eq this.type 'zip')}}zip-badge{{/if}}
                             ">
                                 {{this.type}}
                             </span>
@@ -191,6 +208,7 @@
                                 {{#if (eq this.type 'pdf')}}pdf-badge{{/if}}
                                 {{#if (eq this.type 'excel')}}excel-badge{{/if}}
                                 {{#if (eq this.type 'autocad')}}cad-badge{{/if}}
+                                {{#if (eq this.type 'zip')}}zip-badge{{/if}}
                             ">
                                 {{this.type}}
                             </span>
@@ -330,6 +348,7 @@ html[data-theme="dark"] .stat-total .stat-icon-wrap { background: rgba(159, 213,
 .stat-pdf .stat-icon-wrap { background: rgba(220, 53, 69, 0.12); color: #dc3545; }
 .stat-excel .stat-icon-wrap { background: rgba(25, 135, 84, 0.12); color: #198754; }
 .stat-cad .stat-icon-wrap { background: rgba(25, 118, 210, 0.12); color: #1976d2; }
+.stat-zip .stat-icon-wrap { background: rgba(111, 66, 193, 0.12); color: #6f42c1; }
 
 /* Exercise Card */
 .exercise-card {
@@ -375,6 +394,7 @@ html[data-theme="dark"] .stat-total .stat-icon-wrap { background: rgba(159, 213,
 .pdf-bg { background: linear-gradient(135deg, #ff6b6b, #dc3545); }
 .excel-bg { background: linear-gradient(135deg, #51cf66, #198754); }
 .cad-bg { background: linear-gradient(135deg, #339af0, #1976d2); }
+.zip-bg { background: linear-gradient(135deg, #c084fc, #6f42c1); }
 
 .exercise-body {
     padding: 22px;
@@ -408,6 +428,7 @@ html[data-theme="dark"] .stat-total .stat-icon-wrap { background: rgba(159, 213,
 .pdf-badge { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
 .excel-badge { background: rgba(25, 135, 84, 0.1); color: #198754; }
 .cad-badge { background: rgba(25, 118, 210, 0.1); color: #1976d2; }
+.zip-badge { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
 
 /* Buttons Custom */
 .btn-view-file {
@@ -580,6 +601,7 @@ function updateDashboard(){
     let pdf=0;
     let excel=0;
     let cad=0;
+    let zip=0;
 
     document.querySelectorAll(".exercise-card-wrap").forEach(card=>{
         let type=card.dataset.type;
@@ -587,11 +609,13 @@ function updateDashboard(){
         if(type==="pdf") pdf++;
         if(type==="excel") excel++;
         if(type==="autocad") cad++;
+        if(type==="zip") zip++;
     });
 
     pdfCount.innerText=pdf;
     excelCount.innerText=excel;
     cadCount.innerText=cad;
+    if(document.getElementById("zipCount")) document.getElementById("zipCount").innerText=zip;
 }
 
 function openFile(filePath,type){

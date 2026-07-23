@@ -115,7 +115,7 @@
                                         </h5>
 
                                         <small>
-                                            PDF / XLS / XLSX / DWG
+                                            PDF / XLS / XLSX / DWG / ZIP
                                         </small>
                                     </div>
 
@@ -137,7 +137,7 @@
 
                                     </div>
 
-                                    <input type="file" name="file" id="fileInput" hidden accept=".pdf,.xls,.xlsx,.dwg" onclick="event.stopPropagation()">
+                                    <input type="file" name="file" id="fileInput" hidden accept=".pdf,.xls,.xlsx,.dwg,.zip" onclick="event.stopPropagation()">
 
                                 </div>
                             </div>
@@ -326,6 +326,11 @@
         background: #e3f2ff;
         color: #1976d2;
     }
+
+    .zip-chip {
+        background: #f3e5f5;
+        color: #6f42c1;
+    }
 </style>
 
 
@@ -354,6 +359,7 @@
         if (type === "PDF") cls += " pdf-chip";
         if (type === "EXCEL") cls += " excel-chip";
         if (type === "AUTOCAD") cls += " cad-chip";
+        if (type === "ZIP") cls += " zip-chip";
 
         el.className = cls;
         el.innerText = type;
@@ -383,6 +389,13 @@
             applyType("AUTOCAD", "currentType");
             applyType("AUTOCAD", "summaryType");
         }
+
+        if (current === "zip") {
+            currentIcon.style.background = "#6f42c1";
+            currentIcon.innerHTML = '<i class="fa-solid fa-file-zipper"></i>';
+            applyType("ZIP", "currentType");
+            applyType("ZIP", "summaryType");
+        }
     })();
 
     exerciseTitle.addEventListener("input", function () {
@@ -397,10 +410,10 @@
         if (!file) return;
 
         const ext = file.name.split(".").pop().toLowerCase();
-        const allowed = ["pdf", "xls", "xlsx", "dwg"];
+        const allowed = ["pdf", "xls", "xlsx", "dwg", "zip"];
 
         if (!allowed.includes(ext)) {
-            showError("Only PDF / XLS / XLSX / DWG allowed");
+            showError("Only PDF / XLS / XLSX / DWG / ZIP allowed");
             fileInput.value = "";
             return;
         }
@@ -431,6 +444,12 @@
             type = "AUTOCAD";
             icon = "fa-drafting-compass";
             bg = "#1976d2";
+        }
+
+        if (ext === "zip") {
+            type = "ZIP";
+            icon = "fa-file-zipper";
+            bg = "#6f42c1";
         }
 
         uploadPlaceholder.classList.add("d-none");

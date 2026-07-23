@@ -974,6 +974,7 @@ module.exports = {
                 if (ext === 'pdf')                    newType = 'pdf';
                 else if (ext === 'xls' || ext === 'xlsx') newType = 'excel';
                 else if (ext === 'dwg')               newType = 'autocad';
+                else if (ext === 'zip')               newType = 'zip';
 
                 // Delete old exercise file from Firebase
                 try {

@@ -1281,6 +1281,7 @@ router.post(
       if (ext === 'pdf') type = 'pdf';
       else if (ext === 'xls' || ext === 'xlsx') type = 'excel';
       else if (ext === 'dwg') type = 'autocad';
+      else if (ext === 'zip') type = 'zip';
 
       if (!type) {
         return res.status(400).send('Unsupported exercise file type');
