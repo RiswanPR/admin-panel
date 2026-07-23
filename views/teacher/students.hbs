@@ -196,7 +196,7 @@
     box-shadow:0 12px 30px rgba(0,0,0,.08);
 }
 .stat-dark{background:linear-gradient(135deg,var(--teacher-accent-dark),#0b2237);}
-.stat-green{background:linear-gradient(135deg,var(--teacher-accent),#70bf8e); color:#12314c;}
+.stat-green{background:linear-gradient(135deg,var(--teacher-accent),#70bf8e); color:var(--stat-gradient-text);}
 .stat-red{background:linear-gradient(135deg,#ff8a8a,#dc3545);}
 .stat-icon{font-size:34px; opacity: 0.8;}
 
@@ -233,13 +233,16 @@
 .view-toggle button{
     width:50px;
     height:50px;
-    border:none;
+    border:1px solid var(--border);
     border-radius:12px;
-    background:#edf2f7;
+    background:var(--surface-2);
+    color:var(--text);
+    transition:.2s;
 }
 .view-toggle button.active{
     background:var(--teacher-accent-dark);
     color:white;
+    border:none;
 }
 
 .student-card{
@@ -280,12 +283,12 @@
     font-weight:700;
 }
 .active-pill{
-    background:#dff7e7;
-    color:#198754;
+    background:var(--chip-green-bg);
+    color:var(--chip-green-text);
 }
 .blocked-pill{
-    background:#ffe3e3;
-    color:#dc3545;
+    background:var(--chip-red-bg);
+    color:var(--chip-red-text);
 }
 
 .course-chip{
@@ -301,7 +304,7 @@
 .progress-custom{
     height:8px;
     border-radius:30px;
-    background:#edf2f7;
+    background:var(--progress-bg);
 }
 
 .premium-table{

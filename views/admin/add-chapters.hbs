@@ -211,14 +211,18 @@
 .custom-input{
     border-radius:14px;
     min-height:56px;
-    border:1px solid #dee2e6;
+    border:1px solid var(--input-border);
     padding:12px 18px;
+    background:var(--surface);
+    color:var(--text);
 }
 .custom-textarea{
     border-radius:14px;
     padding:18px;
-    border:1px solid #dee2e6;
+    border:1px solid var(--input-border);
     resize:none;
+    background:var(--surface);
+    color:var(--text);
 }
 
 .upload-area{
@@ -226,8 +230,8 @@
     aspect-ratio:1/1;
     border-radius:24px;
     overflow:hidden;
-    background:#f8fafc;
-    border:2px dashed #cfd8e3;
+    background:var(--preview-bg);
+    border:2px dashed var(--border);
     display:block;
     cursor:pointer;
     position:relative;
@@ -239,7 +243,7 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    color:#12314c;
+    color:var(--text);
     text-align:center;
 }
 .upload-placeholder i{
@@ -253,7 +257,8 @@
 }
 
 .preview-card{
-    background:#f8fafc;
+    background:var(--preview-bg);
+    border:1px solid var(--border);
     border-radius:24px;
     padding:28px;
     top:20px;
@@ -268,8 +273,8 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    background:#e9eef5;
-    color:#777;
+    background:var(--surface-2);
+    color:var(--muted);
 }
 .summary-image{
     object-fit:cover;
@@ -278,14 +283,14 @@
     display:inline-block;
     padding:7px 14px;
     border-radius:12px;
-    background:#eef5fb;
-    color:#12314c;
+    background:var(--chip-neutral-bg);
+    color:var(--chip-neutral-text);
     font-size:13px;
     font-weight:700;
 }
 .order-chip{
-    background:#fff3d4;
-    color:#b8860b;
+    background:var(--chip-yellow-bg);
+    color:var(--chip-yellow-text);
 }
 </style>
 

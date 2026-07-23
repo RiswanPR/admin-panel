@@ -205,14 +205,18 @@
 .custom-input{
     border-radius:14px;
     min-height:56px;
-    border:1px solid #dee2e6;
+    border:1px solid var(--input-border);
     padding:12px 18px;
+    background:var(--surface);
+    color:var(--text);
 }
 .custom-textarea{
     border-radius:14px;
     padding:18px;
-    border:1px solid #dee2e6;
+    border:1px solid var(--input-border);
     resize:none;
+    background:var(--surface);
+    color:var(--text);
 }
 
 .upload-area{
@@ -250,7 +254,8 @@
 }
 
 .preview-card{
-    background:#f8fafc;
+    background:var(--preview-bg);
+    border:1px solid var(--border);
     border-radius:24px;
     padding:28px;
     top:20px;
@@ -265,14 +270,14 @@
     display:inline-block;
     padding:7px 14px;
     border-radius:12px;
-    background:#eef5fb;
-    color:#12314c;
+    background:var(--chip-neutral-bg);
+    color:var(--chip-neutral-text);
     font-size:13px;
     font-weight:700;
 }
 .order-chip{
-    background:#fff3d4;
-    color:#b8860b;
+    background:var(--chip-yellow-bg);
+    color:var(--chip-yellow-text);
 }
 </style>
 

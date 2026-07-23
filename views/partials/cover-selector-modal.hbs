@@ -40,7 +40,7 @@
     border: 2px solid transparent;
     cursor: pointer;
     transition: .2s;
-    background: #fff;
+    background: var(--surface);
 }
 .cover-select-card:hover {
     border-color: #9FD5B2;
@@ -54,7 +54,7 @@
     width: 100%;
     aspect-ratio: 16/9;
     object-fit: cover;
-    background: #eee;
+    background: var(--surface-2);
 }
 .cover-select-info {
     padding: 10px;
@@ -65,10 +65,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text);
 }
 .cover-select-info small {
     font-size: 11px;
-    color: #6c757d;
+    color: var(--muted);
 }
 </style>
 

@@ -380,7 +380,8 @@
         height: 42px;
         border: none;
         border-radius: 50%;
-        background: white;
+        background: var(--surface);
+        color: var(--text);
         font-size: 24px;
         z-index: 2;
     }
@@ -444,12 +445,14 @@
     }
 
     .toolbar-card {
-        background: white;
+        background: var(--surface);
         padding: 18px;
         border-radius: 18px;
         display: flex;
         justify-content: space-between;
         gap: 20px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
     }
 
     .search-box {
@@ -459,7 +462,9 @@
         gap: 12px;
         padding: 14px 18px;
         border-radius: 14px;
-        background: #f7f9fc;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--muted);
     }
 
     .search-box input {
@@ -467,6 +472,7 @@
         outline: none;
         width: 100%;
         background: none;
+        color: var(--text);
     }
 
     .view-toggle {
@@ -477,20 +483,25 @@
     .view-toggle button {
         width: 50px;
         height: 50px;
-        border: none;
+        border: 1px solid var(--border);
         border-radius: 12px;
+        background: var(--surface-2);
+        color: var(--text);
+        transition: .2s;
     }
 
     .view-toggle .active {
-        background: #12314c;
-        color: white;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: var(--btn-primary-text);
+        border: none;
     }
 
     .class-card {
-        background: white;
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 24px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+        box-shadow: var(--shadow);
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -516,8 +527,8 @@
         display: inline-block;
         padding: 7px 14px;
         border-radius: 12px;
-        background: white;
-        color: #12314c;
+        background: var(--surface);
+        color: var(--text);
         font-size: 13px;
         font-weight: 700;
     }
@@ -539,13 +550,13 @@
     }
 
     .order-chip {
-        background: #eaf2ff;
-        color: #12314c;
+        background: var(--chip-blue-bg);
+        color: var(--chip-blue-text);
     }
 
     .duration-chip {
-        background: #dff7e7;
-        color: #198754;
+        background: var(--chip-green-bg);
+        color: var(--chip-green-text);
     }
 
     .class-title {
@@ -561,14 +572,15 @@
     }
 
     .premium-table {
-        background: white;
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 18px;
         overflow: hidden;
     }
 
     .premium-table thead {
-        background: #12314c;
-        color: white;
+        background: var(--surface-2);
+        color: var(--text);
     }
 
     .premium-table th,
@@ -584,14 +596,15 @@
     }
 
     .empty-box {
-        background: white;
+        background: var(--surface);
+        border: 1px solid var(--border);
         padding: 70px 20px;
         border-radius: 24px;
     }
 
     .empty-box i {
         font-size: 55px;
-        color: #12314c;
+        color: var(--brand);
         margin-bottom: 20px;
     }
 

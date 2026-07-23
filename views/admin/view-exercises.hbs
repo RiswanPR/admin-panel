@@ -432,15 +432,18 @@
     display:flex;
     align-items:center;
     gap:12px;
-    background:#f7f9fc;
+    background:var(--surface-2);
+    border:1px solid var(--border);
     padding:14px 18px;
     border-radius:14px;
+    color:var(--muted);
 }
 .search-box input{
     width:100%;
     border:none;
     outline:none;
     background:none;
+    color:var(--text);
 }
 .view-toggle{
     display:flex;
@@ -449,12 +452,16 @@
 .view-toggle button{
     width:50px;
     height:50px;
-    border:none;
+    border:1px solid var(--border);
     border-radius:12px;
+    background:var(--surface-2);
+    color:var(--text);
+    transition:.2s;
 }
 .view-toggle .active{
-    background:var(--brand);
-    color:var(--surface);
+    background:linear-gradient(135deg, var(--brand), var(--brand-2));
+    color:var(--btn-primary-text);
+    border:none;
 }
 
 .exercise-card{
@@ -500,30 +507,31 @@
     text-transform:uppercase;
 }
 .pdf-chip{
-    background:#ffe3e3;
-    color:#dc3545;
+    background:var(--chip-red-bg);
+    color:var(--chip-red-text);
 }
 .excel-chip{
-    background:#dff7e7;
-    color:#198754;
+    background:var(--chip-green-bg);
+    color:var(--chip-green-text);
 }
 .cad-chip{
-    background:#e3f2ff;
-    color:#1976d2;
+    background:var(--chip-blue-bg);
+    color:var(--chip-blue-text);
 }
 .zip-chip{
-    background:#f3e5f5;
-    color:#6f42c1;
+    background:var(--chip-purple-bg);
+    color:var(--chip-purple-text);
 }
 
 .premium-table{
     background:var(--surface);
     border-radius:18px;
     overflow:hidden;
+    border:1px solid var(--border);
 }
 .premium-table thead{
-    background:var(--brand);
-    color:var(--surface);
+    background:var(--surface-2);
+    color:var(--text);
 }
 .premium-table th,
 .premium-table td{
@@ -568,7 +576,8 @@
     height:45px;
     border:none;
     border-radius:50%;
-    background:#f1f3f5;
+    background:var(--surface-2);
+    color:var(--text);
 }
 #pdfViewer{
     width:100%;
