@@ -12,6 +12,7 @@
 const { S3Client, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const fs = require('fs');
 
 if (
   !process.env.AWS_REGION ||
@@ -47,8 +48,6 @@ const getPublicUrl = (key) => {
 const normalizeKey = (destPath) => String(destPath || '')
   .replace(/^\/+/, '')
   .replace(/\\/g, '/');
-
-const fs = require('fs');
 
 /**
  * Upload a Buffer, Stream, or File Path to Amazon S3.
@@ -190,8 +189,6 @@ const getS3ReadUrl = async (value, options = {}) => {
  * @param {string} mimeType   - MIME type, e.g. "video/mp4"
  * @returns {Promise<string>} S3 object key
  */
-const fs = require('fs');
-
 const uploadFileToS3 = async (filePath, destPath, mimeType) => {
   try {
     const fileStream = fs.createReadStream(filePath);
