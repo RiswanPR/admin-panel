@@ -25,6 +25,7 @@ const ensureFolder = (folder) => {
 };
 
 ensureFolder('./temp/videos');
+ensureFolder('./temp/exercises');
 
 
 // ===============================
@@ -102,12 +103,15 @@ const uploadVideo = multer({
 
 
 // ===============================
-// EXERCISE UPLOAD (memory → S3)
+// EXERCISE UPLOAD (disk → S3)
 // ===============================
 const uploadExercise = multer({
-    storage:    memStorage,
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => cb(null, './temp/exercises'),
+        filename:    (req, file, cb) => cb(null, makeName(file))
+    }),
     fileFilter: exerciseFilter,
-    limits:     { fileSize: 100 * 1024 * 1024 }  // 100 MB
+    limits:     { fileSize: 5 * 1024 * 1024 * 1024 }  // 5 GB
 });
 
 

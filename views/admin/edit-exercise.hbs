@@ -418,8 +418,8 @@
             return;
         }
 
-        if (file.size > 20 * 1024 * 1024) {
-            showError("Max file size is 20MB");
+        if (file.size > 5 * 1024 * 1024 * 1024) {
+            showError("Max file size is 5GB");
             fileInput.value = "";
             return;
         }

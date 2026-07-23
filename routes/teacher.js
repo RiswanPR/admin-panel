@@ -869,7 +869,7 @@ router.post(
 
       const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
       const fileUrl = await uploadToS3(
-        req.file.buffer,
+        req.file.path || req.file.buffer,
         destPath,
         req.file.mimetype
       );
@@ -954,7 +954,7 @@ router.post(
         const ext = path.extname(req.file.originalname).replace('.', '').toLowerCase();
         const destPath = `exercises/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
         const newUrl = await uploadToS3(
-          req.file.buffer,
+          req.file.path || req.file.buffer,
           destPath,
           req.file.mimetype
         );

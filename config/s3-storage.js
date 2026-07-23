@@ -48,23 +48,33 @@ const normalizeKey = (destPath) => String(destPath || '')
   .replace(/^\/+/, '')
   .replace(/\\/g, '/');
 
+const fs = require('fs');
+
 /**
- * Upload a Buffer to Amazon S3.
+ * Upload a Buffer, Stream, or File Path to Amazon S3.
  *
- * @param {Buffer} buffer     - file data
+ * @param {Buffer|Readable|string} bufferOrStreamOrPath - file data, stream, or file path on disk
  * @param {string} destPath   - storage path, e.g. "course-images/abc123.jpg"
  * @param {string} mimeType   - MIME type, e.g. "image/jpeg"
  * @returns {Promise<string>} S3 object key
  */
-const uploadToS3 = async (buffer, destPath, mimeType) => {
+const uploadToS3 = async (bufferOrStreamOrPath, destPath, mimeType) => {
+  let shouldUnlink = false;
   try {
     const key = normalizeKey(destPath);
+    let body = bufferOrStreamOrPath;
+
+    if (typeof bufferOrStreamOrPath === 'string') {
+      body = fs.createReadStream(bufferOrStreamOrPath);
+      shouldUnlink = true;
+    }
+
     const upload = new Upload({
       client: s3Client,
       params: {
         Bucket: bucketName,
         Key: key,
-        Body: buffer,
+        Body: body,
         ContentType: mimeType || 'application/octet-stream',
         CacheControl: 'public, max-age=31536000',
       },
@@ -75,6 +85,10 @@ const uploadToS3 = async (buffer, destPath, mimeType) => {
     return key;
   } catch (err) {
     throw err;
+  } finally {
+    if (shouldUnlink && typeof bufferOrStreamOrPath === 'string' && fs.existsSync(bufferOrStreamOrPath)) {
+      fs.unlink(bufferOrStreamOrPath, () => {});
+    }
   }
 };
 
