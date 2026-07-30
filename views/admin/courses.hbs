@@ -163,6 +163,14 @@
                             </button>
                         </div>
 
+                        {{#if ../isSuperuser}}
+                        <div class="mt-2">
+                            <button class="btn btn-outline-secondary btn-sm w-100 backup-btn" onclick="downloadBackup('{{this._id}}', '{{this.name}}')">
+                                <i class="fa-solid fa-cloud-arrow-down me-1"></i> Download Backup
+                            </button>
+                        </div>
+                        {{/if}}
+
                     </div>
 
                 </div>
@@ -273,6 +281,12 @@
                             <button class="btn btn-danger btn-sm" onclick="deleteCourse('{{this._id}}')">
                                 Delete
                             </button>
+
+                            {{#if ../isSuperuser}}
+                            <button class="btn btn-outline-secondary btn-sm backup-btn" onclick="downloadBackup('{{this._id}}', '{{this.name}}')" title="Download Backup">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                            </button>
+                            {{/if}}
                         </td>
 
                     </tr>
@@ -509,6 +523,20 @@
     .sortable-chosen {
         box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
     }
+
+    .backup-btn {
+        border-color: var(--border);
+        color: var(--muted);
+        font-size: 13px;
+        transition: all .2s ease;
+    }
+    .backup-btn:hover {
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: white;
+        border-color: transparent;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -635,6 +663,50 @@
         } catch (err) {
             Swal.fire("Error", "Something went wrong", "error");
         }
+    }
+
+    async function downloadBackup(courseId, courseName) {
+        const result = await Swal.fire({
+            title: 'Download Course Backup?',
+            html: `<p style="margin-bottom:8px;">This will generate a ZIP file containing all course assets:</p>
+                   <ul style="text-align:left;font-size:14px;margin:0 auto;max-width:280px;">
+                     <li>Course & chapter images</li>
+                     <li>Class thumbnails & videos</li>
+                     <li>Exercise files</li>
+                   </ul>
+                   <p style="margin-top:12px;font-size:13px;color:#888;">This may take a while for large courses.</p>`,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--brand, #4f46e5)',
+            confirmButtonText: '<i class="fa-solid fa-download me-1"></i> Download',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!result.isConfirmed) return;
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+        });
+
+        Toast.fire({
+            icon: 'info',
+            title: 'Preparing backup…'
+        });
+
+        // Trigger download via hidden iframe to avoid navigating away
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = '/course/' + courseId + '/backup';
+        document.body.appendChild(iframe);
+
+        // Clean up iframe after a generous timeout
+        setTimeout(() => {
+            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        }, 5 * 60 * 1000);
     }
 
     async function saveNewOrder(ids) {

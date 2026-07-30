@@ -214,6 +214,33 @@ const uploadFileToS3 = async (filePath, destPath, mimeType) => {
   }
 };
 
+/**
+ * Get a readable stream for an S3 object by its key.
+ * Used by backup helper to stream files directly into ZIP archives.
+ *
+ * @param {string} key - S3 object key (or URL to extract key from)
+ * @returns {Promise<{stream: Readable, contentType: string}|null>}
+ */
+const getS3ObjectStream = async (key) => {
+  const objectKey = extractPathFromUrl(key) || normalizeKey(key);
+  if (!objectKey) return null;
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: objectKey,
+    });
+    const response = await s3Client.send(command);
+    return {
+      stream: response.Body,
+      contentType: response.ContentType || 'application/octet-stream',
+    };
+  } catch (err) {
+    console.warn('S3 stream warning:', err.message);
+    return null;
+  }
+};
+
 module.exports = {
   s3Client,
   bucketName,
@@ -224,4 +251,5 @@ module.exports = {
   getPublicUrl,
   getSignedS3Url,
   getS3ReadUrl,
+  getS3ObjectStream,
 };

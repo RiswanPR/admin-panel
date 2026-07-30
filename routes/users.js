@@ -1906,7 +1906,27 @@ router.get('/full-backup', verifyLogin, verifySuperuser, async (req, res) => {
 });
 
 
-// RESTORE — with validation
+// COURSE BACKUP DOWNLOAD (ZIP)
+router.get('/course/:id/backup', verifyLogin, verifySuperuser, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { downloadCourseBackup } = require('../Helpers/backup-helper');
+    await downloadCourseBackup(req.params.id, res);
+
+    logAudit(req, {
+      action: 'backup.course.download',
+      entityType: 'course',
+      entityId: req.params.id,
+      message: `Course backup downloaded (ZIP)`
+    });
+  } catch (err) {
+    logger.info('Course Backup Error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: err.message || 'Backup failed' });
+    }
+  }
+});
+
+
 router.post(
   '/restore-backup',
   verifyLogin,
