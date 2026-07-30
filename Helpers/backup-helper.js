@@ -70,6 +70,34 @@ const getExtFromKey = (key, fallback = '') => {
 };
 
 /**
+ * Append a readable stream to the archive and wait for the entry to finish.
+ * Ensures sequential streaming for large video files without memory accumulation.
+ */
+const appendStreamFile = (archive, stream, archivePath) => {
+  return new Promise((resolve, reject) => {
+    const onEntry = (entry) => {
+      if (entry.name === archivePath) {
+        cleanup();
+        resolve(true);
+      }
+    };
+    const onError = (err) => {
+      cleanup();
+      console.warn(`⚠️ Backup: error writing entry "${archivePath}":`, err.message);
+      resolve(false);
+    };
+    const cleanup = () => {
+      archive.removeListener('entry', onEntry);
+      archive.removeListener('error', onError);
+    };
+
+    archive.on('entry', onEntry);
+    archive.on('error', onError);
+    archive.append(stream, { name: archivePath });
+  });
+};
+
+/**
  * Append an S3-stored file to the archive.
  * Returns true if the file was successfully appended.
  */
@@ -80,8 +108,7 @@ const appendS3File = async (archive, s3Key, archivePath) => {
     const result = await getS3ObjectStream(s3Key);
     if (!result || !result.stream) return false;
 
-    archive.append(result.stream, { name: archivePath });
-    return true;
+    return await appendStreamFile(archive, result.stream, archivePath);
   } catch (err) {
     console.warn(`⚠️ Backup: could not stream S3 file "${s3Key}":`, err.message);
     return false;
@@ -184,9 +211,11 @@ const downloadCourseBackup = async (courseId, res) => {
         try {
           const videoStream = await vdocipherHelper.getVideoDownloadStream(classData.videoId);
           if (videoStream && videoStream.stream) {
-            archive.append(videoStream.stream, { name: `${classPath}/video.mp4` });
-            videoDownloaded = true;
-            totalFiles++;
+            const ok = await appendStreamFile(archive, videoStream.stream, `${classPath}/video.mp4`);
+            if (ok) {
+              videoDownloaded = true;
+              totalFiles++;
+            }
           }
         } catch (err) {
           console.warn(`⚠️ Backup: VdoCipher download failed for ${classData.videoId}:`, err.message);

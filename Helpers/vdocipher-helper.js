@@ -276,103 +276,62 @@ deleteVideo: async (videoId) => {
     try {
       if (!videoId || !API_SECRET) return null;
 
-      // 1. Generate OTP and playbackInfo
-      const otpResponse = await client.post(
-        `${API_URL}/${videoId}/otp`,
-        { ttl: 300 },
-        {
-          headers: {
-            Authorization: `Apisecret ${API_SECRET}`,
-            Accept: 'application/json',
-          },
-        }
-      );
+      // 1. Fetch file list for the video from VdoCipher API
+      const filesUrl = `${API_URL}/${videoId}/files`;
+      const filesResponse = await client.get(filesUrl, {
+        headers: {
+          Authorization: `Apisecret ${API_SECRET}`,
+          Accept: 'application/json',
+        },
+      });
 
-      const { otp, playbackInfo } = otpResponse.data;
-      if (!otp || !playbackInfo) {
-        console.warn('⚠️ VdoCipher: No OTP or playbackInfo returned');
+      const files = filesResponse.data;
+      if (!Array.isArray(files) || files.length === 0) {
         return null;
       }
 
-      // 2. Decode playbackInfo (base64 → JSON)
-      let playbackData;
-      try {
-        const decoded = Buffer.from(playbackInfo, 'base64').toString('utf8');
-        playbackData = JSON.parse(decoded);
-      } catch {
-        console.warn('⚠️ VdoCipher: Could not decode playbackInfo');
+      // 2. Find original/downloadable video file
+      let targetFile = files.find(f => f.encryption_type === 'original' && f.isDownloadable);
+
+      if (!targetFile) {
+        // Fall back to any downloadable file with a video codec or original type
+        const videoFiles = files.filter(f => f.isDownloadable && (f.video_codec || f.encryption_type === 'original'));
+        if (videoFiles.length > 0) {
+          videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0));
+          targetFile = videoFiles[0];
+        }
+      }
+
+      if (!targetFile || !targetFile.id) {
         return null;
       }
 
-      // 3. Extract the video URL from playbackInfo
-      //    playbackInfo typically has: { videoId, ... }
-      //    The actual video is fetched via the embed URL with OTP
-      //    We use the VdoCipher download endpoint pattern
-      const videoUrl = `https://dev.vdocipher.com/api/videos/${videoId}/files`;
+      // 3. Request presigned download URL for the target file
+      const fileDetailUrl = `${API_URL}/${videoId}/files/${targetFile.id}`;
+      const fileDetailRes = await client.get(fileDetailUrl, {
+        headers: {
+          Authorization: `Apisecret ${API_SECRET}`,
+          Accept: 'application/json',
+        },
+      });
 
-      // Try to get file list from VdoCipher API
-      let downloadUrl = null;
-      try {
-        const filesResponse = await client.get(videoUrl, {
-          headers: {
-            Authorization: `Apisecret ${API_SECRET}`,
-            Accept: 'application/json',
-          },
-        });
-
-        // The files endpoint returns available renditions
-        const files = filesResponse.data;
-        if (Array.isArray(files) && files.length > 0) {
-          // Pick the highest quality file
-          const sorted = files.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-          downloadUrl = sorted[0]?.file;
-        }
-      } catch {
-        // files endpoint may not be available — fall back to OTP-based approach
+      const downloadUrl = fileDetailRes.data?.redirect || fileDetailRes.data?.url;
+      if (!downloadUrl) {
+        return null;
       }
 
-      // 4. If we got a download URL, stream it
-      if (downloadUrl) {
-        const dlResponse = await client.get(downloadUrl, {
-          responseType: 'stream',
-        });
-        return {
-          stream: dlResponse.data,
-          contentType: dlResponse.headers['content-type'] || 'video/mp4',
-        };
-      }
+      // 4. Stream video file from presigned URL
+      const dlResponse = await axios.get(downloadUrl, {
+        responseType: 'stream',
+        timeout: 0,
+      });
 
-      // 5. Fallback: try the player-based approach
-      //    Construct the player URL and try to extract video source
-      const playerUrl = `https://player.vdocipher.com/v2/?otp=${otp}&playbackInfo=${playbackInfo}`;
-
-      // Attempt to fetch the player page and extract the actual video source URL
-      try {
-        const playerResponse = await client.get(playerUrl, {
-          maxRedirects: 5,
-        });
-
-        const html = String(playerResponse.data || '');
-        // Try to extract a direct video URL from the player page
-        const urlMatch = html.match(/https:\/\/[^"'\s]+\.mp4[^"'\s]*/);
-        if (urlMatch) {
-          const videoStreamUrl = urlMatch[0];
-          const streamResponse = await client.get(videoStreamUrl, {
-            responseType: 'stream',
-          });
-          return {
-            stream: streamResponse.data,
-            contentType: streamResponse.headers['content-type'] || 'video/mp4',
-          };
-        }
-      } catch {
-        // Player-based approach failed
-      }
-
-      // 6. If all approaches fail, return null — video-info.json will be used as fallback
-      return null;
-
+      return {
+        stream: dlResponse.data,
+        contentType: dlResponse.headers['content-type'] || 'video/mp4',
+      };
     } catch (err) {
+      console.warn(`⚠️ VdoCipher download stream error (${videoId}):`, err.response?.data?.message || err.message);
       return null;
     }
   },
