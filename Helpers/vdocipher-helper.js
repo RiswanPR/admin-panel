@@ -369,12 +369,10 @@ deleteVideo: async (videoId) => {
         // Player-based approach failed
       }
 
-      // 6. If all approaches fail, return null — video-info.json will be used instead
-      console.warn(`⚠️ VdoCipher: Could not obtain downloadable stream for video ${videoId}`);
+      // 6. If all approaches fail, return null — video-info.json will be used as fallback
       return null;
 
     } catch (err) {
-      console.warn('⚠️ VdoCipher getVideoDownloadStream:', err.response?.data?.message || err.message);
       return null;
     }
   },
