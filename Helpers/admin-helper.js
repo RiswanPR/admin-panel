@@ -2,6 +2,7 @@ const db = require('../config/connection');
 const collection = require('../config/collections');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
+const logger = require('./logger');
 
 const SALT_ROUNDS = 10;
 
@@ -16,7 +17,7 @@ const getAdminByEmail = async (email) => {
 
     return admin || null;
   } catch (err) {
-    console.error('getAdminByEmail Error:', err.message);
+    logger.error('getAdminByEmail Error:', err.message);
     return null;
   }
 };
@@ -34,7 +35,7 @@ const getAdminById = async (id) => {
 
     return admin || null;
   } catch (err) {
-    console.error('getAdminById Error:', err.message);
+    logger.error('getAdminById Error:', err.message);
     return null;
   }
 };
@@ -48,7 +49,7 @@ const verifyAdminPassword = async (admin, plainPassword) => {
   try {
     return await bcrypt.compare(plainPassword, admin.Password);
   } catch (err) {
-    console.error('verifyAdminPassword Error:', err.message);
+    logger.error('verifyAdminPassword Error:', err.message);
     return false;
   }
 };
@@ -99,7 +100,7 @@ const getAllAdmins = async () => {
 
     return admins;
   } catch (err) {
-    console.error('getAllAdmins Error:', err.message);
+    logger.error('getAllAdmins Error:', err.message);
     return [];
   }
 };
@@ -125,7 +126,7 @@ const deleteAdmin = async (id) => {
 
     return { status: true };
   } catch (err) {
-    console.error('deleteAdmin Error:', err.message);
+    logger.error('deleteAdmin Error:', err.message);
     return { status: false, message: err.message };
   }
 };

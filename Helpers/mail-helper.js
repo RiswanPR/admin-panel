@@ -1,21 +1,34 @@
 const axios = require('axios');
+const logger = require('./logger');
+
+const RESEND_TIMEOUT_MS = 10000;
+
+const getFromEmail = () => {
+    const resendFrom = process.env.RESEND_FROM_EMAIL;
+    if (resendFrom) {
+        return resendFrom.replace(/^"(.*)"$/, '$1').trim();
+    }
+    return 'Zeitnah Admin <onboarding@resend.dev>';
+};
 
 module.exports = {
     sendAdminOtpEmail: async (email, otp) => {
         const apiKey = process.env.RESEND_API_KEY;
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+        const fromEmail = getFromEmail();
 
-        // ── RESEND NOT CONFIGURED — console fallback (development mode) ──
+        // ── RESEND NOT CONFIGURED — development mode fallback ──
         if (!apiKey) {
             if (process.env.NODE_ENV === 'production') {
-                throw new Error('RESEND_API_KEY is required in production.');
+                logger.error('RESEND_API_KEY is not configured in production.');
+                throw new Error('Email service is not configured. Please contact administrator.');
             }
+            logger.info(`🔑 [DEV MODE] Admin OTP for ${email}: ${otp}`);
             return; // skip email, OTP is still stored in session
         }
 
         // Send via Resend API
         try {
-            await axios.post('https://api.resend.com/emails', {
+            const response = await axios.post('https://api.resend.com/emails', {
                 from: fromEmail,
                 to: email,
                 subject: "Your Admin Login OTP • Zeitnah",
@@ -150,11 +163,24 @@ module.exports = {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: RESEND_TIMEOUT_MS
             });
+
+            // Validate Resend response
+            if (!response.data || !response.data.id) {
+                throw new Error('Resend API returned unexpected response (no message ID)');
+            }
+
+            logger.info(`Admin OTP email sent successfully to ${email} (Resend ID: ${response.data.id})`);
         } catch (error) {
+            if (error.code === 'ECONNABORTED') {
+                logger.error(`OTP email timeout after ${RESEND_TIMEOUT_MS}ms to ${email}`);
+                throw new Error('Email service timed out. Please try again.');
+            }
             const errorMsg = error.response?.data?.message || error.message;
-            throw new Error(`Failed to send OTP email via Resend: ${errorMsg}`);
+            logger.error(`Failed to send OTP email via Resend to ${email}: ${errorMsg}`);
+            throw new Error(`Failed to send OTP email: ${errorMsg}`);
         }
     }
 };

@@ -43,6 +43,13 @@ if (missingEnv.length) {
   throw new Error(`Missing required environment variable(s): ${missingEnv.join(', ')}`);
 }
 
+// Email configuration validation (warn, don't crash)
+const emailEnv = ['RESEND_API_KEY', 'RESEND_FROM_EMAIL'];
+const missingEmailEnv = emailEnv.filter((key) => !process.env[key]);
+if (missingEmailEnv.length) {
+  console.warn(`⚠️  Missing email configuration: ${missingEmailEnv.join(', ')} — Emails will not be sent.`);
+}
+
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
@@ -265,6 +272,24 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Block sensitive path probes (scanners, bots) ──
+app.use((req, res, next) => {
+  // Allow RFC 8615 well-known URIs (e.g. /.well-known/security.txt)
+  if (req.path.startsWith('/.well-known/')) {
+    return next();
+  }
+  const BLOCKED_PATHS = /^\/(\.|_|env|git|aws|docker|dump|credential|proc|wp-|xmlrpc)/i;
+  if (BLOCKED_PATHS.test(req.path)) {
+    return res.status(403).end();
+  }
+  next();
+});
+
+// Serve /security.txt from .well-known
+app.get('/security.txt', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', '.well-known', 'security.txt'));
+});
+
 // static files
 app.use(
   express.static(
@@ -276,17 +301,23 @@ app.use(
 const isProduction = process.env.NODE_ENV === 'production';
 const MongoStore = require('connect-mongo').default;
 
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URL,
+  collectionName: 'sessions',
+  ttl: 24 * 60 * 60 // 1 day
+});
+
+sessionStore.on('error', (err) => {
+  console.warn('⚠️ Session store warning:', err.message);
+});
+
 app.use(
   session({
     name: 'zeitnah.sid',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URL,
-      collectionName: 'sessions',
-      ttl: 24 * 60 * 60 // 1 day
-    }),
+    store: sessionStore,
     cookie: {
       maxAge:   1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,                  // JS cannot read this cookie (XSS protection)

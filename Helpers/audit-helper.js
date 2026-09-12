@@ -43,7 +43,7 @@ module.exports = {
         metadata = {}
     }) => {
         try {
-            const admin = req?.session?.admin || null;
+            const actor = req?.session?.admin || req?.session?.teacher || null;
 
             const log = {
                 action,
@@ -54,9 +54,9 @@ module.exports = {
                 message,
                 metadata,
                 admin: {
-                    id: admin?._id ? String(admin._id) : '',
-                    name: getAdminName(admin),
-                    email: admin?.Email || admin?.email || ''
+                    id: actor?._id ? String(actor._id) : '',
+                    name: getAdminName(actor),
+                    email: actor?.Email || actor?.email || ''
                 },
                 ...buildRequestMeta(req),
                 createdAt: new Date()

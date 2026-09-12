@@ -1,0 +1,5 @@
+# Zeitnah Academy Admin Panel
+# https://zeitnahacademy.com
+
+User-agent: *
+Disallow: /

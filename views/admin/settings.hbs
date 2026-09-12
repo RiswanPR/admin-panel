@@ -303,6 +303,18 @@
                         <strong>Today</strong>
                     </div>
 
+                    <div class="sys-item">
+                        <small>Email Service</small>
+                        <strong class="{{#if emailHealth.apiKeyConfigured}}text-success{{else}}text-warning{{/if}}">
+                            {{#if emailHealth.apiKeyConfigured}}Resend ({{emailHealth.status}}){{else}}Not Configured{{/if}}
+                        </strong>
+                        {{#if emailHealth.apiKeyConfigured}}
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 d-block mx-auto" onclick="triggerEmailTest()" id="testEmailBtn" style="font-size:11px; padding:3px 10px; border-radius:8px;">
+                                <i class="fa-solid fa-paper-plane me-1"></i>Test Email
+                            </button>
+                        {{/if}}
+                    </div>
+
                 </div>
 
             </div>
@@ -614,4 +626,57 @@ document
     }
 
 });
+
+async function triggerEmailTest() {
+    const { value: email } = await Swal.fire({
+        title: 'Test Email Delivery',
+        input: 'email',
+        inputLabel: 'Recipient Email Address',
+        inputPlaceholder: 'admin@example.com',
+        showCancelButton: true,
+        confirmButtonText: 'Send Test Email',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Please enter a valid email address';
+            }
+        }
+    });
+
+    if (email) {
+        Swal.fire({
+            title: 'Sending Test Email...',
+            text: 'Testing Resend API integration...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const res = await fetch('/email-health/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Email Sent!',
+                    text: 'Resend Message ID: ' + data.messageId
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Email Delivery Failed',
+                    text: data.message || 'Unknown error'
+                });
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Request Failed',
+                text: err.message
+            });
+        }
+    }
+}
 </script>

@@ -14,21 +14,24 @@ const writeLog = (type, args) => {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] [${type.toUpperCase()}] ${message}\n`;
   
-  // Console logging is still useful for process monitors and container logs
+  // Console logging for process monitors and container logs
   if (type === 'error') {
     console.error(...args);
   } else if (type === 'warn') {
     console.warn(...args);
   } else {
+    console.log(...args);
   }
 
   try {
     if (!fs.existsSync(LOG_DIR)) {
       fs.mkdirSync(LOG_DIR, { recursive: true });
     }
-    fs.appendFileSync(path.join(LOG_DIR, `${type === 'error' ? 'error' : 'combined'}.log`), line);
-    if (type !== 'error') {
-      fs.appendFileSync(path.join(LOG_DIR, 'combined.log'), line);
+    // Always write to combined.log
+    fs.appendFileSync(path.join(LOG_DIR, 'combined.log'), line);
+    // Additionally write errors to error.log
+    if (type === 'error') {
+      fs.appendFileSync(path.join(LOG_DIR, 'error.log'), line);
     }
   } catch (err) {
     // Fail silently to prevent application crash if disk is full/unwritable

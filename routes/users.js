@@ -1790,17 +1790,18 @@ router.get('/:id/chapters', verifyLogin, validateObjectIds(['id']), async (req, 
 // SETTINGS PAGE
 router.get('/settings', verifyLogin, verifySuperuser, async (req, res) => {
   try {
-
     let settings = await settingsHelper.getSettings();
+    const emailHealth = emailService.checkHealth();
 
     res.render('admin/settings', {
       admins: true,
       currentPage: 'settings',
-      settings
+      settings,
+      emailHealth
     });
 
   } catch (err) {
-    logger.info(err);
+    logger.error('Settings page error:', err.message);
     res.redirect('/');
   }
 });
@@ -2655,6 +2656,48 @@ router.post('/chapters/:chapterId/classes/update-order', verifyLogin, async (req
   } catch (err) {
     logger.error('Update classes order error:', err.message);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// EMAIL HEALTH MONITORING (superuser only)
+// ═══════════════════════════════════════════════════
+router.get('/email-health', verifyLogin, verifySuperuser, (req, res) => {
+  try {
+    const health = emailService.checkHealth();
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      return res.json({ success: true, email: health });
+    }
+    res.render('admin/settings', {
+      admins: true,
+      currentPage: 'settings',
+      emailHealth: health
+    });
+  } catch (err) {
+    logger.error('Email Health Check Error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to check email health' });
+  }
+});
+
+router.post('/email-health/test', verifyLogin, verifySuperuser, async (req, res) => {
+  try {
+    const targetEmail = String(req.body.email || req.session?.admin?.Email || '').trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Valid recipient email required' });
+    }
+
+    const result = await emailService.sendTestEmail(targetEmail);
+    logAudit(req, {
+      action: 'email.test.sent',
+      entityType: 'email',
+      entityName: targetEmail,
+      message: `Diagnostic test email sent (ID: ${result.messageId})`
+    });
+
+    res.json({ success: true, message: 'Diagnostic test email sent successfully', messageId: result.messageId });
+  } catch (err) {
+    logger.error('Email Test Send Error:', err.message);
+    res.status(500).json({ success: false, message: err.message || 'Failed to send test email' });
   }
 });
 

@@ -2,6 +2,11 @@ const logger = require('../Helpers/logger');
 var express = require('express');
 var router = express.Router();
 const teacherHelper = require('../Helpers/teacher-helper');
+const auditHelper = require('../Helpers/audit-helper');
+
+const logAudit = (req, data) => {
+  auditHelper.logAction({ req, ...data });
+};
 const assignmentHelper = require('../Helpers/assignment-helper');
 const courseHelper = require('../Helpers/course-helper');
 const classHelper = require('../Helpers/class-helper');

@@ -2,6 +2,17 @@
 
 require('dotenv').config();
 
+const logger = require('../Helpers/logger');
+
+// Top-level crash prevention for production
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Promise Rejection:', reason?.stack || reason?.message || reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error?.stack || error?.message || error);
+});
+
 /**
  * Module dependencies.
  */

@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
 const { decorateCourse, decorateProfileImage } = require('./image-url-helper');
+const logger = require('./logger');
 
 const SALT_ROUNDS = 10;
 
@@ -14,7 +15,7 @@ const deleteTeacherImageFromFirebase = async (imageUrl) => {
     const storagePath = extractPathFromUrl(imageUrl);
     if (storagePath) await deleteFromS3(storagePath);
   } catch (e) {
-    console.warn('Could not delete teacher image from Firebase:', e.message);
+    logger.warn('Could not delete teacher image from Firebase:', e.message);
   }
 };
 
@@ -40,7 +41,7 @@ const createTeacher = async (data) => {
     email,
     mobile: data.mobile || '',
     password: hashedPassword,
-    profileImage: data.profileImage || 'default-teacher.png',
+    profileImage: data.profileImage || '/img/placeholders/profile.svg',
     designation: data.designation || '',
     bio: data.bio || '',
     role: 'teacher',
@@ -66,7 +67,7 @@ const getTeacherByEmail = async (email) => {
       .collection(collection.TEACHER_COLLECTION)
       .findOne({ email: email.trim().toLowerCase() });
   } catch (err) {
-    console.error('getTeacherByEmail Error:', err.message);
+    logger.error('getTeacherByEmail Error:', err.message);
     return null;
   }
 };
@@ -84,7 +85,7 @@ const getTeacherById = async (id) => {
 
     return decorateProfileImage(teacher, 'profileImage');
   } catch (err) {
-    console.error('getTeacherById Error:', err.message);
+    logger.error('getTeacherById Error:', err.message);
     return null;
   }
 };
@@ -97,7 +98,7 @@ const verifyTeacherPassword = async (teacher, plainPassword) => {
   try {
     return await bcrypt.compare(plainPassword, teacher.password);
   } catch (err) {
-    console.error('verifyTeacherPassword Error:', err.message);
+    logger.error('verifyTeacherPassword Error:', err.message);
     return false;
   }
 };
@@ -133,7 +134,7 @@ const getAllTeachers = async () => {
 
     return teachers;
   } catch (err) {
-    console.error('getAllTeachers Error:', err.message);
+    logger.error('getAllTeachers Error:', err.message);
     return [];
   }
 };
@@ -206,7 +207,7 @@ const deleteTeacher = async (id) => {
 
     return { status: true };
   } catch (err) {
-    console.error('deleteTeacher Error:', err.message);
+    logger.error('deleteTeacher Error:', err.message);
     return { status: false, message: err.message };
   }
 };
@@ -304,7 +305,7 @@ const getTeacherCourses = async (teacherId) => {
 
     return courses;
   } catch (err) {
-    console.error('getTeacherCourses Error:', err.message);
+    logger.error('getTeacherCourses Error:', err.message);
     return [];
   }
 };
@@ -346,7 +347,7 @@ const getTeacherStudents = async (teacherId) => {
 
     return students;
   } catch (err) {
-    console.error('getTeacherStudents Error:', err.message);
+    logger.error('getTeacherStudents Error:', err.message);
     return [];
   }
 };
@@ -448,7 +449,7 @@ const getTeacherDashboardData = async (teacherId) => {
       })
     };
   } catch (err) {
-    console.error('getTeacherDashboardData Error:', err.message);
+    logger.error('getTeacherDashboardData Error:', err.message);
     return {
       assignedCourseCount: 0,
       totalStudents: 0,
