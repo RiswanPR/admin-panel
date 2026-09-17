@@ -50,9 +50,12 @@ if (missingEmailEnv.length) {
   console.warn(`⚠️  Missing email configuration: ${missingEmailEnv.join(', ')} — Emails will not be sent.`);
 }
 
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+// Trust the local reverse proxy (Nginx on loopback).
+// Using 'loopback' is safer than `1` or `true` because it only trusts
+// proxies at 127.0.0.1 / ::1, preventing external IP spoofing.
+// Always enabled (not gated by NODE_ENV) so rate-limiting and session
+// security work correctly in all environments behind Nginx.
+app.set('trust proxy', 'loopback');
 
 // ======================================
 // SECURITY — HTTP HEADERS (helmet)
@@ -388,9 +391,12 @@ app.use((err, req, res, next) => {
   }
 
   res.locals.message = err.message;
+  // Serialize error to a plain object so Handlebars can access 'status'
+  // as an own property (http-errors puts 'status' on the prototype,
+  // which triggers Handlebars' prototype-access security warning).
   res.locals.error =
     req.app.get('env') === 'development'
-      ? err
+      ? { status: err.status, stack: err.stack }
       : {};
 
   res.status(err.status || 500);
