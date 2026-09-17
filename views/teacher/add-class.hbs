@@ -38,6 +38,7 @@
 
                     <input type="hidden" name="chapterId" value="{{chapterCode}}">
                     <input type="hidden" name="courseType" value="{{courseType}}">
+                    <input type="hidden" name="clientDuration" id="clientDurationInput" value="">
 
                     <div class="row g-5">
 
@@ -227,9 +228,13 @@
             </div>
 
             <div class="loader-note">
-                Large videos may take a few minutes.
+                Large videos may take several minutes.
                 Please keep this page open.
             </div>
+
+            <button type="button" id="cancelUploadBtn" class="btn btn-outline-light btn-sm mt-3 px-4 py-2" style="border-radius: 20px; font-weight: 500; opacity: 0.85;">
+                <i class="fa-solid fa-xmark me-1"></i> Cancel Upload
+            </button>
 
         </div>
     </div>
@@ -413,6 +418,8 @@
     const loaderStage = document.getElementById("loaderStage");
     const progressFill = document.getElementById("progressFill");
     const progressText = document.getElementById("progressText");
+    const cancelUploadBtn = document.getElementById("cancelUploadBtn");
+    const clientDurationInput = document.getElementById("clientDurationInput");
 
     const title = document.getElementById("title");
     const summaryTitle = document.getElementById("summaryTitle");
@@ -426,7 +433,9 @@
     const uploadStatus = document.getElementById("uploadStatus");
 
     const courseType = '{{courseType}}';
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GiB (5,368,709,120 bytes)
     let videoReady = false;
+    let currentXhr = null;
 
     function showError(msg) {
         errorMsg.classList.remove("d-none");
@@ -467,11 +476,12 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024 * 1024) {
+        if (file.size > MAX_FILE_SIZE) {
             videoReady = false;
             summaryDuration.innerText = "-";
+            if (clientDurationInput) clientDurationInput.value = "";
             checkReady();
-            showError("Video max 5GB");
+            showError("File is too large (" + formatBytes(file.size) + "). Maximum supported size is 5 GB.");
             videoInput.value = "";
             return;
         }
@@ -483,8 +493,24 @@
         videoStatus.className = "text-success";
         videoStatus.innerText = "Ready";
         videoReady = true;
-        summaryDuration.innerText = "Auto-detected";
+        summaryDuration.innerText = "Detecting...";
         checkReady();
+
+        const previewVideo = document.createElement("video");
+        previewVideo.preload = "metadata";
+        previewVideo.src = URL.createObjectURL(file);
+        previewVideo.addEventListener("loadedmetadata", () => {
+            const seconds = Math.ceil(previewVideo.duration);
+            summaryDuration.innerText = formatTime(seconds);
+            if (clientDurationInput) {
+                clientDurationInput.value = seconds;
+            }
+            URL.revokeObjectURL(previewVideo.src);
+        });
+        previewVideo.addEventListener("error", () => {
+            summaryDuration.innerText = "Auto-detected on server";
+            URL.revokeObjectURL(previewVideo.src);
+        });
     });
 
     // cover selected callback
@@ -496,6 +522,16 @@
             }
         }
     };
+
+    if (cancelUploadBtn) {
+        cancelUploadBtn.addEventListener("click", () => {
+            if (currentXhr) {
+                if (confirm("Are you sure you want to cancel the video upload?")) {
+                    currentXhr.abort();
+                }
+            }
+        });
+    }
 
     // ═══════════════════════════════════════
     // REAL UPLOAD via XHR
@@ -518,58 +554,68 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
         uploadOverlay.style.display = "flex";
+        if (cancelUploadBtn) {
+            cancelUploadBtn.disabled = false;
+            cancelUploadBtn.style.display = "inline-block";
+        }
         loaderStage.innerText = "Preparing upload...";
         progressFill.style.width = "0%";
+        progressFill.style.background = "";
         progressText.innerText = "0%";
         uploadStatus.innerText = "Uploading...";
 
         const formData = new FormData(classForm);
         const xhr = new XMLHttpRequest();
+        currentXhr = xhr;
         let uploadStartTime = Date.now();
+        let lastLoaded = 0;
+        let lastTime = Date.now();
+        let currentSpeed = 0;
 
         // ── REAL UPLOAD PROGRESS (browser → server) ──
         xhr.upload.addEventListener("progress", (ev) => {
             if (!ev.lengthComputable) return;
 
-            const pct = (ev.loaded / ev.total) * 85; // 0–85% = upload phase
-            const elapsed = (Date.now() - uploadStartTime) / 1000;
-            const speed = ev.loaded / elapsed;
-            const remaining = (ev.total - ev.loaded) / speed;
+            const now = Date.now();
+            const timeDiff = (now - lastTime) / 1000;
+            if (timeDiff >= 0.5) {
+                const instantSpeed = (ev.loaded - lastLoaded) / timeDiff;
+                currentSpeed = currentSpeed ? (currentSpeed * 0.7 + instantSpeed * 0.3) : instantSpeed;
+                lastLoaded = ev.loaded;
+                lastTime = now;
+            }
+
+            const pct = (ev.loaded / ev.total) * 100;
+            const overallElapsed = (now - uploadStartTime) / 1000;
+            const avgSpeed = ev.loaded / (overallElapsed || 1);
+            const speedToUse = currentSpeed || avgSpeed;
+            const remaining = speedToUse > 0 ? (ev.total - ev.loaded) / speedToUse : 0;
 
             progressFill.style.width = pct.toFixed(1) + "%";
             progressText.innerText = Math.floor(pct) + "%";
 
             if (pct < 5) {
                 loaderStage.innerText = "Starting upload...";
-            } else if (pct < 40) {
-                loaderStage.innerText = `Uploading video — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)}  ·  ${formatBytes(speed)}/s`;
-            } else if (pct < 80) {
-                loaderStage.innerText = `Uploading video — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)}  ·  ~${formatTime(remaining)} left`;
-            } else {
-                loaderStage.innerText = "Almost done uploading...";
+            } else if (pct < 100) {
+                loaderStage.innerText = `Uploading video — ${formatBytes(ev.loaded)} / ${formatBytes(ev.total)} (${Math.floor(pct)}%)  ·  ${formatBytes(speedToUse)}/s  ·  ~${formatTime(remaining)} remaining`;
             }
         });
 
         // ── UPLOAD COMPLETE → Server processing phase ──
         xhr.upload.addEventListener("load", () => {
-            progressFill.style.width = "85%";
-            progressText.innerText = "85%";
+            progressFill.style.width = "100%";
+            progressText.innerText = "Processing...";
             const dest = courseType === 'online' ? 'Amazon S3' : 'VdoCipher';
-            loaderStage.innerText = `Upload complete · Server is processing & uploading to ${dest}...`;
-
-            // Slow tick from 85% → 95% while server processes
-            let serverPct = 85;
-            window._serverTimer = setInterval(() => {
-                serverPct += Math.random() * 1.5;
-                if (serverPct > 95) serverPct = 95;
-                progressFill.style.width = serverPct.toFixed(1) + "%";
-                progressText.innerText = Math.floor(serverPct) + "%";
-            }, 1200);
+            loaderStage.innerHTML = `<strong>Upload to server complete (100%)!</strong><br><span style="font-size: 0.9em; opacity: 0.85;">Server is now verifying and transferring to ${dest}... This may take a few minutes for large files. Please keep this page open.</span>`;
+            if (cancelUploadBtn) {
+                cancelUploadBtn.disabled = true;
+                cancelUploadBtn.style.display = "none";
+            }
         });
 
         // ── SERVER RESPONSE ──
         xhr.addEventListener("load", () => {
-            clearInterval(window._serverTimer);
+            currentXhr = null;
 
             let data;
             try {
@@ -591,25 +637,44 @@
                 uploadOverlay.style.display = "none";
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
-                showError(data?.error || 'Upload failed. Please try again.');
+                uploadStatus.innerText = "Upload failed";
+
+                let errorMsgText = data?.error;
+                if (!errorMsgText) {
+                    if (xhr.status === 413) {
+                        errorMsgText = "Upload failed: File exceeds maximum allowed size (HTTP 413).";
+                    } else if (xhr.status === 504) {
+                        errorMsgText = "Upload timed out on the gateway (HTTP 504). Please try again or check your network.";
+                    } else if (xhr.status === 502) {
+                        errorMsgText = "Server gateway error (HTTP 502). The server took too long to process the request.";
+                    } else if (xhr.status === 408) {
+                        errorMsgText = "Request timeout (HTTP 408). The upload connection timed out.";
+                    } else {
+                        errorMsgText = 'Upload failed (HTTP ' + xhr.status + '). Please try again.';
+                    }
+                }
+                showError(errorMsgText);
             }
         });
 
         // ── NETWORK ERROR ──
         xhr.addEventListener("error", () => {
-            clearInterval(window._serverTimer);
+            currentXhr = null;
             uploadOverlay.style.display = "none";
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
-            showError("Network error. Please check your connection and try again.");
+            uploadStatus.innerText = "Upload failed";
+            showError("Network error occurred during upload. Please check your internet connection and try again.");
         });
 
         // ── ABORT ──
         xhr.addEventListener("abort", () => {
-            clearInterval(window._serverTimer);
+            currentXhr = null;
             uploadOverlay.style.display = "none";
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fa-solid fa-upload me-2"></i>Upload Class';
+            uploadStatus.innerText = "Upload cancelled";
+            showError("Upload was cancelled.");
         });
 
         xhr.open("POST", classForm.action);

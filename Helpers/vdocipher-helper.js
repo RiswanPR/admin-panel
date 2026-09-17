@@ -67,13 +67,17 @@ async function uploadToS3(
     ''
   );
 
-  // file
+  // file — provide knownLength so the multipart Content-Length
+  // header is accurate; some S3 POST policies reject chunked
+  // transfer-encoding for large files without it.
+  const fileStats = fs.statSync(filePath);
   const stream =
     fs.createReadStream(filePath);
 
   form.append(
     'file',
-    stream
+    stream,
+    { knownLength: fileStats.size }
   );
 
   try {
@@ -159,15 +163,16 @@ module.exports = {
         );
       } catch (err) {
 
-        // retry once
-        if (
+        // retry once on transient network errors
+        const isTransient =
           err.code === 'ECONNRESET' ||
-          err.message.includes(
-            'ECONNRESET'
-          )
-        ) {
+          err.code === 'ETIMEDOUT' ||
+          err.message.includes('ECONNRESET') ||
+          err.message.includes('ETIMEDOUT');
 
-
+        if (isTransient) {
+          console.warn('⚠️ VdoCipher upload transient error, retrying in 2s:', err.code || err.message);
+          await new Promise(r => setTimeout(r, 2000));
           await uploadToS3(
             uploadLink,
             clientPayload,

@@ -1,0 +1,56 @@
+# ==============================================================================
+# Nginx Configuration Reference for Zeitnah LMS Admin Panel (5GB Video Uploads)
+# ==============================================================================
+#
+# Apply these directives to your Nginx server block or upload location block
+# on the production server (e.g., /etc/nginx/sites-available/zeitnah).
+#
+# IMPORTANT:
+# - After making changes, test configuration with: sudo nginx -t
+# - Reload Nginx with: sudo systemctl reload nginx
+# ==============================================================================
+
+# 1. Allow request bodies up to 5.5 GB (room for multipart envelope on 5GB file)
+client_max_body_size 5500M;
+
+# 2. Disable request buffering so the browser streams directly to Node.js / Multer.
+#    Without this, Nginx buffers the entire 5GB to /var/lib/nginx/body before
+#    sending a single byte to Express, which:
+#    - Exhausts root disk space on the proxy host
+#    - Breaks frontend progress bar accuracy
+#    - Doubles disk I/O latency
+proxy_request_buffering off;
+
+# 3. Increase timeouts to 1 hour (3600s) to allow 5GB uploads on standard broadband
+#    (e.g., 5GB @ 20 Mbps = ~35 minutes; @ 50 Mbps = ~14 minutes)
+client_body_timeout      3600s;
+proxy_connect_timeout    120s;
+proxy_send_timeout       3600s;
+proxy_read_timeout       3600s;
+send_timeout             3600s;
+
+# 4. Keep-alive timeout
+keepalive_timeout        3600s;
+
+# ==============================================================================
+# Example Location Block:
+#
+# location / {
+#     proxy_pass http://127.0.0.1:3000;
+#     proxy_http_version 1.1;
+#     proxy_set_header Upgrade $http_upgrade;
+#     proxy_set_header Connection 'upgrade';
+#     proxy_set_header Host $host;
+#     proxy_set_header X-Real-IP $remote_addr;
+#     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#     proxy_set_header X-Forwarded-Proto $scheme;
+#
+#     # Upload optimizations for large files
+#     client_max_body_size    5500M;
+#     proxy_request_buffering off;
+#     client_body_timeout     3600s;
+#     proxy_read_timeout      3600s;
+#     proxy_send_timeout      3600s;
+#     send_timeout            3600s;
+# }
+# ==============================================================================

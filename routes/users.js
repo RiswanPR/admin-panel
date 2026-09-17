@@ -1008,19 +1008,32 @@ router.post(
       // Use coverImageUrl from body
       let thumbnailUrl = req.body.coverImageUrl;
 
+      if (req.files && req.files.video && req.files.video[0]) {
+        const videoFile = req.files.video[0];
+        const fileSizeMB = (videoFile.size / (1024 * 1024)).toFixed(2);
+        const userEmail = req.session?.user?.Email || req.session?.user?._id || 'unknown';
+        logger.info(`Admin POST /add-class: Received video "${videoFile.originalname}" (${fileSizeMB} MB, ${videoFile.mimetype}) for chapter "${req.body.chapterId}" by user "${userEmail}"`);
+      }
+
       let detectedDuration = 0;
-      try {
-        if (req.files && req.files.video && req.files.video[0]) {
-          const videoFile = req.files.video[0];
-          logger.info(`Extracting duration for ${videoFile.originalname} (${videoFile.mimetype}, ${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
+      const clientDur = parseFloat(req.body.clientDuration);
+      if (Number.isFinite(clientDur) && clientDur > 0 && clientDur <= 86400) {
+        detectedDuration = Math.floor(clientDur);
+        logger.info(`Using client-reported duration: ${detectedDuration} seconds`);
+      } else {
+        try {
+          if (req.files && req.files.video && req.files.video[0]) {
+            const videoFile = req.files.video[0];
+            logger.info(`Extracting duration via ffprobe for ${videoFile.originalname} (${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
 
-          const rawSeconds = await getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
-          detectedDuration = Math.floor(rawSeconds);
+            const rawSeconds = await getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
+            detectedDuration = Math.floor(rawSeconds);
 
-          logger.info(`Successfully extracted duration: ${detectedDuration} seconds`);
+            logger.info(`Successfully extracted duration via ffprobe: ${detectedDuration} seconds`);
+          }
+        } catch (durationErr) {
+          logger.error('Video duration extraction failed:', durationErr.message);
         }
-      } catch (durationErr) {
-        logger.error('Video duration extraction failed:', durationErr.message);
       }
 
       // Fetch course type for this chapter

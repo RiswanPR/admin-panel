@@ -34,6 +34,16 @@ var server = http.createServer(app);
 /**
  * Listen on provided port.
  */
+// ── Large-upload timeout configuration ──
+// The default Node.js 18+ requestTimeout is 300 s (5 min).
+// A 5 GB video at 50 Mbps takes ~14 minutes just for the browser→server
+// transfer, plus additional time for server→S3/VdoCipher re-upload.
+// Without these overrides uploads >~3 GB are forcibly terminated.
+server.requestTimeout   = 3600000;  // 1 hour — total time for the full request
+server.headersTimeout   = 3660000;  // Must exceed requestTimeout (Node.js requirement)
+server.keepAliveTimeout =   65000;  // Slightly above common LB idle timeout (60 s)
+server.timeout          = 3600000;  // Socket inactivity timeout (mirrors requestTimeout)
+
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

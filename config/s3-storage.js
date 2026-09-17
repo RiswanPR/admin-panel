@@ -188,8 +188,8 @@ const getS3ReadUrl = async (value, options = {}) => {
  * @returns {Promise<string>} S3 object key
  */
 const uploadFileToS3 = async (filePath, destPath, mimeType) => {
+  const fileStream = fs.createReadStream(filePath);
   try {
-    const fileStream = fs.createReadStream(filePath);
     const key = normalizeKey(destPath);
 
     const upload = new Upload({
@@ -201,14 +201,22 @@ const uploadFileToS3 = async (filePath, destPath, mimeType) => {
         ContentType: mimeType || 'application/octet-stream',
         CacheControl: 'public, max-age=31536000',
       },
+      // ── Multipart tuning for large video uploads (up to 5 GiB) ──
+      // 20 MB parts → ~256 parts for 5 GB (default 5 MB → ~1000 parts).
+      // 4 concurrent uploads → peak ~80 MB RAM, well within PM2's 1 GB limit.
+      // leavePartsOnError: false → SDK calls AbortMultipartUpload on failure
+      // so orphaned S3 parts don't accumulate and incur storage costs.
+      partSize: 20 * 1024 * 1024,
+      queueSize: 4,
+      leavePartsOnError: false,
     });
 
     await upload.done();
-    fileStream.destroy();
-
     return key;
   } catch (err) {
     throw err;
+  } finally {
+    fileStream.destroy();
   }
 };
 
