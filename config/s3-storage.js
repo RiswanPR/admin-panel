@@ -13,6 +13,7 @@ const { S3Client, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/cl
 const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const fs = require('fs');
+const logger = require('../Helpers/logger');
 
 if (
   !process.env.AWS_REGION ||
@@ -191,6 +192,7 @@ const uploadFileToS3 = async (filePath, destPath, mimeType) => {
   const fileStream = fs.createReadStream(filePath);
   try {
     const key = normalizeKey(destPath);
+    logger.info(`Starting S3 multipart upload for: ${key}`);
 
     const upload = new Upload({
       client: s3Client,
@@ -202,16 +204,17 @@ const uploadFileToS3 = async (filePath, destPath, mimeType) => {
         CacheControl: 'public, max-age=31536000',
       },
       // ── Multipart tuning for large video uploads (up to 5 GiB) ──
-      // 20 MB parts → ~256 parts for 5 GB (default 5 MB → ~1000 parts).
-      // 4 concurrent uploads → peak ~80 MB RAM, well within PM2's 1 GB limit.
+      // 10 MB parts, 2 concurrent uploads → peak ~20 MB RAM buffer.
+      // This protects memory on constrained servers and prevents PM2 restarts.
       // leavePartsOnError: false → SDK calls AbortMultipartUpload on failure
       // so orphaned S3 parts don't accumulate and incur storage costs.
-      partSize: 20 * 1024 * 1024,
-      queueSize: 4,
+      partSize: 10 * 1024 * 1024,
+      queueSize: 2,
       leavePartsOnError: false,
     });
 
     await upload.done();
+    logger.info(`S3 multipart upload completed: ${key}`);
     return key;
   } catch (err) {
     throw err;

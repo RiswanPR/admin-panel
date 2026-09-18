@@ -76,7 +76,7 @@ module.exports = {
 
             // remove temp uploaded video
             if (fs.existsSync(videoPath)) {
-                fs.unlinkSync(videoPath);
+                try { fs.unlinkSync(videoPath); } catch (e) {}
             }
 
             const chapter = targetCourse.chapters.find(ch => ch.uniqueCode === data.chapterId);
@@ -134,7 +134,7 @@ module.exports = {
             if (files?.video?.[0]) {
                 const tempVideo = files.video[0].path;
                 if (fs.existsSync(tempVideo)) {
-                    fs.unlinkSync(tempVideo);
+                    try { fs.unlinkSync(tempVideo); } catch (e) {}
                 }
             }
 

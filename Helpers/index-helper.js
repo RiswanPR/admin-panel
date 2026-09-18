@@ -25,6 +25,7 @@ const ensureIndexes = async (db) => {
     [collection.TEACHER_COLLECTION, { email: 1 }, { unique: true, sparse: true }],
     [collection.TEACHER_COLLECTION, { assignedCourses: 1 }],
     [collection.STUDENTS_COLLECTION, { email: 1 }, { unique: true, sparse: true }],
+    [collection.STUDENTS_COLLECTION, { username: 1 }, { unique: true, sparse: true }],
     [collection.STUDENTS_COLLECTION, { 'course.courseId': 1 }],
     [collection.STUDENTS_COLLECTION, { End_Date: 1, status: 1 }],
     [collection.COURSE_COLLECTION, { 'chapters.uniqueCode': 1 }],
@@ -32,6 +33,7 @@ const ensureIndexes = async (db) => {
     [collection.ASSIGNMENT_COLLECTION, { teacherId: 1, createdAt: -1 }],
     [collection.AUDIT_LOG_COLLECTION, { createdAt: -1 }],
     [collection.COVER_IMAGES_COLLECTION, { status: 1, category: 1, createdAt: -1 }],
+    [collection.RESERVED_USERNAMES_COLLECTION, { keyword: 1 }, { unique: true }],
   ];
 
   await Promise.allSettled(

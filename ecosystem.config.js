@@ -7,7 +7,8 @@ module.exports = {
       exec_mode: 'cluster',      // Enable PM2 cluster mode
       autorestart: true,         // Automatically restart if process crashes
       watch: false,              // Do not watch files in production (saves CPU)
-      max_memory_restart: '1G',  // Restart process if memory exceeds 1GB (mitigates memory leaks)
+      max_memory_restart: '2.5G', // Headroom for multi-GB video upload stream buffers
+      node_args: '--max-old-space-size=2048', // 2 GB V8 heap allocation
       env: {
         NODE_ENV: 'development'
       },

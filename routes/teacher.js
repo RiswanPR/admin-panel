@@ -17,6 +17,7 @@ const collection = require('../config/collections');
 const { uploadTeacher, uploadStudent, uploadClass, uploadExercise } = require('../config/multer');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const parseForm = multer().none();
 const { uploadToS3 } = require('../config/s3-storage');
 const mediaHelper = require('../Helpers/media-helper');
@@ -363,6 +364,9 @@ router.post(
       if (course) {
         const owns = await teacherHelper.teacherOwnsCourse(req.session.teacher._id, course._id);
         if (!owns) {
+          if (req.files?.video?.[0]?.path && fs.existsSync(req.files.video[0].path)) {
+            try { fs.unlinkSync(req.files.video[0].path); } catch (e) {}
+          }
           return isAjax
             ? res.status(403).json({ success: false, error: 'Access Denied' })
             : res.status(403).send('Access Denied');
@@ -370,6 +374,9 @@ router.post(
       }
 
       if (!req.body.coverImageUrl) {
+        if (req.files?.video?.[0]?.path && fs.existsSync(req.files.video[0].path)) {
+          try { fs.unlinkSync(req.files.video[0].path); } catch (e) {}
+        }
         const msg = 'Class cover image is required. Please select one from the Media Library.';
         return isAjax
           ? res.status(400).json({ success: false, error: msg })
@@ -396,7 +403,10 @@ router.post(
             const videoFile = req.files.video[0];
             logger.info(`Teacher Upload: Extracting duration via ffprobe for ${videoFile.originalname} (${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
 
-            const rawSeconds = await getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
+            // Safe duration probe with 15s timeout to prevent hanging
+            const durationPromise = getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('ffprobe timed out after 15s')), 15000));
+            const rawSeconds = await Promise.race([durationPromise, timeoutPromise]);
             detectedDuration = Math.floor(rawSeconds);
 
             logger.info(`Teacher Upload: Successfully extracted duration via ffprobe: ${detectedDuration} seconds`);
@@ -409,6 +419,7 @@ router.post(
       const courseType = course?.type || 'recording';
 
       const bodyWithThumb = { ...req.body, thumbnailUrl, duration: detectedDuration, courseType };
+      logger.info(`Teacher Upload: Initiating class processing for chapter "${req.body.chapterId}" (${courseType})`);
       const result = await classHelper.addClass(bodyWithThumb, req.files);
 
       if (!result.success) {
@@ -424,6 +435,9 @@ router.post(
         : res.redirect(redirectUrl);
 
     } catch (err) {
+      if (req.files?.video?.[0]?.path && fs.existsSync(req.files.video[0].path)) {
+        try { fs.unlinkSync(req.files.video[0].path); } catch (e) {}
+      }
       logger.error('Teacher Add Class Route Error:', err.message);
       return isAjax
         ? res.status(500).json({ success: false, error: 'Failed to add class' })

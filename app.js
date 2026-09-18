@@ -3,6 +3,7 @@ require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+var fs = require('fs');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
@@ -19,6 +20,44 @@ var db = require('./config/connection');
 const cron = require('node-cron');
 const studentHelper = require('./Helpers/student-helper');
 const { ensureIndexes } = require('./Helpers/index-helper');
+
+// ── Orphaned Temporary Upload Housekeeping ──
+// Cleans up interrupted or stale multipart temp files (>2h old) to prevent disk exhaustion
+const cleanupOrphanedTempFiles = () => {
+  const tempDirs = [
+    path.join(__dirname, 'temp/videos'),
+    path.join(__dirname, 'temp/exercises')
+  ];
+  const maxAgeMs = 2 * 60 * 60 * 1000; // 2 hours
+  const now = Date.now();
+
+  tempDirs.forEach((dir) => {
+    if (!fs.existsSync(dir)) return;
+    try {
+      const files = fs.readdirSync(dir);
+      files.forEach((file) => {
+        const filePath = path.join(dir, file);
+        try {
+          const stats = fs.statSync(filePath);
+          if (stats.isFile() && (now - stats.mtimeMs > maxAgeMs)) {
+            fs.unlinkSync(filePath);
+            console.log(`🧹 Cleaned up orphaned temp upload: ${filePath} (${(stats.size / 1024 / 1024).toFixed(1)} MB)`);
+          }
+        } catch (fileErr) {
+          // File may have been deleted concurrently
+        }
+      });
+    } catch (dirErr) {
+      console.warn(`⚠️ Temp directory cleanup warning for ${dir}:`, dirErr.message);
+    }
+  });
+};
+
+// Run temp cleanup on startup and every 2 hours
+cleanupOrphanedTempFiles();
+cron.schedule('0 */2 * * *', () => {
+  cleanupOrphanedTempFiles();
+});
 
 // Run daily student expiration check at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -133,6 +172,18 @@ app.engine(
 
       inc: function (value) {
         return Number(value || 0) + 1;
+      },
+
+      dec: function (value) {
+        return Math.max(1, Number(value || 1) - 1);
+      },
+
+      ifGt: function (a, b, options) {
+        return Number(a) > Number(b) ? options.fn(this) : options.inverse(this);
+      },
+
+      ifLt: function (a, b, options) {
+        return Number(a) < Number(b) ? options.fn(this) : options.inverse(this);
       },
 
       selected: function (a, b) {
@@ -394,12 +445,13 @@ app.use((err, req, res, next) => {
   // Serialize error to a plain object so Handlebars can access 'status'
   // as an own property (http-errors puts 'status' on the prototype,
   // which triggers Handlebars' prototype-access security warning).
+  const status = err.status || err.statusCode || 500;
   res.locals.error =
     req.app.get('env') === 'development'
-      ? { status: err.status, stack: err.stack }
-      : {};
+      ? { status, stack: err.stack }
+      : { status };
 
-  res.status(err.status || 500);
+  res.status(status);
   res.render('error');
 });
 

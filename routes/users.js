@@ -4,6 +4,7 @@ var router = express.Router();
 const rateLimit = require('express-rate-limit');
 var courseHelpers = require('../Helpers/course-helper');
 var studentHelpers = require('../Helpers/student-helper');
+const usernameHelper = require('../Helpers/username-helper');
 var mailHelpers = require('../Helpers/mail-helper');
 const emailService = require('../Helpers/email-service');
 var auditHelper = require('../Helpers/audit-helper');
@@ -228,6 +229,207 @@ router.get('/students', verifyLogin, function (req, res, next) {
     logger.info('Get Students Error:', err.message);
     res.redirect('/');
   });
+});
+
+// ==========================================
+// USERNAME MANAGEMENT SYSTEM
+// ==========================================
+
+const renderUsernamesDashboard = async (req, res) => {
+  try {
+    const health = await usernameHelper.getUsernameHealth();
+    const queryResult = await usernameHelper.getUsersWithUsernames({
+      search: req.query.search || '',
+      claimStatus: req.query.claim || 'all',
+      accountStatus: req.query.status || 'all',
+      role: req.query.role || 'all',
+      issueFilter: req.query.issue || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 20,
+      sortField: req.query.sort || 'createdAt',
+      sortDir: req.query.dir === 'asc' ? 1 : -1
+    });
+
+    res.render('admin/usernames', {
+      admins: true,
+      currentPage: 'usernames',
+      health,
+      users: queryResult.users,
+      pagination: {
+        page: queryResult.page,
+        totalPages: queryResult.totalPages,
+        total: queryResult.total,
+        limit: queryResult.limit
+      },
+      filters: {
+        search: req.query.search || '',
+        claim: req.query.claim || 'all',
+        status: req.query.status || 'all',
+        role: req.query.role || 'all',
+        issue: req.query.issue || 'all',
+        sort: req.query.sort || 'createdAt',
+        dir: req.query.dir || 'desc'
+      }
+    });
+  } catch (err) {
+    logger.info('Get Usernames Dashboard Error:', err.message);
+    res.redirect('/');
+  }
+};
+
+router.get('/usernames', verifyLogin, renderUsernamesDashboard);
+router.get('/admin/usernames', verifyLogin, renderUsernamesDashboard);
+
+// API: Search & filter directory
+router.get('/usernames/api/list', verifyLogin, async (req, res) => {
+  try {
+    const result = await usernameHelper.getUsersWithUsernames({
+      search: req.query.search || '',
+      claimStatus: req.query.claim || 'all',
+      accountStatus: req.query.status || 'all',
+      role: req.query.role || 'all',
+      issueFilter: req.query.issue || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 20,
+      sortField: req.query.sort || 'createdAt',
+      sortDir: req.query.dir === 'asc' ? 1 : -1
+    });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API: Check availability
+router.get('/usernames/api/check-availability', verifyLogin, async (req, res) => {
+  try {
+    const username = req.query.username || '';
+    const excludeUserId = req.query.excludeUserId || null;
+    const result = await usernameHelper.checkAvailability(username, excludeUserId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ available: false, reason: err.message });
+  }
+});
+
+// API: Suggest generated username
+router.post('/usernames/api/generate', verifyLogin, async (req, res) => {
+  try {
+    const { userId, name, email } = req.body;
+    let userObj = { name, email };
+    if (userId && ObjectId.isValid(userId)) {
+      const found = await db.get().collection(collection.STUDENTS_COLLECTION).findOne({ _id: new ObjectId(userId) });
+      if (found) userObj = found;
+    }
+    const suggestion = await usernameHelper.generateUsernameForUser(userObj, userId);
+    res.json({ success: true, suggestion });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API: Change username (Admin override with audit log)
+router.post('/usernames/api/change/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { newUsername, reason } = req.body;
+    const admin = req.session.admin || null;
+    const result = await usernameHelper.changeUsername({
+      userId: req.params.id,
+      newUsername,
+      reason,
+      admin,
+      req
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// API: Health diagnostics
+router.get('/usernames/api/health', verifyLogin, async (req, res) => {
+  try {
+    const health = await usernameHelper.getUsernameHealth();
+    res.json({ success: true, health });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API: Resolve collision conflict
+router.post('/usernames/api/resolve-conflict', verifyLogin, async (req, res) => {
+  try {
+    const { winnerUserId, loserUserId, loserNewUsername } = req.body;
+    const admin = req.session.admin || null;
+    const result = await usernameHelper.resolveConflict({
+      winnerUserId,
+      loserUserId,
+      loserNewUsername,
+      admin,
+      req
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// API: Reserved keywords list
+router.get('/usernames/api/reserved', verifyLogin, async (req, res) => {
+  try {
+    const search = req.query.search || '';
+    const list = await usernameHelper.getReservedKeywordsList(search);
+    res.json({ success: true, list });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API: Add reserved keyword (Superuser only)
+router.post('/usernames/api/reserved/add', verifyLogin, verifySuperuser, async (req, res) => {
+  try {
+    const { keyword, reason } = req.body;
+    const admin = req.session.admin || null;
+    const result = await usernameHelper.addReservedKeyword({ keyword, reason, admin, req });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// API: Delete reserved keyword (Superuser only)
+router.post('/usernames/api/reserved/delete', verifyLogin, verifySuperuser, async (req, res) => {
+  try {
+    const { keyword } = req.body;
+    const admin = req.session.admin || null;
+    const result = await usernameHelper.deleteReservedKeyword({ keyword, admin, req });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// API: Bulk preview missing usernames
+router.post('/usernames/api/bulk-preview', verifyLogin, async (req, res) => {
+  try {
+    const limit = Math.min(200, parseInt(req.body.limit, 10) || 50);
+    const preview = await usernameHelper.bulkGenerateMissingPreview(limit);
+    res.json({ success: true, preview });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API: Bulk apply missing usernames
+router.post('/usernames/api/bulk-apply', verifyLogin, async (req, res) => {
+  try {
+    const { candidates } = req.body;
+    const admin = req.session.admin || null;
+    const result = await usernameHelper.bulkGenerateMissingApply({ candidates, admin, req });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ✅ REGISTERED USERS (from user panel, no courses)
@@ -474,12 +676,49 @@ router.get('/edit-student/:id', verifyLogin, validateObjectIds(['id']), async (r
       return res.redirect('/students');
     }
 
+    // Decorate username fields
+    student.displayUsername = student.username ? `@${student.username}` : '';
+    student.isClaimed = Boolean(student.usernameClaimed);
+
+    const changedAt = student.usernameChangedAt ? new Date(student.usernameChangedAt) : null;
+    student.lastChangedDate = changedAt
+      ? changedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : 'Never';
+
+    const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    student.isCooldownActive = Boolean(changedAt && (now - changedAt.getTime()) < fourteenDaysMs);
+    student.cooldownDaysRemaining = student.isCooldownActive
+      ? Math.ceil((fourteenDaysMs - (now - changedAt.getTime())) / (24 * 60 * 60 * 1000))
+      : 0;
+
     let courses = await courseHelpers.getCourses();
+
+    // Fetch username change history from audit logs
+    const usernameHistory = await db.get()
+      .collection(collection.AUDIT_LOG_COLLECTION)
+      .find({
+        entityId: String(student._id),
+        action: { $in: ['ADMIN_USERNAME_CHANGED', 'USERNAME_CHANGED', 'USERNAME_CONFLICT_RESOLVED'] }
+      })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .toArray()
+      .catch(() => []);
+
+    usernameHistory.forEach(h => {
+      h.formattedDate = h.createdAt
+        ? new Date(h.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '—';
+      h.changedBy = h.admin?.name || 'User';
+      h.reason = h.metadata?.reason || h.message || '—';
+    });
 
     res.render('admin/edit-student', {
       admins: true,
       student,
-      courses
+      courses,
+      usernameHistory
     });
   } catch (err) {
     logger.info('GET Edit Student Error:', err.message);
@@ -999,6 +1238,9 @@ router.post(
     try {
 
       if (!req.body.coverImageUrl) {
+        if (req.files?.video?.[0]?.path && fs.existsSync(req.files.video[0].path)) {
+          try { fs.unlinkSync(req.files.video[0].path); } catch (e) {}
+        }
         const msg = 'Class cover image is required. Please select one from the Media Library.';
         return isAjax
           ? res.status(400).json({ success: false, error: msg })
@@ -1026,7 +1268,10 @@ router.post(
             const videoFile = req.files.video[0];
             logger.info(`Extracting duration via ffprobe for ${videoFile.originalname} (${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
 
-            const rawSeconds = await getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
+            // Safe duration probe with 15s timeout to prevent hanging
+            const durationPromise = getVideoDurationInSeconds(videoFile.path, ffprobeStatic.path);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('ffprobe timed out after 15s')), 15000));
+            const rawSeconds = await Promise.race([durationPromise, timeoutPromise]);
             detectedDuration = Math.floor(rawSeconds);
 
             logger.info(`Successfully extracted duration via ffprobe: ${detectedDuration} seconds`);
@@ -1045,6 +1290,7 @@ router.post(
       // Attach Firebase URL + courseType so class-helper can use it
       const bodyWithThumb = { ...req.body, thumbnailUrl, duration: detectedDuration, courseType };
 
+      logger.info(`Initiating class processing for chapter "${req.body.chapterId}" (${courseType})`);
       const result = await classHelper.addClass(bodyWithThumb, req.files);
 
       if (!result.success) {
@@ -1068,7 +1314,10 @@ router.post(
         : res.redirect(redirectUrl);
 
     } catch (err) {
-      logger.info('Add Class Route Error:', err.message);
+      if (req.files?.video?.[0]?.path && fs.existsSync(req.files.video[0].path)) {
+        try { fs.unlinkSync(req.files.video[0].path); } catch (e) {}
+      }
+      logger.error('Add Class Route Error:', err.message);
       return isAjax
         ? res.status(500).json({ success: false, error: 'Failed to add class' })
         : res.status(500).send('Failed to add class');
@@ -1986,7 +2235,7 @@ router.post(
         return res.json({ status: false, message: 'Invalid backup structure.' });
       }
 
-      const validKeys = new Set(['students', 'courses', 'settings', 'auditLogs']);
+      const validKeys = new Set(['students', 'courses', 'settings', 'auditLogs', 'reservedUsernames']);
       const hasValidKey = Object.keys(data).some(k => validKeys.has(k));
       if (!hasValidKey) {
         cleanupBackupUpload();
@@ -1998,7 +2247,8 @@ router.post(
         ['students', collection.STUDENTS_COLLECTION],
         ['courses', collection.COURSE_COLLECTION],
         ['settings', collection.SETTINGS_COLLECTION],
-        ['auditLogs', collection.AUDIT_LOG_COLLECTION]
+        ['auditLogs', collection.AUDIT_LOG_COLLECTION],
+        ['reservedUsernames', collection.RESERVED_USERNAMES_COLLECTION]
       ].filter(([key]) => Object.hasOwn(data, key));
 
       if (restoreTargets.some(([key]) => !Array.isArray(data[key]))) {

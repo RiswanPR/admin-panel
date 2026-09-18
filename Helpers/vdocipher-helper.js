@@ -9,6 +9,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const logger = require('./logger');
 
 const API_SECRET =
   String(
@@ -71,14 +72,15 @@ async function uploadToS3(
   // header is accurate; some S3 POST policies reject chunked
   // transfer-encoding for large files without it.
   const fileStats = fs.statSync(filePath);
-  const stream =
-    fs.createReadStream(filePath);
+  const stream = fs.createReadStream(filePath, { highWaterMark: 64 * 1024 });
 
   form.append(
     'file',
     stream,
     { knownLength: fileStats.size }
   );
+
+  logger.info(`Starting VdoCipher S3 transfer for: "${filePath}" (${(fileStats.size / (1024 * 1024)).toFixed(2)} MB)`);
 
   try {
 
@@ -90,6 +92,7 @@ async function uploadToS3(
       }
     );
 
+    logger.info(`VdoCipher S3 transfer completed successfully for: "${filePath}"`);
     return true;
 
   } finally {

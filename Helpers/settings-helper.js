@@ -104,8 +104,23 @@ module.exports = {
                 .find({})
                 .toArray();
 
+            const exportData = students.map(s => ({
+                id: String(s._id),
+                name: s.name || s.Name || '',
+                email: s.email || '',
+                username: s.username ? `@${s.username}` : '',
+                usernameClaimed: s.usernameClaimed ? 'Claimed' : 'Unclaimed',
+                usernameChangedAt: s.usernameChangedAt ? new Date(s.usernameChangedAt).toISOString() : '',
+                phone: s.Phone_Number || '',
+                paidAmount: s.Paid_Amount || 0,
+                status: s.status ? 'Active' : 'Expired',
+                isVerified: s.account_Status?.isVerified ? 'Yes' : 'No',
+                isBlocked: s.account_Status?.isBlocked ? 'Yes' : 'No',
+                createdAt: s.createdAt ? new Date(s.createdAt).toISOString() : ''
+            }));
+
             const parser = new Parser();
-            const csv = parser.parse(students);
+            const csv = parser.parse(exportData);
             const fileName = 'students-' + Date.now() + '.csv';
             const filePath = path.join(backupDir, fileName);
 
@@ -167,6 +182,12 @@ module.exports = {
                 .collection(collection.AUDIT_LOG_COLLECTION)
                 .find({})
                 .toArray();
+
+            backupData.reservedUsernames = await db.get()
+                .collection(collection.RESERVED_USERNAMES_COLLECTION)
+                .find({})
+                .toArray()
+                .catch(() => []);
 
             const fileName = 'zeitnah-backup-' + Date.now() + '.json';
             const filePath = path.join(backupDir, fileName);

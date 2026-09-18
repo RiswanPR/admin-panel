@@ -1,0 +1,1240 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="un-hero mb-4">
+        <div class="un-hero-glow"></div>
+        <div class="un-hero-content d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="un-hero-tag">
+                    <i class="fa-solid fa-id-card-clip me-2"></i>
+                    Identity Control
+                </div>
+                <h2 class="text-white fw-bold m-0 mt-2">
+                    Username Management
+                </h2>
+                <p class="un-hero-sub mt-2 mb-0">
+                    Manage student &amp; learner usernames, resolve conflicts, and audit identity changes
+                </p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button class="btn btn-light un-btn-top" onclick="refreshHealth()">
+                    <i class="fa-solid fa-arrows-rotate me-2"></i> Health Scan
+                </button>
+                <button class="btn btn-outline-light un-btn-top" onclick="switchTab('tab-bulk')">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Bulk Fix
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS / KPIS -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="un-stat">
+                <div class="un-stat-icon" style="background:linear-gradient(135deg,var(--brand),var(--brand-2));">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <small class="un-stat-label">Total Users</small>
+                    <h3 class="un-stat-value" id="kpiTotal">{{health.totalUsers}}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="un-stat">
+                <div class="un-stat-icon" style="background:linear-gradient(135deg,#9fd5b2,#70bf8e);color:var(--stat-gradient-text);">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <small class="un-stat-label">Claimed Usernames</small>
+                    <h3 class="un-stat-value" id="kpiClaimed">{{health.claimedCount}}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="un-stat">
+                <div class="un-stat-icon" style="background:linear-gradient(135deg,#f6ed4a,#d8d038);color:var(--stat-gradient-text);">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <small class="un-stat-label">Unclaimed / Generated</small>
+                    <h3 class="un-stat-value" id="kpiUnclaimed">{{health.unclaimedCount}}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="un-stat {{#if health.totalIssues}}un-stat-danger{{/if}}">
+                <div class="un-stat-icon" style="background:linear-gradient(135deg,#dc3545,#ff8a8a);">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <small class="un-stat-label">Issues Detected</small>
+                    <h3 class="un-stat-value" id="kpiIssues">{{health.totalIssues}}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="un-tabs-card mb-4">
+        <div class="un-tab-nav">
+            <button class="un-tab-btn active" id="btn-tab-directory" onclick="switchTab('tab-directory')">
+                <i class="fa-solid fa-table-list me-2"></i> User Directory
+            </button>
+            <button class="un-tab-btn" id="btn-tab-health" onclick="switchTab('tab-health')">
+                <i class="fa-solid fa-heart-pulse me-2"></i> Health &amp; Diagnostics
+                {{#if health.totalIssues}}
+                <span class="badge bg-danger ms-2">{{health.totalIssues}}</span>
+                {{/if}}
+            </button>
+            <button class="un-tab-btn" id="btn-tab-reserved" onclick="switchTab('tab-reserved')">
+                <i class="fa-solid fa-shield-halved me-2"></i> Reserved Handles
+            </button>
+            <button class="un-tab-btn" id="btn-tab-bulk" onclick="switchTab('tab-bulk')">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Bulk Generator
+            </button>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: USER DIRECTORY                                    -->
+    <!-- ======================================================== -->
+    <div id="tab-directory" class="un-tab-content active">
+
+        <!-- SEARCH + FILTERS BAR -->
+        <div class="un-toolbar mb-4">
+            <form id="filterForm" method="GET" action="/usernames" class="w-100">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-4 col-md-12">
+                        <div class="un-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" name="search" id="searchInput" placeholder="Search name, @username, email, phone..." value="{{filters.search}}">
+                            {{#if filters.search}}
+                            <button type="button" class="un-clear-search" onclick="clearSearch()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select un-select" name="claim" onchange="submitFilter()">
+                            <option value="all" {{#ifEquals filters.claim 'all'}}selected{{/ifEquals}}>All Claim States</option>
+                            <option value="claimed" {{#ifEquals filters.claim 'claimed'}}selected{{/ifEquals}}>✓ Claimed</option>
+                            <option value="unclaimed" {{#ifEquals filters.claim 'unclaimed'}}selected{{/ifEquals}}>○ Unclaimed</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select un-select" name="role" onchange="submitFilter()">
+                            <option value="all" {{#ifEquals filters.role 'all'}}selected{{/ifEquals}}>All Roles</option>
+                            <option value="student" {{#ifEquals filters.role 'student'}}selected{{/ifEquals}}>Enrolled Students</option>
+                            <option value="registered" {{#ifEquals filters.role 'registered'}}selected{{/ifEquals}}>Registered Users</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select un-select" name="issue" onchange="submitFilter()">
+                            <option value="all" {{#ifEquals filters.issue 'all'}}selected{{/ifEquals}}>All Issues</option>
+                            <option value="missing" {{#ifEquals filters.issue 'missing'}}selected{{/ifEquals}}>Missing Username</option>
+                            <option value="recent" {{#ifEquals filters.issue 'recent'}}selected{{/ifEquals}}>Recently Changed</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select un-select" name="sort" onchange="submitFilter()">
+                            <option value="createdAt" {{#ifEquals filters.sort 'createdAt'}}selected{{/ifEquals}}>Newest First</option>
+                            <option value="username" {{#ifEquals filters.sort 'username'}}selected{{/ifEquals}}>Username (A-Z)</option>
+                            <option value="name" {{#ifEquals filters.sort 'name'}}selected{{/ifEquals}}>Name (A-Z)</option>
+                            <option value="usernameChangedAt" {{#ifEquals filters.sort 'usernameChangedAt'}}selected{{/ifEquals}}>Recently Changed</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- USERS TABLE -->
+        <div class="un-table-card">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 un-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Username</th>
+                            <th>Role &amp; Courses</th>
+                            <th>Claim Status</th>
+                            <th>Last Changed</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if users.length}}
+                        {{#each users}}
+                        <tr id="row-{{this._id}}">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="un-avatar">
+                                        {{#if this.imageUrl}}
+                                        <img src="{{this.imageUrl}}" alt="" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+                                        {{else}}
+                                        <div class="un-avatar-char">{{#if this.name}}{{this.name.[0]}}{{else}}{{this.Name.[0]}}{{/if}}</div>
+                                        {{/if}}
+                                    </div>
+                                    <div>
+                                        <strong class="d-block text-white mb-0">{{this.displayName}}</strong>
+                                        <small class="text-muted">{{this.displayEmail}}</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                {{#if this.hasUsername}}
+                                <span class="un-badge-username">@{{this.username}}</span>
+                                {{else}}
+                                <span class="badge bg-danger text-white">Missing</span>
+                                {{/if}}
+                            </td>
+
+                            <td>
+                                {{#if this.isStudent}}
+                                <span class="badge bg-primary me-1">Student</span>
+                                <small class="text-muted">{{this.courseCount}} courses</small>
+                                {{else}}
+                                <span class="badge bg-secondary">Registered</span>
+                                {{/if}}
+                            </td>
+
+                            <td>
+                                {{#if this.isClaimed}}
+                                <span class="un-chip-claimed">
+                                    <i class="fa-solid fa-check-circle me-1"></i> Claimed
+                                </span>
+                                {{else}}
+                                <span class="un-chip-unclaimed">
+                                    <i class="fa-regular fa-clock me-1"></i> Unclaimed
+                                </span>
+                                {{/if}}
+                            </td>
+
+                            <td>
+                                <span class="text-muted" style="font-size:0.85em;">{{this.lastChangedDate}}</span>
+                                {{#if this.isCooldownActive}}
+                                <span class="badge bg-warning text-dark ms-1" title="In normal user cooldown for {{this.cooldownDaysRemaining}} more days">Cooldown</span>
+                                {{/if}}
+                            </td>
+
+                            <td class="text-end">
+                                <button class="btn btn-sm un-btn-manage"
+                                    data-id="{{this._id}}"
+                                    data-name="{{this.displayName}}"
+                                    data-email="{{this.displayEmail}}"
+                                    data-username="{{this.username}}"
+                                    data-claimed="{{this.isClaimed}}"
+                                    data-cooldown="{{this.isCooldownActive}}"
+                                    data-cooldowndays="{{this.cooldownDaysRemaining}}"
+                                    data-lastchanged="{{this.lastChangedDate}}"
+                                    onclick="openManageModalFromButton(this)">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Manage
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-user-slash fa-3x mb-3 opacity-25 d-block"></i>
+                                <h5>No users found</h5>
+                                <p class="mb-0">Try clearing or adjusting your search filters.</p>
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            {{#if pagination.totalPages}}
+            <div class="un-pagination d-flex justify-content-between align-items-center flex-wrap gap-2 p-3">
+                <small class="text-muted">
+                    Showing page {{pagination.page}} of {{pagination.totalPages}} ({{pagination.total}} total users)
+                </small>
+
+                <div class="btn-group">
+                    {{#ifGt pagination.page 1}}
+                    <a href="/usernames?page={{dec pagination.page}}&search={{filters.search}}&claim={{filters.claim}}&role={{filters.role}}&issue={{filters.issue}}&sort={{filters.sort}}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </a>
+                    {{/ifGt}}
+
+                    <span class="btn btn-secondary btn-sm disabled px-3">Page {{pagination.page}}</span>
+
+                    {{#ifLt pagination.page pagination.totalPages}}
+                    <a href="/usernames?page={{inc pagination.page}}&search={{filters.search}}&claim={{filters.claim}}&role={{filters.role}}&issue={{filters.issue}}&sort={{filters.sort}}" class="btn btn-outline-secondary btn-sm">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                    {{/ifLt}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: HEALTH & DIAGNOSTICS                              -->
+    <!-- ======================================================== -->
+    <div id="tab-health" class="un-tab-content">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card un-card p-4 h-100">
+                    <h5 class="fw-bold text-white mb-3">
+                        <i class="fa-solid fa-shield-halved text-success me-2"></i> System Health Overview
+                    </h5>
+                    <p class="text-muted" style="font-size:0.9em;">
+                        Automated diagnostic scan evaluating username conformity, format validity, collision resistance, and reservation policies.
+                    </p>
+
+                    <div class="un-health-list">
+                        <div class="un-health-row">
+                            <span><i class="fa-solid fa-circle-check text-success me-2"></i> Valid Formatted Usernames</span>
+                            <strong class="text-success">{{health.validCount}}</strong>
+                        </div>
+                        <div class="un-health-row">
+                            <span><i class="fa-solid fa-circle-exclamation text-warning me-2"></i> Missing / Empty Usernames</span>
+                            <strong class="{{#if health.missingCount}}text-warning{{else}}text-muted{{/if}}">{{health.missingCount}}</strong>
+                        </div>
+                        <div class="un-health-row">
+                            <span><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Format Constraint Violations</span>
+                            <strong class="{{#if health.invalidCount}}text-danger{{else}}text-muted{{/if}}">{{health.invalidCount}}</strong>
+                        </div>
+                        <div class="un-health-row">
+                            <span><i class="fa-solid fa-users-viewfinder text-danger me-2"></i> Duplicate / Collision Groups</span>
+                            <strong class="{{#if health.duplicateGroupsCount}}text-danger{{else}}text-muted{{/if}}">{{health.duplicateGroupsCount}}</strong>
+                        </div>
+                        <div class="un-health-row">
+                            <span><i class="fa-solid fa-lock text-info me-2"></i> Reserved Names in Use</span>
+                            <strong class="{{#if health.reservedInUseCount}}text-info{{else}}text-muted{{/if}}">{{health.reservedInUseCount}}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card un-card p-4 h-100">
+                    <h5 class="fw-bold text-white mb-3">
+                        <i class="fa-solid fa-handshake-angle text-warning me-2"></i> Conflict Resolution Assistant
+                    </h5>
+
+                    {{#if health.duplicates.length}}
+                    <p class="text-muted" style="font-size:0.9em;">
+                        The following accounts share duplicate username handles. Select a winner or reassign:
+                    </p>
+
+                    <div class="un-conflict-container">
+                        {{#each health.duplicates}}
+                        <div class="un-conflict-box p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="un-badge-username">@{{this._id}}</span>
+                                <span class="badge bg-danger">{{this.count}} Collisions</span>
+                            </div>
+                            <div class="small text-muted mb-2">Accounts involved:</div>
+                            <ul class="mb-3 ps-3" style="font-size:0.85em;">
+                                {{#each this.emails}}
+                                <li class="text-white">{{this}}</li>
+                                {{/each}}
+                            </ul>
+
+                            <button class="btn btn-warning btn-sm w-100" onclick="launchConflictModal('{{this._id}}', '{{this.userIds.[0]}}', '{{this.userIds.[1]}}')">
+                                <i class="fa-solid fa-arrows-split-up-and-left me-1"></i> Resolve Conflict
+                            </button>
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{else}}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-circle-check text-success fa-3x mb-3 d-block opacity-75"></i>
+                        <h6 class="text-white">Zero Username Collisions</h6>
+                        <p class="small mb-0">All registered and student user handles are distinct across the system.</p>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: RESERVED USERNAMES                                -->
+    <!-- ======================================================== -->
+    <div id="tab-reserved" class="un-tab-content">
+        <div class="card un-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div>
+                    <h5 class="fw-bold text-white mb-1">
+                        <i class="fa-solid fa-shield-halved text-info me-2"></i> Reserved Handle Registry
+                    </h5>
+                    <p class="text-muted mb-0 small">
+                        Keywords reserved for core system routes, administration, and public features.
+                    </p>
+                </div>
+
+                {{#if isSuperuser}}
+                <button class="btn btn-primary btn-sm" onclick="openAddReservedModal()">
+                    <i class="fa-solid fa-plus me-1"></i> Add Reserved Handle
+                </button>
+                {{else}}
+                <span class="badge bg-secondary">Superuser required to add</span>
+                {{/if}}
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="un-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="reservedSearchInput" placeholder="Filter reserved keywords..." onkeyup="filterReservedList()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="un-reserved-grid" id="reservedGrid">
+                <!-- Dynamically populated or server rendered -->
+                <div class="text-center py-4 text-muted w-100" id="reservedLoading">
+                    <div class="spinner-border spinner-border-sm text-light me-2" role="status"></div> Loading reserved registry...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: BULK GENERATOR                                    -->
+    <!-- ======================================================== -->
+    <div id="tab-bulk" class="un-tab-content">
+        <div class="card un-card p-4">
+            <h5 class="fw-bold text-white mb-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i> Bulk Missing Username Generator
+            </h5>
+            <p class="text-muted small mb-4">
+                Scan accounts with missing or empty usernames and safely generate unique identity handles using the standard name-based derivation algorithm with duplicate protection.
+            </p>
+
+            <div class="d-flex gap-2 mb-4 flex-wrap">
+                <button class="btn btn-warning" onclick="loadBulkPreview()">
+                    <i class="fa-solid fa-eye me-2"></i> Preview Dry Run
+                </button>
+            </div>
+
+            <div id="bulkPreviewContainer" style="display:none;">
+                <div class="alert alert-info mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <strong id="bulkCountLabel">0</strong> accounts requiring generated usernames discovered.
+                    </div>
+                    <button class="btn btn-success btn-sm px-3" onclick="confirmBulkApply()">
+                        <i class="fa-solid fa-check-double me-1"></i> Apply Changes
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle un-table" id="bulkPreviewTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Current</th>
+                                <th>Generated Suggestion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkPreviewTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: MANAGE USERNAME                                    -->
+<!-- ======================================================== -->
+<div class="modal fade" id="manageUsernameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content un-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white">
+                    <i class="fa-solid fa-id-badge text-primary me-2"></i> Manage Username
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <!-- User Summary -->
+                <div class="un-modal-user-box p-3 mb-3">
+                    <strong class="text-white d-block" id="modalUserName">User Name</strong>
+                    <small class="text-muted d-block" id="modalUserEmail">email@example.com</small>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <small class="text-muted">Current Handle:</small>
+                        <span class="un-badge-username" id="modalCurrentUsername">@none</span>
+                    </div>
+                </div>
+
+                <!-- Cooldown Notice -->
+                <div id="modalCooldownWarning" class="alert alert-warning py-2 px-3 mb-3 small" style="display:none;">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <strong>Admin Override:</strong> This user changed their username recently. Normal 14-day user cooldown will be bypassed and audited.
+                </div>
+
+                <!-- Input form -->
+                <div class="mb-3">
+                    <label class="form-label text-white fw-semibold small">New Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text un-ig-text">@</span>
+                        <input type="text" class="form-control un-input" id="modalNewUsernameInput" placeholder="username" onkeyup="onUsernameInputChanged()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="requestGeneratedSuggestion()" title="Generate Suggestion">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
+                    </div>
+                    <div id="modalAvailabilityBadge" class="mt-2 small"></div>
+                </div>
+
+                <!-- Reason Selector -->
+                <div class="mb-3">
+                    <label class="form-label text-white fw-semibold small">Reason for Change</label>
+                    <select class="form-select un-input" id="modalReasonSelect">
+                        <option value="Student requested correction">Student requested correction</option>
+                        <option value="Typo correction">Typo correction</option>
+                        <option value="Duplicate handle resolution">Duplicate handle resolution</option>
+                        <option value="Inappropriate name policy violation">Inappropriate name policy violation</option>
+                        <option value="Privacy request">Privacy request</option>
+                        <option value="Admin correction">Admin correction</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="modalSaveBtn" onclick="submitUsernameChange()" disabled>
+                    Update Username
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: ADD RESERVED USERNAME                             -->
+<!-- ======================================================== -->
+<div class="modal fade" id="addReservedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content un-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white">
+                    <i class="fa-solid fa-shield-halved text-info me-2"></i> Add Reserved Handle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label text-white fw-semibold small">Keyword / Handle</label>
+                    <div class="input-group">
+                        <span class="input-group-text un-ig-text">@</span>
+                        <input type="text" class="form-control un-input" id="reservedKeywordInput" placeholder="keyword">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white fw-semibold small">Restriction Reason</label>
+                    <input type="text" class="form-control un-input" id="reservedReasonInput" placeholder="e.g. Reserved for future platform feature">
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddReserved()">Save Reserved Handle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* HERO */
+.un-hero {
+    position: relative;
+    background: linear-gradient(135deg, #12314c 0%, #0d2438 100%);
+    border-radius: 22px;
+    padding: 32px 36px;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.un-hero-glow {
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(159,213,178,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.un-hero-tag {
+    display: inline-block;
+    background: rgba(159,213,178,0.15);
+    color: #9fd5b2;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(159,213,178,0.3);
+}
+.un-hero-sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+}
+.un-btn-top {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 8px 18px;
+}
+
+/* STATS */
+.un-stat {
+    background: var(--card-bg, #1a222d);
+    border-radius: 18px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.un-stat-danger {
+    border-color: rgba(220,53,69,0.3);
+}
+.un-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+}
+.un-stat-label {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 2px;
+}
+.un-stat-value {
+    color: #fff;
+    font-weight: 800;
+    font-size: 26px;
+    margin: 0;
+}
+
+/* TABS */
+.un-tabs-card {
+    background: var(--card-bg, #1a222d);
+    border-radius: 16px;
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.un-tab-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.un-tab-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.65);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.un-tab-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+}
+.un-tab-btn.active {
+    color: #12314c;
+    background: #9fd5b2;
+    font-weight: 700;
+}
+.un-tab-content {
+    display: none;
+}
+.un-tab-content.active {
+    display: block;
+}
+
+/* TOOLBAR & SEARCH */
+.un-toolbar {
+    background: var(--card-bg, #1a222d);
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.un-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.un-search i {
+    position: absolute;
+    left: 14px;
+    color: rgba(255,255,255,0.4);
+}
+.un-search input {
+    width: 100%;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 38px 10px 40px;
+    font-size: 14px;
+}
+.un-search input:focus {
+    outline: none;
+    border-color: #9fd5b2;
+}
+.un-clear-search {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+}
+.un-select {
+    background-color: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 13px;
+    padding: 10px 12px;
+}
+.un-select:focus {
+    background-color: rgba(0,0,0,0.35);
+    color: #fff;
+    border-color: #9fd5b2;
+}
+
+/* TABLE */
+.un-table-card {
+    background: var(--card-bg, #1a222d);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+.un-table thead th {
+    background: rgba(0,0,0,0.2);
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 20px;
+}
+.un-table tbody td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.un-table tbody tr:hover td {
+    background: rgba(255,255,255,0.02);
+}
+.un-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.un-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.un-avatar-char {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #9fd5b2, #12314c);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+.un-badge-username {
+    font-family: monospace;
+    font-weight: 700;
+    color: #9fd5b2;
+    background: rgba(159,213,178,0.12);
+    border: 1px solid rgba(159,213,178,0.25);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: inline-block;
+}
+.un-chip-claimed {
+    color: #70bf8e;
+    font-size: 12px;
+    font-weight: 700;
+}
+.un-chip-unclaimed {
+    color: #d8d038;
+    font-size: 12px;
+    font-weight: 600;
+}
+.un-btn-manage {
+    background: rgba(159,213,178,0.15);
+    color: #9fd5b2;
+    border: 1px solid rgba(159,213,178,0.3);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 6px 14px;
+    transition: all 0.2s ease;
+}
+.un-btn-manage:hover {
+    background: #9fd5b2;
+    color: #12314c;
+}
+
+/* HEALTH & CARDS */
+.un-card {
+    background: var(--card-bg, #1a222d);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.un-health-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.un-health-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+.un-conflict-box {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(220,53,69,0.3);
+    border-radius: 14px;
+}
+
+/* RESERVED GRID */
+.un-reserved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+.un-reserved-pill {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+.un-reserved-pill.core {
+    border-color: rgba(159,213,178,0.25);
+}
+
+/* MODAL */
+.un-modal {
+    background: #1a222d;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.un-modal-user-box {
+    background: rgba(0,0,0,0.3);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.un-ig-text {
+    background: rgba(0,0,0,0.4);
+    color: #9fd5b2;
+    border-color: rgba(255,255,255,0.1);
+    font-weight: 700;
+}
+.un-input {
+    background: rgba(0,0,0,0.25);
+    border-color: rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 10px;
+}
+.un-input:focus {
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    border-color: #9fd5b2;
+}
+</style>
+
+<script>
+let currentManageUserId = null;
+let debounceTimer = null;
+let reservedKeywordsCache = [];
+
+function switchTab(tabId) {
+    document.querySelectorAll('.un-tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.un-tab-btn').forEach(el => el.classList.remove('active'));
+
+    const tab = document.getElementById(tabId);
+    const btn = document.getElementById('btn-' + tabId);
+    if (tab) tab.classList.add('active');
+    if (btn) btn.classList.add('active');
+
+    if (tabId === 'tab-reserved') {
+        loadReservedKeywords();
+    }
+}
+
+function submitFilter() {
+    document.getElementById('filterForm').submit();
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    submitFilter();
+}
+
+function openManageModalFromButton(btn) {
+    const id = btn.getAttribute('data-id');
+    const name = btn.getAttribute('data-name');
+    const email = btn.getAttribute('data-email');
+    const username = btn.getAttribute('data-username');
+    const inCooldown = btn.getAttribute('data-cooldown') === 'true';
+
+    currentManageUserId = id;
+    document.getElementById('modalUserName').innerText = name;
+    document.getElementById('modalUserEmail').innerText = email;
+    document.getElementById('modalCurrentUsername').innerText = username ? '@' + username : '@none';
+    document.getElementById('modalNewUsernameInput').value = username || '';
+    document.getElementById('modalAvailabilityBadge').innerHTML = '';
+    document.getElementById('modalSaveBtn').disabled = true;
+
+    const cooldownWarn = document.getElementById('modalCooldownWarning');
+    if (inCooldown) {
+        cooldownWarn.style.display = 'block';
+    } else {
+        cooldownWarn.style.display = 'none';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('manageUsernameModal'));
+    modal.show();
+}
+
+function onUsernameInputChanged() {
+    clearTimeout(debounceTimer);
+    const input = document.getElementById('modalNewUsernameInput');
+    const saveBtn = document.getElementById('modalSaveBtn');
+    const badge = document.getElementById('modalAvailabilityBadge');
+    const rawVal = input.value.trim().replace(/^@/, '');
+
+    if (!rawVal) {
+        badge.innerHTML = '';
+        saveBtn.disabled = true;
+        return;
+    }
+
+    badge.innerHTML = '<span class="text-muted"><i class="fa-solid fa-spinner fa-spin me-1"></i> Checking availability...</span>';
+    saveBtn.disabled = true;
+
+    debounceTimer = setTimeout(() => {
+        fetch(`/usernames/api/check-availability?username=${encodeURIComponent(rawVal)}&excludeUserId=${currentManageUserId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.available) {
+                    badge.innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> @${data.username} is available</span>`;
+                    saveBtn.disabled = false;
+                } else {
+                    badge.innerHTML = `<span class="text-danger fw-semibold"><i class="fa-solid fa-circle-xmark me-1"></i> ${data.reason || 'Unavailable'}</span>`;
+                    saveBtn.disabled = true;
+                }
+            })
+            .catch(err => {
+                badge.innerHTML = `<span class="text-danger">Error checking availability</span>`;
+                saveBtn.disabled = true;
+            });
+    }, 300);
+}
+
+function requestGeneratedSuggestion() {
+    const name = document.getElementById('modalUserName').innerText;
+    const email = document.getElementById('modalUserEmail').innerText;
+
+    fetch('/usernames/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentManageUserId, name, email })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.suggestion) {
+            document.getElementById('modalNewUsernameInput').value = data.suggestion;
+            onUsernameInputChanged();
+        }
+    });
+}
+
+function submitUsernameChange() {
+    const newUsername = document.getElementById('modalNewUsernameInput').value.trim();
+    const reason = document.getElementById('modalReasonSelect').value;
+
+    Swal.fire({
+        title: 'Confirm Username Change',
+        html: `You are about to change this learner's handle to <strong>@${newUsername.replace(/^@/, '')}</strong>.<br><small class="text-muted">Reason: ${reason}</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#12314c',
+        confirmButtonText: 'Yes, Update'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        fetch(`/usernames/api/change/${currentManageUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newUsername, reason })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Updated!', `Username updated to @${data.newUsername}`, 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', data.message || 'Failed to update username.', 'error');
+            }
+        })
+        .catch(err => {
+            Swal.fire('Error', err.message, 'error');
+        });
+    });
+}
+
+function refreshHealth() {
+    fetch('/usernames/api/health')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Diagnostic Scan Complete', `Total Users: ${data.health.totalUsers}<br>Issues: ${data.health.totalIssues}`, 'info')
+                    .then(() => location.reload());
+            }
+        });
+}
+
+function loadReservedKeywords() {
+    const grid = document.getElementById('reservedGrid');
+    fetch('/usernames/api/reserved')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                reservedKeywordsCache = data.list;
+                renderReservedKeywords(data.list);
+            }
+        });
+}
+
+function renderReservedKeywords(list) {
+    const grid = document.getElementById('reservedGrid');
+    if (!list.length) {
+        grid.innerHTML = '<div class="text-muted p-3">No reserved handles found.</div>';
+        return;
+    }
+
+    grid.innerHTML = list.map(item => `
+        <div class="un-reserved-pill ${item.isSystemCore ? 'core' : ''}">
+            <div>
+                <strong>@${item.keyword}</strong>
+                <small class="d-block text-muted" style="font-size:10px">${item.isSystemCore ? 'Core System' : 'Custom'}</small>
+            </div>
+            ${!item.isSystemCore ? `
+                <button class="btn btn-link text-danger p-0 ms-2" onclick="deleteReserved('${item.keyword}')" title="Delete">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            ` : '<i class="fa-solid fa-lock text-muted" style="font-size:11px;" title="Immutable core handle"></i>'}
+        </div>
+    `).join('');
+}
+
+function filterReservedList() {
+    const q = document.getElementById('reservedSearchInput').value.toLowerCase().trim();
+    const filtered = reservedKeywordsCache.filter(item => item.keyword.includes(q));
+    renderReservedKeywords(filtered);
+}
+
+function openAddReservedModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addReservedModal'));
+    modal.show();
+}
+
+function submitAddReserved() {
+    const keyword = document.getElementById('reservedKeywordInput').value.trim();
+    const reason = document.getElementById('reservedReasonInput').value.trim();
+
+    fetch('/usernames/api/reserved/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword, reason })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Added', `@${data.keyword} is now reserved`, 'success').then(() => {
+                bootstrap.Modal.getInstance(document.getElementById('addReservedModal')).hide();
+                loadReservedKeywords();
+            });
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    });
+}
+
+function deleteReserved(keyword) {
+    Swal.fire({
+        title: `Remove @${keyword}?`,
+        text: 'This handle will no longer be restricted for new users.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Remove'
+    }).then(res => {
+        if (!res.isConfirmed) return;
+
+        fetch('/usernames/api/reserved/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Removed', '', 'success').then(() => loadReservedKeywords());
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        });
+    });
+}
+
+let bulkCandidatesCache = [];
+function loadBulkPreview() {
+    fetch('/usernames/api/bulk-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 100 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            bulkCandidatesCache = data.preview.candidates;
+            document.getElementById('bulkCountLabel').innerText = data.preview.candidates.length;
+            const tbody = document.getElementById('bulkPreviewTbody');
+
+            if (!data.preview.candidates.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">All accounts already have valid usernames!</td></tr>';
+            } else {
+                tbody.innerHTML = data.preview.candidates.map(c => `
+                    <tr>
+                        <td><strong>${c.name}</strong></td>
+                        <td class="text-muted">${c.email}</td>
+                        <td><span class="badge bg-secondary">${c.currentUsername}</span></td>
+                        <td><span class="un-badge-username">@${c.suggestedUsername}</span></td>
+                    </tr>
+                `).join('');
+            }
+            document.getElementById('bulkPreviewContainer').style.display = 'block';
+        }
+    });
+}
+
+function confirmBulkApply() {
+    if (!bulkCandidatesCache.length) return;
+
+    Swal.fire({
+        title: `Apply to ${bulkCandidatesCache.length} users?`,
+        text: 'Generated usernames will be assigned to these accounts.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Apply Generated Usernames'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch('/usernames/api/bulk-apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidates: bulkCandidatesCache })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Completed', `Updated ${data.updated} accounts.`, 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        });
+    });
+}
+
+function launchConflictModal(username, userA, userB) {
+    Swal.fire({
+        title: `Resolve @${username} Conflict`,
+        html: `Select which user retains @${username}. The other user will be assigned a new generated handle.`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'User 1 Keeps Handle',
+        denyButtonText: 'User 2 Keeps Handle'
+    }).then((result) => {
+        let winner = null;
+        let loser = null;
+
+        if (result.isConfirmed) {
+            winner = userA;
+            loser = userB;
+        } else if (result.isDenied) {
+            winner = userB;
+            loser = userA;
+        } else {
+            return;
+        }
+
+        fetch('/usernames/api/resolve-conflict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ winnerUserId: winner, loserUserId: loser })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Conflict Resolved', `Reassigned handle to @${data.loserNewUsername}`, 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        });
+    });
+}
+</script>

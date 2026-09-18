@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { deleteFromS3, extractPathFromUrl } = require('../config/s3-storage');
 const { decorateProfileImage } = require('./image-url-helper');
+const usernameHelper = require('./username-helper');
 
 const SALT_ROUNDS = 10;
 
@@ -135,8 +136,23 @@ module.exports = {
                 return callback(existing._id, false); // isNew = false
             }
 
+            // Generate a unique username for the new student if not supplied
+            const rawUsername = students.username ? usernameHelper.normalizeUsername(students.username) : '';
+            let finalUsername = rawUsername;
+            if (!finalUsername) {
+                finalUsername = await usernameHelper.generateUsernameForUser({ name, email });
+            } else {
+                const avail = await usernameHelper.checkAvailability(finalUsername);
+                if (!avail.available) {
+                    finalUsername = await usernameHelper.generateUsernameForUser({ name, email });
+                }
+            }
+
             const result = await users.insertOne({
                 ...update,
+                username: finalUsername,
+                usernameClaimed: false,
+                usernameChangedAt: new Date(),
                 createdAt: new Date()
             });
             callback(result.insertedId, true); // isNew = true
@@ -155,6 +171,10 @@ module.exports = {
                 })
                 .toArray();
             await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
+            students.forEach(student => {
+                student.displayUsername = student.username ? `@${student.username}` : '';
+                student.isClaimed = Boolean(student.usernameClaimed);
+            });
             resolve(students);
         });
     },
@@ -174,6 +194,10 @@ module.exports = {
                 .sort({ createdAt: -1 })
                 .toArray();
             await Promise.all(users.map(user => decorateProfileImage(user, 'image')));
+            users.forEach(user => {
+                user.displayUsername = user.username ? `@${user.username}` : '';
+                user.isClaimed = Boolean(user.usernameClaimed);
+            });
             resolve(users);
         });
     },
