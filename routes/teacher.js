@@ -24,6 +24,7 @@ const mediaHelper = require('../Helpers/media-helper');
 const ffprobeStatic = require('ffprobe-static');
 const { getVideoDurationInSeconds } = require('get-video-duration');
 const { decorateClass, decorateCourse, decorateProfileImage } = require('../Helpers/image-url-helper');
+const gamificationHelper = require('../Helpers/gamification-helper');
 
 // ═══════════════════════════════════════════════════
 // GUARDS
@@ -1057,4 +1058,116 @@ router.post(
   }
 );
 
+// ═══════════════════════════════════════════════════
+// TEACHER GAMIFICATION & LEADERBOARD
+// ═══════════════════════════════════════════════════
+
+// 1. Classroom Leaderboard (Learners in teacher's assigned courses)
+router.get('/leaderboard', verifyTeacherLogin, async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const assignedCourses = (teacher.assignedCourses || []).map(id => id.toString());
+
+    if (!assignedCourses.length) {
+      return res.render('teacher/leaderboard', {
+        teacherPanel: true,
+        currentPage: 'leaderboard',
+        students: [],
+        podium: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 1 },
+        kpis: { totalStudents: 0, activeStudents: 0, totalPoints: 0, averagePoints: 0 },
+        filters: {}
+      });
+    }
+
+    const { page, limit, search } = req.query;
+    const data = await gamificationHelper.getGlobalLeaderboard({
+      page,
+      limit,
+      search,
+      courseId: assignedCourses.length === 1 ? assignedCourses[0] : null,
+      status: 'active'
+    });
+
+    const studentsCol = db.get().collection(collection.STUDENTS_COLLECTION);
+    const totalTeacherStudents = await studentsCol.countDocuments({
+      'course.courseId': { $in: assignedCourses }
+    });
+
+    res.render('teacher/leaderboard', {
+      teacherPanel: true,
+      currentPage: 'leaderboard',
+      students: data.students,
+      podium: data.podium,
+      pagination: data.pagination,
+      kpis: {
+        totalStudents: totalTeacherStudents,
+        activeStudents: data.kpis.activeStudents,
+        totalPoints: data.kpis.totalPoints,
+        averagePoints: data.kpis.averagePoints
+      },
+      filters: { search }
+    });
+  } catch (err) {
+    logger.error('Teacher leaderboard error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load classroom leaderboard.' });
+  }
+});
+
+// 2. Specific Course Leaderboard (Assigned courses only)
+router.get(
+  '/leaderboard/course/:courseId',
+  verifyTeacherLogin,
+  validateObjectIds(['courseId']),
+  checkTeacherCourseOwnership,
+  async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { page, limit, search, sort } = req.query;
+      const data = await gamificationHelper.getCourseLeaderboard(courseId, { page, limit, search, sort });
+
+      res.render('teacher/course-leaderboard', {
+        teacherPanel: true,
+        currentPage: 'leaderboard',
+        course: data.course,
+        students: data.students,
+        podium: data.podium,
+        pagination: data.pagination,
+        kpis: data.kpis,
+        filters: { search, sort }
+      });
+    } catch (err) {
+      logger.error('Teacher course leaderboard error:', err.message);
+      res.status(500).render('error', { message: 'Unable to load course leaderboard.' });
+    }
+  }
+);
+
+// 3. Student Gamification Profile (Teacher's students only)
+router.get(
+  '/leaderboard/student/:studentId',
+  verifyTeacherLogin,
+  validateObjectIds(['studentId']),
+  checkTeacherStudentAccess,
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const data = await gamificationHelper.getStudentGamificationProfile(studentId);
+
+      res.render('teacher/student-gamification', {
+        teacherPanel: true,
+        currentPage: 'leaderboard',
+        student: data.student,
+        gamification: data.gamification,
+        enrolledCourses: data.enrolledCourses,
+        timeline: data.timeline
+      });
+    } catch (err) {
+      logger.error('Teacher student gamification error:', err.message);
+      res.status(500).render('error', { message: 'Unable to load student gamification profile.' });
+    }
+  }
+);
+
 module.exports = router;
+

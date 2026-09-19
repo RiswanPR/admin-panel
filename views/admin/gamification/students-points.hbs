@@ -1,0 +1,196 @@
+<link rel="stylesheet" href="/stylesheets/gamification.css">
+
+<div class="container-fluid mt-3 mb-5">
+
+  <!-- HEADER -->
+  <div class="gamification-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="hero-tag">
+          <i class="fa-solid fa-users-gear"></i> Point Management
+        </div>
+        <h1>Students & Points</h1>
+        <p>
+          Manage XP balances, levels, and point rewards across all enrolled students.
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-success px-4 py-2" style="font-size:13px; font-weight:700;" onclick="openAwardPointsModal({ mode: 'award' })">
+          <i class="fa-solid fa-plus me-1"></i> Give Points
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="gamification-toolbar">
+    <div class="filter-group">
+      <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search student name, @handle..." value="{{filters.search}}"
+               oninput="onSearchInputChange(this)">
+      </div>
+
+      <select class="filter-select" onchange="updateLeaderboardFilter('level', this.value)">
+        <option value="">All Levels</option>
+        <option value="1" {{selected filters.level '1'}}>Level 1</option>
+        <option value="2" {{selected filters.level '2'}}>Level 2</option>
+        <option value="3" {{selected filters.level '3'}}>Level 3</option>
+        <option value="4" {{selected filters.level '4'}}>Level 4</option>
+        <option value="5" {{selected filters.level '5'}}>Level 5</option>
+        <option value="6" {{selected filters.level '6'}}>Level 6</option>
+        <option value="7" {{selected filters.level '7'}}>Level 7</option>
+      </select>
+
+      <select class="filter-select" onchange="updateLeaderboardFilter('rank', this.value)">
+        <option value="">All Ranks</option>
+        <option value="Grand Master" {{selected filters.rank 'Grand Master'}}>Grand Master</option>
+        <option value="Master" {{selected filters.rank 'Master'}}>Master</option>
+        <option value="Expert" {{selected filters.rank 'Expert'}}>Expert</option>
+        <option value="Advanced Learner" {{selected filters.rank 'Advanced Learner'}}>Advanced Learner</option>
+        <option value="Learner" {{selected filters.rank 'Learner'}}>Learner</option>
+        <option value="Beginner" {{selected filters.rank 'Beginner'}}>Beginner</option>
+      </select>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">Show:</span>
+      <select class="filter-select" onchange="updateLeaderboardFilter('limit', this.value)">
+        <option value="25" {{selected pagination.limit '25'}}>25</option>
+        <option value="50" {{selected pagination.limit '50'}}>50</option>
+        <option value="100" {{selected pagination.limit '100'}}>100</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STUDENTS TABLE -->
+  <div class="leaderboard-table-card">
+    {{#if students.length}}
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Level</th>
+          <th>Rank Title</th>
+          <th>Current XP</th>
+          <th>Completed Classes</th>
+          <th>Courses</th>
+          <th>Streak</th>
+          <th style="text-align: right;">Quick Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each students}}
+        <tr class="leaderboard-row">
+          <td data-label="Student">
+            <div class="student-cell">
+              {{#if this.imageUrl}}
+              <img src="{{this.imageUrl}}" alt="{{this.displayName}}" class="student-table-avatar"
+                   onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+              {{else}}
+              <div class="student-table-initials">{{this.initials}}</div>
+              {{/if}}
+              <div class="student-meta-info">
+                <a href="/admin/leaderboard/student/{{this._id}}" class="student-cell-name">
+                  {{this.displayName}}
+                </a>
+                <span class="student-cell-username">{{this.username}}</span>
+              </div>
+            </div>
+          </td>
+
+          <td data-label="Level">
+            <span class="level-badge">
+              <i class="fa-solid fa-bolt"></i> Lvl {{this.level}}
+            </span>
+          </td>
+
+          <td data-label="Rank Title">
+            <span class="rank-title-badge {{this.rankMeta.badgeClass}}">
+              <i class="fa-solid {{this.rankMeta.icon}}"></i> {{this.rankTitle}}
+            </span>
+          </td>
+
+          <td data-label="Current XP">
+            <div class="points-cell">
+              {{this.points}}<span>XP</span>
+            </div>
+          </td>
+
+          <td data-label="Classes">
+            <span class="fw-semibold">{{this.completedClasses}}</span>
+          </td>
+
+          <td data-label="Courses">
+            <span class="fw-semibold">{{this.completedCourses}}</span> / {{this.enrolledCoursesCount}}
+          </td>
+
+          <td data-label="Streak">
+            {{#if this.streak}}
+            <span class="streak-pill">
+              <i class="fa-solid fa-fire"></i> {{this.streak}}d
+            </span>
+            {{else}}
+            <span class="text-muted">—</span>
+            {{/if}}
+          </td>
+
+          <td data-label="Quick Actions" style="text-align: right;">
+            <div class="d-flex align-items-center justify-content-end gap-2">
+              <button type="button" class="btn btn-sm btn-outline-success px-2 py-1" style="font-size:12px;"
+                      onclick="openAwardPointsModal({ studentId: '{{this._id}}', studentName: '{{this.displayName}}', studentUsername: '{{this.username}}', currentBalance: {{this.points}}, mode: 'award' })">
+                <i class="fa-solid fa-plus me-1"></i> Award
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size:12px;"
+                      onclick="openAwardPointsModal({ studentId: '{{this._id}}', studentName: '{{this.displayName}}', studentUsername: '{{this.username}}', currentBalance: {{this.points}}, mode: 'adjust' })">
+                <i class="fa-solid fa-minus me-1"></i> Deduct
+              </button>
+              <a href="/admin/leaderboard/student/{{this._id}}" class="btn btn-sm btn-outline-secondary px-2 py-1" style="font-size:12px;" title="View Profile">
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="gamification-pagination">
+      <small class="text-muted" style="font-size:13px;">
+        Showing {{students.length}} of {{pagination.total}} students &bull; Page {{pagination.page}} of {{pagination.totalPages}}
+      </small>
+
+      <div class="pagination-controls">
+        <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.prevPage}})">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <span style="font-size:13px; font-weight:700; padding: 0 10px;">
+          {{pagination.page}}
+        </span>
+
+        <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.nextPage}})">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    {{else}}
+    <div class="text-center py-5">
+      <i class="fa-solid fa-user-graduate text-muted mb-3" style="font-size:48px; opacity:0.3;"></i>
+      <h5 class="fw-bold text-muted mb-2">No students found</h5>
+      <p class="text-muted" style="font-size:14px;">Try changing your search or filter criteria.</p>
+    </div>
+    {{/if}}
+  </div>
+
+</div>
+
+<!-- AWARD / ADJUST POINTS MODAL -->
+{{> gamification/award-modal}}
+
+<script src="/javascripts/gamification.js"></script>

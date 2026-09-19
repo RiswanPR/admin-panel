@@ -1,0 +1,131 @@
+<link rel="stylesheet" href="/stylesheets/gamification.css">
+
+<div class="container-fluid mt-3 mb-5">
+
+  <!-- HEADER -->
+  <div class="gamification-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="hero-tag">
+          <i class="fa-solid fa-scale-balanced"></i> Data Integrity & Auditing
+        </div>
+        <h1>Gamification Ledger Reconciliation</h1>
+        <p>
+          Compare the Point Transaction Ledger against student document balances to detect and repair discrepancies.
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <form action="/admin/gamification/reconcile" method="GET" class="d-inline">
+          <button type="submit" class="btn btn-outline-secondary px-3 py-2" style="font-size:13px; font-weight:600;">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Audit
+          </button>
+        </form>
+        {{#if summary.totalMismatches}}
+        <form action="/admin/gamification/reconcile/fix-all" method="POST" class="d-inline" onsubmit="return confirm('Fix all mismatches? This will adjust student balances to match their ledger transactions.')">
+          <button type="submit" class="btn btn-warning px-3 py-2" style="font-size:13px; font-weight:700;">
+            <i class="fa-solid fa-wrench me-1"></i> Fix All Mismatches
+          </button>
+        </form>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Students Inspected</small>
+        <h3>{{summary.totalChecked}}</h3>
+      </div>
+      <div class="kpi-icon icon-blue">
+        <i class="fa-solid fa-users"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Matched Balances</small>
+        <h3 class="text-success">{{summary.totalMatches}}</h3>
+      </div>
+      <div class="kpi-icon icon-mint">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Discrepancies Found</small>
+        <h3 class="{{#if summary.totalMismatches}}text-danger{{else}}text-muted{{/if}}">
+          {{summary.totalMismatches}}
+        </h3>
+      </div>
+      <div class="kpi-icon {{#if summary.totalMismatches}}icon-gold{{else}}icon-purple{{/if}}">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCREPANCY TABLE -->
+  <div class="leaderboard-table-card">
+    {{#if summary.discrepancies.length}}
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Expected (Ledger Sum)</th>
+          <th>Actual (Student Balance)</th>
+          <th>Discrepancy</th>
+          <th>Ledger Transactions</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each summary.discrepancies}}
+        <tr class="leaderboard-row">
+          <td data-label="Student">
+            <strong class="d-block" style="font-size:14px;">{{this.studentName}}</strong>
+            <small class="text-muted font-monospace">{{this.username}}</small>
+          </td>
+
+          <td data-label="Expected">
+            <span class="fw-bold text-success font-monospace">{{this.expectedBalance}} XP</span>
+          </td>
+
+          <td data-label="Actual">
+            <span class="fw-bold font-monospace">{{this.actualBalance}} XP</span>
+          </td>
+
+          <td data-label="Discrepancy">
+            <span class="badge bg-danger font-monospace">
+              {{#ifGt this.discrepancy 0}}+{{/ifGt}}{{this.discrepancy}} XP
+            </span>
+          </td>
+
+          <td data-label="Transactions">
+            <span>{{this.transactionCount}} records</span>
+          </td>
+
+          <td data-label="Action" style="text-align: right;">
+            <form action="/admin/gamification/reconcile/fix/{{this.studentId}}" method="POST" class="d-inline"
+                  onsubmit="return confirm('Reconcile points for {{this.studentName}}? Expected: {{this.expectedBalance}} XP')">
+              <button type="submit" class="btn btn-sm btn-outline-warning px-3" style="font-size:12px;">
+                <i class="fa-solid fa-wrench me-1"></i> Reconcile
+              </button>
+            </form>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="text-center py-5">
+      <i class="fa-solid fa-circle-check text-success mb-3" style="font-size:48px;"></i>
+      <h5 class="fw-bold text-success mb-2">100% Ledger Balance Consistency</h5>
+      <p class="text-muted" style="font-size:14px;">Every student balance perfectly reconciles with the Point Transaction Ledger.</p>
+    </div>
+    {{/if}}
+  </div>
+
+</div>

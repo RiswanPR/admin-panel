@@ -59,6 +59,40 @@
             <span>Teachers</span>
         </a>
 
+        <!-- GAMIFICATION GROUP -->
+        <div class="sidebar-heading mt-3 mb-1 ms-3"
+            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
+            GAMIFICATION
+        </div>
+
+        <a href="/admin/leaderboard" class="{{#ifEquals currentPage 'leaderboard'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-trophy"></i>
+            <span>Leaderboard</span>
+        </a>
+
+        <a href="/admin/leaderboard/courses" class="{{#ifEquals currentPage 'course-leaderboards'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-ranking-star"></i>
+            <span>Course Leaderboards</span>
+        </a>
+
+        <a href="/admin/leaderboard/students" class="{{#ifEquals currentPage 'students-points'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-star"></i>
+            <span>Students & Points</span>
+        </a>
+
+        <a href="/admin/points/history" class="{{#ifEquals currentPage 'point-history'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Point History</span>
+        </a>
+
+        {{#if isSuperuser}}
+        <a href="/admin/gamification/reconcile" class="{{#ifEquals currentPage 'reconciliation'}}active{{/ifEquals}} superuser-nav-item">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>Reconciliation</span>
+            <span class="su-badge">SU</span>
+        </a>
+        {{/if}}
+
         <div class="sidebar-heading mt-3 mb-1 ms-3"
             style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
         </div>

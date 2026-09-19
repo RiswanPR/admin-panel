@@ -10,5 +10,5 @@ module.exports = {
     COVER_IMAGES_COLLECTION: 'cover_images',
     RESERVED_USERNAMES_COLLECTION: 'reserved_usernames',
     COMMUNITY_PROFILES_COLLECTION: 'community_profiles',
-    
+    POINT_TRANSACTIONS_COLLECTION: 'point_transactions',
 }

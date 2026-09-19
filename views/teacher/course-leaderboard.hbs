@@ -1,0 +1,191 @@
+<link rel="stylesheet" href="/stylesheets/gamification.css">
+
+<div class="container-fluid mt-3 mb-5">
+
+  <!-- HEADER -->
+  <div class="gamification-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <a href="/teacher/leaderboard" class="text-decoration-none text-muted" style="font-size:13px; font-weight:600;">
+            <i class="fa-solid fa-arrow-left me-1"></i> Classroom Leaderboard
+          </a>
+          <span class="text-muted">&bull;</span>
+          <span class="badge bg-success" style="font-size:11px;">Course Leaderboard</span>
+        </div>
+        <h1>{{course.name}}</h1>
+        <p>Learner performance, rankings, and completion momentum for this course.</p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a href="/teacher/courses" class="btn btn-outline-secondary px-3 py-2" style="font-size:13px; font-weight:600;">
+          <i class="fa-solid fa-layer-group me-1"></i> My Courses
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- COURSE KPIS -->
+  {{> gamification/kpi-cards kpis=kpis isCourseLeaderboard=true}}
+
+  <!-- COURSE PODIUM -->
+  {{> gamification/podium podium=podium teacherPanel=true}}
+
+  <!-- TOOLBAR -->
+  <div class="gamification-toolbar">
+    <div class="search-field">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" placeholder="Search enrolled student..." value="{{filters.search}}"
+             oninput="onSearchInputChange(this)">
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">Show:</span>
+      <select class="filter-select" onchange="updateLeaderboardFilter('limit', this.value)">
+        <option value="25" {{selected pagination.limit '25'}}>25</option>
+        <option value="50" {{selected pagination.limit '50'}}>50</option>
+        <option value="100" {{selected pagination.limit '100'}}>100</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD TABLE -->
+  <div class="leaderboard-table-card">
+    {{#if students.length}}
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th style="width: 70px; text-align: center;">Rank</th>
+          <th>Student</th>
+          <th>Level</th>
+          <th>Course XP</th>
+          <th>Course Completion</th>
+          <th>Classes</th>
+          <th>Streak</th>
+          <th>Last Active</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each students}}
+        <tr class="leaderboard-row">
+          <td class="rank-badge-cell" data-label="Rank">
+            {{#ifEquals this.rank 1}}
+              <span class="rank-pill rank-1-pill"><i class="fa-solid fa-crown" style="font-size:10px; margin-right:2px;"></i>1</span>
+            {{else}}
+              {{#ifEquals this.rank 2}}
+                <span class="rank-pill rank-2-pill">2</span>
+              {{else}}
+                {{#ifEquals this.rank 3}}
+                  <span class="rank-pill rank-3-pill">3</span>
+                {{else}}
+                  <span class="rank-pill rank-other-pill">#{{this.rank}}</span>
+                {{/ifEquals}}
+              {{/ifEquals}}
+            {{/ifEquals}}
+          </td>
+
+          <td data-label="Student">
+            <div class="student-cell">
+              {{#if this.imageUrl}}
+              <img src="{{this.imageUrl}}" alt="{{this.displayName}}" class="student-table-avatar"
+                   onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+              {{else}}
+              <div class="student-table-initials">{{this.initials}}</div>
+              {{/if}}
+              <div class="student-meta-info">
+                <a href="/teacher/leaderboard/student/{{this._id}}" class="student-cell-name">
+                  {{this.displayName}}
+                </a>
+                <span class="student-cell-username">{{this.username}}</span>
+              </div>
+            </div>
+          </td>
+
+          <td data-label="Level">
+            <span class="level-badge">
+              <i class="fa-solid fa-bolt"></i> Lvl {{this.level}}
+            </span>
+          </td>
+
+          <td data-label="Course XP">
+            <div class="points-cell">
+              {{this.courseXP}}<span>XP</span>
+            </div>
+            <small class="text-muted" style="font-size:11px;">Global: {{this.globalXP}} XP</small>
+          </td>
+
+          <td data-label="Completion">
+            <div style="min-width: 130px;">
+              <div class="d-flex justify-content-between mb-1" style="font-size:12px; font-weight:700;">
+                <span>{{this.completionPercent}}%</span>
+              </div>
+              <div class="progress" style="height: 6px; border-radius: 6px; background: var(--progress-bg);">
+                <div class="progress-bar bg-success" role="progressbar" style="width: {{this.completionPercent}}%; border-radius: 6px;"></div>
+              </div>
+            </div>
+          </td>
+
+          <td data-label="Classes">
+            <span class="fw-semibold">{{this.completedClasses}}</span> / {{this.totalClasses}}
+          </td>
+
+          <td data-label="Streak">
+            {{#if this.streak}}
+            <span class="streak-pill">
+              <i class="fa-solid fa-fire"></i> {{this.streak}}d
+            </span>
+            {{else}}
+            <span class="text-muted">—</span>
+            {{/if}}
+          </td>
+
+          <td data-label="Last Active">
+            <span class="text-muted" style="font-size:12px;">{{formatDate this.lastActive}}</span>
+          </td>
+
+          <td data-label="Action" style="text-align: right;">
+            <a href="/teacher/leaderboard/student/{{this._id}}" class="btn btn-sm btn-outline-secondary px-3" style="font-size:12px;">
+              View Progress &rarr;
+            </a>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="gamification-pagination">
+      <small class="text-muted" style="font-size:13px;">
+        Showing {{students.length}} of {{pagination.total}} enrolled students &bull; Page {{pagination.page}} of {{pagination.totalPages}}
+      </small>
+
+      <div class="pagination-controls">
+        <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.prevPage}})">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <span style="font-size:13px; font-weight:700; padding: 0 10px;">
+          {{pagination.page}}
+        </span>
+
+        <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.nextPage}})">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    {{else}}
+    <div class="text-center py-5">
+      <i class="fa-solid fa-user-graduate text-muted mb-3" style="font-size:48px; opacity:0.3;"></i>
+      <h5 class="fw-bold text-muted mb-2">No students enrolled yet</h5>
+      <p class="text-muted" style="font-size:14px;">Students enrolled in this course will appear here.</p>
+    </div>
+    {{/if}}
+  </div>
+
+</div>
+
+<script src="/javascripts/gamification.js"></script>

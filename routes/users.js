@@ -43,6 +43,8 @@ const {
 const { uploadToS3, extractPathFromUrl, deleteFromS3 } = require('../config/s3-storage');
 const mediaHelper = require('../Helpers/media-helper');
 const { decorateClass, decorateCourse } = require('../Helpers/image-url-helper');
+const gamificationHelper = require('../Helpers/gamification-helper');
+const { Parser } = require('json2csv');
 
 const logAudit = (req, data) => {
   auditHelper.logAction({ req, ...data });
@@ -2964,4 +2966,414 @@ router.post('/email-health/test', verifyLogin, verifySuperuser, async (req, res)
   }
 });
 
+// ═══════════════════════════════════════════════════
+// GAMIFICATION & LEADERBOARD SYSTEM
+// ═══════════════════════════════════════════════════
+
+// 1. Global Leaderboard
+router.get('/admin/leaderboard', verifyLogin, async (req, res) => {
+  try {
+    const { page, limit, search, level, rank, courseId, status, sort } = req.query;
+    const data = await gamificationHelper.getGlobalLeaderboard({
+      page,
+      limit,
+      search,
+      level,
+      rank,
+      courseId,
+      status,
+      sort
+    });
+    res.render('admin/gamification/leaderboard', {
+      admins: true,
+      currentPage: 'leaderboard',
+      students: data.students,
+      podium: data.podium,
+      pagination: data.pagination,
+      kpis: data.kpis,
+      filters: { search, level, rank, courseId, status, sort }
+    });
+  } catch (err) {
+    logger.error('Leaderboard error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load leaderboard. Please try again.' });
+  }
+});
+router.get('/leaderboard', verifyLogin, (req, res) => res.redirect('/admin/leaderboard'));
+
+// 2. Course Leaderboards (Overview)
+router.get('/admin/leaderboard/courses', verifyLogin, async (req, res) => {
+  try {
+    const courses = await courseHelpers.getCourses();
+    const studentsCol = db.get().collection(collection.STUDENTS_COLLECTION);
+    const ledgerCol = db.get().collection(collection.POINT_TRANSACTIONS_COLLECTION);
+
+    const enrichedCourses = await Promise.all(
+      courses.map(async (course) => {
+        const cIdStr = course._id.toString();
+        const enrolledCount = await studentsCol.countDocuments({ 'course.courseId': cIdStr });
+        const enrolledStudents = await studentsCol.find({ 'course.courseId': cIdStr }).toArray();
+
+        let totalCourseXP = 0;
+        enrolledStudents.forEach(s => {
+          const enrollment = (s.course || []).find(c => String(c.courseId) === cIdStr);
+          totalCourseXP += gamificationHelper.calculateCourseProgressPoints(enrollment);
+        });
+
+        const txSummary = await ledgerCol.aggregate([
+          { $match: { courseId: cIdStr, scope: 'course' } },
+          {
+            $group: {
+              _id: null,
+              totalCredits: { $sum: { $cond: [{ $eq: ['$direction', 'credit'] }, '$points', 0] } },
+              totalDebits: { $sum: { $cond: [{ $eq: ['$direction', 'debit'] }, '$points', 0] } }
+            }
+          }
+        ]).toArray();
+
+        const netTxPoints = (txSummary[0]?.totalCredits || 0) - (txSummary[0]?.totalDebits || 0);
+        totalCourseXP = Math.max(0, totalCourseXP + netTxPoints);
+        const averageXP = enrolledCount ? Math.round(totalCourseXP / enrolledCount) : 0;
+
+        return {
+          _id: cIdStr,
+          name: course.name,
+          imageUrl: course.imageUrl,
+          type: course.type,
+          studentCount: enrolledCount,
+          averageXP
+        };
+      })
+    );
+
+    res.render('admin/gamification/course-leaderboards', {
+      admins: true,
+      currentPage: 'course-leaderboards',
+      courses: enrichedCourses
+    });
+  } catch (err) {
+    logger.error('Course leaderboards error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load course leaderboards.' });
+  }
+});
+
+// 3. Specific Course Leaderboard
+router.get('/admin/leaderboard/course/:courseId', verifyLogin, validateObjectIds(['courseId']), async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { page, limit, search, sort } = req.query;
+    const data = await gamificationHelper.getCourseLeaderboard(courseId, { page, limit, search, sort });
+
+    res.render('admin/gamification/course-detail', {
+      admins: true,
+      currentPage: 'course-leaderboards',
+      course: data.course,
+      students: data.students,
+      podium: data.podium,
+      pagination: data.pagination,
+      kpis: data.kpis,
+      filters: { search, sort }
+    });
+  } catch (err) {
+    logger.error('Course detail error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load course leaderboard.' });
+  }
+});
+
+// 4. Student Gamification Profile
+router.get('/admin/leaderboard/student/:studentId', verifyLogin, validateObjectIds(['studentId']), async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const data = await gamificationHelper.getStudentGamificationProfile(studentId);
+
+    res.render('admin/gamification/student-profile', {
+      admins: true,
+      currentPage: 'leaderboard',
+      student: data.student,
+      gamification: data.gamification,
+      enrolledCourses: data.enrolledCourses,
+      timeline: data.timeline
+    });
+  } catch (err) {
+    logger.error('Student profile error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load student gamification profile.' });
+  }
+});
+
+// 5. Students & Points Management View
+router.get('/admin/leaderboard/students', verifyLogin, async (req, res) => {
+  try {
+    const { page, limit, search, level, rank } = req.query;
+    const data = await gamificationHelper.getGlobalLeaderboard({
+      page,
+      limit,
+      search,
+      level,
+      rank,
+      sort: 'points'
+    });
+
+    res.render('admin/gamification/students-points', {
+      admins: true,
+      currentPage: 'students-points',
+      students: data.students,
+      pagination: data.pagination,
+      filters: { search, level, rank }
+    });
+  } catch (err) {
+    logger.error('Students & Points error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load students and points.' });
+  }
+});
+
+// 6. Point History & Audit Trail
+router.get('/admin/points/history', verifyLogin, async (req, res) => {
+  try {
+    const { page, limit, studentId, actorId, courseId, scope, direction, type, search, startDate, endDate } = req.query;
+    const data = await gamificationHelper.getPointHistory({
+      page,
+      limit,
+      studentId,
+      actorId,
+      courseId,
+      scope,
+      direction,
+      type,
+      search,
+      startDate,
+      endDate
+    });
+
+    res.render('admin/gamification/point-history', {
+      admins: true,
+      currentPage: 'point-history',
+      transactions: data.transactions,
+      pagination: data.pagination,
+      filters: { studentId, actorId, courseId, scope, direction, type, search, startDate, endDate }
+    });
+  } catch (err) {
+    logger.error('Point history error:', err.message);
+    res.status(500).render('error', { message: 'Unable to load point history.' });
+  }
+});
+
+// 7. Award Points API
+router.post('/admin/points/award', verifyLogin, async (req, res) => {
+  try {
+    const { studentId, points, scope, courseId, reason, transactionKey } = req.body;
+    const admin = req.session.admin || {};
+
+    const result = await gamificationHelper.recordPointTransaction({
+      studentId,
+      points,
+      direction: 'credit',
+      type: 'manual_award',
+      scope: scope || 'global',
+      courseId: courseId || null,
+      reason,
+      source: 'admin',
+      actorId: admin._id || null,
+      actorRole: admin.role === 'superuser' ? 'superadmin' : 'admin',
+      actorName: admin.Name || admin.name || 'Admin',
+      transactionKey
+    });
+
+    res.json(result);
+  } catch (err) {
+    logger.error('Award points error:', err.message);
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// 8. Adjust / Deduct Points API
+router.post('/admin/points/adjust', verifyLogin, async (req, res) => {
+  try {
+    const { studentId, points, direction = 'debit', scope, courseId, reason, transactionKey } = req.body;
+    const admin = req.session.admin || {};
+
+    const result = await gamificationHelper.recordPointTransaction({
+      studentId,
+      points,
+      direction,
+      type: 'manual_adjustment',
+      scope: scope || 'global',
+      courseId: courseId || null,
+      reason,
+      source: 'admin',
+      actorId: admin._id || null,
+      actorRole: admin.role === 'superuser' ? 'superadmin' : 'admin',
+      actorName: admin.Name || admin.name || 'Admin',
+      transactionKey
+    });
+
+    res.json(result);
+  } catch (err) {
+    logger.error('Adjust points error:', err.message);
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// 9. Student Search (for modal autocomplete)
+router.get('/admin/points/student-search', verifyLogin, async (req, res) => {
+  try {
+    const term = String(req.query.q || '').trim();
+    if (!term || term.length < 2) {
+      return res.json({ success: true, students: [] });
+    }
+
+    const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const students = await db.get().collection(collection.STUDENTS_COLLECTION)
+      .find({
+        $or: [
+          { Name: regex },
+          { name: regex },
+          { username: regex },
+          { email: regex },
+          { Email: regex }
+        ]
+      }, {
+        projection: { _id: 1, Name: 1, name: 1, username: 1, email: 1, Email: 1, 'gamification.totalPoints': 1 }
+      })
+      .limit(10)
+      .toArray();
+
+    res.json({
+      success: true,
+      students: students.map(s => {
+        const name = s.Name || s.name || 'Student';
+        return {
+          _id: s._id.toString(),
+          name,
+          username: s.username || '',
+          email: s.email || s.Email || '',
+          points: s.gamification?.totalPoints || 0,
+          initials: name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() || 'ST'
+        };
+      })
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Search failed' });
+  }
+});
+
+// 10. Student Courses (for modal dynamic course selector)
+router.get('/admin/points/student-courses/:studentId', verifyLogin, validateObjectIds(['studentId']), async (req, res) => {
+  try {
+    const student = await db.get().collection(collection.STUDENTS_COLLECTION)
+      .findOne({ _id: new ObjectId(req.params.studentId) }, { projection: { course: 1 } });
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    const courses = (student.course || []).map(c => ({
+      courseId: c.courseId,
+      courseName: c.courseName || 'Course'
+    }));
+
+    res.json({ success: true, courses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch student courses' });
+  }
+});
+
+// 11. Export Global Leaderboard CSV
+router.get('/admin/leaderboard/export', verifyLogin, async (req, res) => {
+  try {
+    const data = await gamificationHelper.getGlobalLeaderboard({ limit: 1000 });
+    const fields = [
+      { label: 'Rank', value: 'rank' },
+      { label: 'Student Name', value: 'displayName' },
+      { label: 'Username', value: 'username' },
+      { label: 'Email', value: 'email' },
+      { label: 'Level', value: 'level' },
+      { label: 'Rank Title', value: 'rankTitle' },
+      { label: 'Total Points (XP)', value: 'points' },
+      { label: 'Completed Classes', value: 'completedClasses' },
+      { label: 'Completed Courses', value: 'completedCourses' },
+      { label: 'Streak (Days)', value: 'streak' },
+      { label: 'Status', value: (row) => row.isActive ? 'Active' : 'Blocked' }
+    ];
+
+    const parser = new Parser({ fields });
+    const csv = parser.parse(data.students);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment(`zeitnah-leaderboard-${Date.now()}.csv`);
+    return res.send(csv);
+  } catch (err) {
+    logger.error('Export leaderboard CSV error:', err.message);
+    res.status(500).send('Failed to export leaderboard');
+  }
+});
+
+// 12. Export Point History CSV
+router.get('/admin/points/history/export', verifyLogin, async (req, res) => {
+  try {
+    const data = await gamificationHelper.getPointHistory({ limit: 5000 });
+    const fields = [
+      { label: 'Date', value: (row) => new Date(row.createdAt).toISOString() },
+      { label: 'Student Name', value: 'studentName' },
+      { label: 'Username', value: 'studentUsername' },
+      { label: 'Action Type', value: 'type' },
+      { label: 'Direction', value: 'direction' },
+      { label: 'Points', value: 'points' },
+      { label: 'Scope', value: 'scope' },
+      { label: 'Course', value: 'courseName' },
+      { label: 'Reason', value: 'reason' },
+      { label: 'Admin / Actor', value: 'actorName' },
+      { label: 'Actor Role', value: 'actorRole' },
+      { label: 'Previous Balance', value: 'previousBalance' },
+      { label: 'New Balance', value: 'newBalance' }
+    ];
+
+    const parser = new Parser({ fields });
+    const csv = parser.parse(data.transactions);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment(`zeitnah-point-ledger-${Date.now()}.csv`);
+    return res.send(csv);
+  } catch (err) {
+    logger.error('Export point history CSV error:', err.message);
+    res.status(500).send('Failed to export point history');
+  }
+});
+
+// 13. Superadmin Reconciliation Dashboard
+router.get('/admin/gamification/reconcile', verifyLogin, verifySuperuser, async (req, res) => {
+  try {
+    const summary = await gamificationHelper.reconcileAllStudents({ applyFix: false });
+    res.render('admin/gamification/reconciliation', {
+      admins: true,
+      currentPage: 'reconciliation',
+      summary
+    });
+  } catch (err) {
+    logger.error('Reconciliation error:', err.message);
+    res.status(500).render('error', { message: 'Failed to run reconciliation audit.' });
+  }
+});
+
+// 14. Superadmin Reconcile Single Student
+router.post('/admin/gamification/reconcile/fix/:studentId', verifyLogin, verifySuperuser, validateObjectIds(['studentId']), async (req, res) => {
+  try {
+    await gamificationHelper.reconcileStudent(req.params.studentId, true);
+    res.redirect('/admin/gamification/reconcile');
+  } catch (err) {
+    logger.error('Reconcile student error:', err.message);
+    res.redirect('/admin/gamification/reconcile');
+  }
+});
+
+// 15. Superadmin Reconcile All Students
+router.post('/admin/gamification/reconcile/fix-all', verifyLogin, verifySuperuser, async (req, res) => {
+  try {
+    await gamificationHelper.reconcileAllStudents({ applyFix: true });
+    res.redirect('/admin/gamification/reconcile');
+  } catch (err) {
+    logger.error('Reconcile all error:', err.message);
+    res.redirect('/admin/gamification/reconcile');
+  }
+});
+
 module.exports = router;
+

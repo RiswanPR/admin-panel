@@ -1,0 +1,258 @@
+<link rel="stylesheet" href="/stylesheets/gamification.css">
+
+<div class="container-fluid mt-3 mb-5">
+
+  <!-- HERO STUDENT HEADER -->
+  <div class="student-profile-hero">
+    <div class="profile-header-wrap">
+
+      <div class="profile-user-info">
+        {{#if student.imageUrl}}
+        <img src="{{student.imageUrl}}" alt="{{student.displayName}}" class="profile-hero-avatar"
+             onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+        {{else}}
+        <div class="profile-hero-initials">{{student.initials}}</div>
+        {{/if}}
+
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="fw-bold m-0" style="color:var(--text); font-size:24px;">{{student.displayName}}</h2>
+            {{#if student.isActive}}
+            <span class="badge bg-success" style="font-size:10px;">Active</span>
+            {{else}}
+            <span class="badge bg-danger" style="font-size:10px;">Blocked</span>
+            {{/if}}
+          </div>
+          <span class="text-muted font-monospace d-block mb-1" style="font-size:13px;">{{student.username}}</span>
+          <small class="text-muted" style="font-size:12px;">{{student.email}}</small>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-danger px-3 py-2" style="font-size:13px; font-weight:700;"
+                onclick="openAwardPointsModal({ studentId: '{{student._id}}', studentName: '{{student.displayName}}', studentUsername: '{{student.username}}', currentBalance: {{gamification.totalPoints}}, mode: 'adjust' })">
+          <i class="fa-solid fa-minus me-1"></i> Deduct XP
+        </button>
+        <button type="button" class="btn btn-success px-4 py-2" style="font-size:13px; font-weight:700;"
+                onclick="openAwardPointsModal({ studentId: '{{student._id}}', studentName: '{{student.displayName}}', studentUsername: '{{student.username}}', currentBalance: {{gamification.totalPoints}}, mode: 'award' })">
+          <i class="fa-solid fa-plus me-1"></i> Award XP
+        </button>
+      </div>
+
+    </div>
+
+    <!-- HERO GAMIFICATION METRICS -->
+    <div class="row g-4 align-items-center mt-3">
+
+      <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+          <div>
+            <small class="text-muted text-uppercase d-block mb-1" style="font-size:11px; font-weight:700; letter-spacing:0.8px;">Total XP</small>
+            <h1 class="fw-extrabold m-0" style="font-size:42px; letter-spacing:-1px; color:var(--text); line-height:1;">
+              {{gamification.totalPoints}}<span style="font-size:16px; color:var(--brand); margin-left:4px;">XP</span>
+            </h1>
+          </div>
+
+          <div class="border-start ps-4" style="border-color:var(--border) !important;">
+            <small class="text-muted text-uppercase d-block mb-1" style="font-size:11px; font-weight:700; letter-spacing:0.8px;">Global Rank</small>
+            <h3 class="fw-bold m-0" style="color:var(--text);">#{{gamification.globalRank}}</h3>
+          </div>
+
+          <div class="border-start ps-4" style="border-color:var(--border) !important;">
+            <small class="text-muted text-uppercase d-block mb-1" style="font-size:11px; font-weight:700; letter-spacing:0.8px;">Current Tier</small>
+            <span class="rank-title-badge {{gamification.rankMeta.badgeClass}}">
+              <i class="fa-solid {{gamification.rankMeta.icon}}"></i> {{gamification.rankTitle}}
+            </span>
+          </div>
+        </div>
+
+        <!-- Next Level Progress -->
+        <div class="xp-progress-wrap">
+          <div class="d-flex justify-content-between text-muted" style="font-size:12px; font-weight:600;">
+            <span>Level {{gamification.level}}</span>
+            <span>
+              {{#if gamification.levelProgress.nextLevel}}
+                {{gamification.levelProgress.pointsToNextLevel}} XP to Level {{gamification.levelProgress.nextLevel}}
+              {{else}}
+                Maximum Level Reached
+              {{/if}}
+            </span>
+          </div>
+          <div class="xp-progress-bar-bg">
+            <div class="xp-progress-bar-fill" style="width: {{gamification.levelProgress.progressPercent}}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="col-lg-5">
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="profile-stat-box">
+              <small>Completed Classes</small>
+              <h4>{{gamification.completedClasses}}</h4>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="profile-stat-box">
+              <small>Completed Courses</small>
+              <h4>{{gamification.completedCourses}}</h4>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="profile-stat-box">
+              <small>Watch Minutes</small>
+              <h4>{{gamification.totalWatchMinutes}}m</h4>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="profile-stat-box">
+              <small>Current Streak</small>
+              <h4>{{gamification.streak}} Days</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ENROLLED COURSES PERFORMANCE -->
+  <div class="mb-5">
+    <h4 class="fw-bold mb-3" style="color:var(--text); font-size:18px;">
+      <i class="fa-solid fa-graduation-cap text-primary me-2"></i> Course Performance
+    </h4>
+
+    {{#if enrolledCourses.length}}
+    <div class="course-perf-grid">
+      {{#each enrolledCourses}}
+      <div class="course-perf-card">
+        <div class="course-perf-header">
+          <div>
+            <h5>{{this.courseName}}</h5>
+            <small class="text-muted">Duration: {{this.duration}}</small>
+          </div>
+          <span class="course-rank-pill">
+            Course Rank #{{this.courseRank}}
+          </span>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style="background:var(--card-solid); border:1px solid var(--border);">
+          <div>
+            <small class="text-muted d-block text-uppercase" style="font-size:10px; font-weight:700;">Course XP</small>
+            <strong style="font-size:16px;">{{this.courseXP}} XP</strong>
+          </div>
+          <div class="text-end">
+            <small class="text-muted d-block text-uppercase" style="font-size:10px; font-weight:700;">Classes</small>
+            <strong style="font-size:16px;">{{this.completedClasses}} / {{this.totalClasses}}</strong>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1" style="font-size:11px; font-weight:700;">
+            <span class="text-muted">Completion</span>
+            <span>{{this.completionPercent}}%</span>
+          </div>
+          <div class="progress" style="height: 6px; border-radius: 6px; background: var(--progress-bg);">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{this.completionPercent}}%; border-radius: 6px;"></div>
+          </div>
+        </div>
+
+        <a href="/admin/leaderboard/course/{{this.courseId}}" class="btn btn-sm btn-outline-secondary w-100 py-1.5" style="font-size:12px;">
+          View Course Leaderboard &rarr;
+        </a>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="p-4 text-center rounded-3 border bg-body mb-4">
+      <small class="text-muted">Student is not currently enrolled in any active courses.</small>
+    </div>
+    {{/if}}
+  </div>
+
+  <!-- ACHIEVEMENTS & POINT TIMELINE -->
+  <div class="row g-4">
+
+    <!-- ACHIEVEMENTS BADGES -->
+    <div class="col-lg-5">
+      <div class="timeline-card h-100">
+        <h4 class="fw-bold mb-3" style="color:var(--text); font-size:18px;">
+          <i class="fa-solid fa-award text-warning me-2"></i> Achievements
+        </h4>
+
+        {{#if gamification.achievements.length}}
+        <div class="d-flex flex-wrap gap-2">
+          {{#each gamification.achievements}}
+          <span class="badge p-2.5 d-inline-flex align-items-center gap-2 rounded-3 border"
+                style="background:var(--card-solid); color:var(--text); font-size:12px; font-weight:600; border-color:var(--border) !important;">
+            <i class="fa-solid fa-medal text-warning"></i> {{this}}
+          </span>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="text-center py-4 text-muted">
+          <i class="fa-solid fa-certificate mb-2" style="font-size:32px; opacity:0.3;"></i>
+          <p class="m-0" style="font-size:13px;">No achievements unlocked yet.</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- POINT HISTORY TIMELINE -->
+    <div class="col-lg-7">
+      <div class="timeline-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold m-0" style="color:var(--text); font-size:18px;">
+            <i class="fa-solid fa-clock-rotate-left text-info me-2"></i> Point Activity Timeline
+          </h4>
+          <a href="/admin/points/history?studentId={{student._id}}" class="btn btn-sm btn-outline-secondary" style="font-size:12px;">
+            Full History &rarr;
+          </a>
+        </div>
+
+        {{#if timeline.length}}
+        <div class="timeline-list">
+          {{#each timeline}}
+          <div class="timeline-item {{#if this.isCredit}}credit{{else}}debit{{/if}}">
+            <div class="timeline-dot">
+              <i class="fa-solid {{#if this.isCredit}}fa-plus{{else}}fa-minus{{/if}}"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <span class="timeline-points {{#if this.isCredit}}credit{{else}}debit{{/if}}">
+                  {{#if this.isCredit}}+{{else}}-{{/if}}{{this.points}} XP
+                </span>
+                <span class="timeline-date">{{formatDateTime this.createdAt}}</span>
+              </div>
+              <div class="timeline-reason">{{this.reason}}</div>
+              <div class="timeline-footer">
+                {{#if this.courseName}}
+                <span><i class="fa-solid fa-book-open me-1"></i> {{this.courseName}}</span>
+                {{/if}}
+                <span><i class="fa-solid fa-user-shield me-1"></i> {{this.actorName}}</span>
+                <span>Balance: {{this.previousBalance}} &rarr; {{this.newBalance}} XP</span>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="text-center py-4 text-muted">
+          <i class="fa-solid fa-list-check mb-2" style="font-size:32px; opacity:0.3;"></i>
+          <p class="m-0" style="font-size:13px;">No point activity recorded yet.</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- AWARD / ADJUST POINTS MODAL -->
+{{> gamification/award-modal}}
+
+<script src="/javascripts/gamification.js"></script>

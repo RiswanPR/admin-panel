@@ -1,0 +1,191 @@
+<link rel="stylesheet" href="/stylesheets/gamification.css">
+
+<div class="container-fluid mt-3 mb-5">
+
+  <!-- HEADER -->
+  <div class="gamification-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="hero-tag">
+          <i class="fa-solid fa-clock-rotate-left"></i> Point Transaction Ledger
+        </div>
+        <h1>Point History & Audit Trail</h1>
+        <p>
+          Complete immutable audit record of all automatic and manual point modifications across Zeitnah LMS.
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a href="/admin/points/history/export" class="btn btn-outline-secondary px-3 py-2" style="font-size:13px; font-weight:600;">
+          <i class="fa-solid fa-file-csv me-1"></i> Export Ledger CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR & FILTERS -->
+  <div class="gamification-toolbar">
+    <div class="filter-group">
+      <!-- Search -->
+      <div class="search-field" style="min-width:240px;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search student, admin, reason..." value="{{filters.search}}"
+               oninput="onSearchInputChange(this)">
+      </div>
+
+      <!-- Direction Filter -->
+      <select class="filter-select" onchange="updateLeaderboardFilter('direction', this.value)">
+        <option value="">All Directions</option>
+        <option value="credit" {{selected filters.direction 'credit'}}>Credits (+)</option>
+        <option value="debit" {{selected filters.direction 'debit'}}>Debits (-)</option>
+      </select>
+
+      <!-- Scope Filter -->
+      <select class="filter-select" onchange="updateLeaderboardFilter('scope', this.value)">
+        <option value="">All Scopes</option>
+        <option value="global" {{selected filters.scope 'global'}}>Global XP</option>
+        <option value="course" {{selected filters.scope 'course'}}>Course XP</option>
+      </select>
+
+      <!-- Type Filter -->
+      <select class="filter-select" onchange="updateLeaderboardFilter('type', this.value)">
+        <option value="">All Action Types</option>
+        <option value="manual_award" {{selected filters.type 'manual_award'}}>Manual Award</option>
+        <option value="manual_adjustment" {{selected filters.type 'manual_adjustment'}}>Manual Adjustment</option>
+        <option value="class_completed" {{selected filters.type 'class_completed'}}>Class Completed</option>
+        <option value="course_completed" {{selected filters.type 'course_completed'}}>Course Completed</option>
+        <option value="watch_minutes" {{selected filters.type 'watch_minutes'}}>Watch Minutes</option>
+        <option value="migration_baseline" {{selected filters.type 'migration_baseline'}}>Migration Baseline</option>
+      </select>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">Show:</span>
+      <select class="filter-select" onchange="updateLeaderboardFilter('limit', this.value)">
+        <option value="25" {{selected pagination.limit '25'}}>25</option>
+        <option value="50" {{selected pagination.limit '50'}}>50</option>
+        <option value="100" {{selected pagination.limit '100'}}>100</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS TABLE -->
+  <div class="leaderboard-table-card">
+    {{#if transactions.length}}
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Student</th>
+          <th>Type / Action</th>
+          <th>Points</th>
+          <th>Scope</th>
+          <th>Course</th>
+          <th>Reason</th>
+          <th>Actor</th>
+          <th style="text-align: right;">Balance Transition</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each transactions}}
+        <tr class="leaderboard-row">
+          <!-- Date -->
+          <td data-label="Date">
+            <span class="text-muted" style="font-size:12px;">{{formatDateTime this.createdAt}}</span>
+          </td>
+
+          <!-- Student -->
+          <td data-label="Student">
+            <div>
+              <a href="/admin/leaderboard/student/{{this.studentId}}" class="fw-bold" style="color:var(--text); font-size:13px;">
+                {{this.studentName}}
+              </a>
+              <small class="text-muted d-block font-monospace" style="font-size:11px;">{{this.studentUsername}}</small>
+            </div>
+          </td>
+
+          <!-- Type -->
+          <td data-label="Type">
+            <span class="badge {{#if this.isCredit}}bg-success{{else}}bg-danger{{/if}}" style="font-size:10px; text-transform:uppercase;">
+              {{this.type}}
+            </span>
+          </td>
+
+          <!-- Points -->
+          <td data-label="Points">
+            <span class="fw-bold" style="color: {{#if this.isCredit}}#10b981{{else}}#ef4444{{/if}}; font-size:14px;">
+              {{#if this.isCredit}}+{{else}}-{{/if}}{{this.points}} XP
+            </span>
+          </td>
+
+          <!-- Scope -->
+          <td data-label="Scope">
+            <span class="badge bg-secondary" style="font-size:10px; text-transform:capitalize;">
+              {{this.scope}}
+            </span>
+          </td>
+
+          <!-- Course -->
+          <td data-label="Course">
+            <span style="font-size:13px;">{{this.courseName}}</span>
+          </td>
+
+          <!-- Reason -->
+          <td data-label="Reason">
+            <span style="font-size:13px;" title="{{this.reason}}">{{this.reason}}</span>
+          </td>
+
+          <!-- Actor -->
+          <td data-label="Actor">
+            <div>
+              <span class="fw-semibold" style="font-size:12px;">{{this.actorName}}</span>
+              <small class="text-muted d-block text-uppercase" style="font-size:10px;">{{this.actorRole}}</small>
+            </div>
+          </td>
+
+          <!-- Balance Change -->
+          <td data-label="Balance" style="text-align: right;">
+            <span class="font-monospace" style="font-size:12px;">
+              {{this.previousBalance}} &rarr; <strong>{{this.newBalance}}</strong> XP
+            </span>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="gamification-pagination">
+      <small class="text-muted" style="font-size:13px;">
+        Showing {{transactions.length}} of {{pagination.total}} records &bull; Page {{pagination.page}} of {{pagination.totalPages}}
+      </small>
+
+      <div class="pagination-controls">
+        <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.prevPage}})">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <span style="font-size:13px; font-weight:700; padding: 0 10px;">
+          {{pagination.page}}
+        </span>
+
+        <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
+                onclick="updateLeaderboardFilter('page', {{pagination.nextPage}})">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    {{else}}
+    <div class="text-center py-5">
+      <i class="fa-solid fa-clock-rotate-left text-muted mb-3" style="font-size:48px; opacity:0.3;"></i>
+      <h5 class="fw-bold text-muted mb-2">No point transactions recorded yet</h5>
+      <p class="text-muted" style="font-size:14px;">Point rewards and adjustments will be logged here in real time.</p>
+    </div>
+    {{/if}}
+  </div>
+
+</div>
+
+<script src="/javascripts/gamification.js"></script>

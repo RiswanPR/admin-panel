@@ -1,0 +1,92 @@
+{{#if podium.length}}
+<div class="podium-section">
+  <div class="podium-container">
+
+    {{!-- RANK 2 (SILVER) --}}
+    {{#if podium.[1]}}
+    <div class="podium-slot rank-2">
+      <div class="podium-avatar-wrap">
+        {{#if podium.[1].imageUrl}}
+        <img src="{{podium.[1].imageUrl}}" alt="{{podium.[1].displayName}}" class="podium-avatar"
+             onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+        {{else}}
+        <div class="podium-avatar podium-initials">{{podium.[1].initials}}</div>
+        {{/if}}
+        <div class="podium-rank-badge">2</div>
+      </div>
+      <div class="pedestal">
+        <a href="{{#if ../teacherPanel}}/teacher/leaderboard/student/{{podium.[1]._id}}{{else}}/admin/leaderboard/student/{{podium.[1]._id}}{{/if}}" class="podium-name" title="{{podium.[1].displayName}}">
+          {{podium.[1].displayName}}
+        </a>
+        <span class="podium-username">{{podium.[1].username}}</span>
+        <span class="level-badge mb-2">
+          <i class="fa-solid fa-bolt"></i> Lvl {{podium.[1].level}}
+        </span>
+        <span class="podium-xp">
+          {{#if podium.[1].courseXP}}{{podium.[1].courseXP}}{{else}}{{podium.[1].points}}{{/if}}
+          <small style="font-size:12px;font-weight:600;">XP</small>
+        </span>
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- RANK 1 (GOLD - CENTER ELEVATED) --}}
+    {{#if podium.[0]}}
+    <div class="podium-slot rank-1">
+      <div class="podium-avatar-wrap">
+        <i class="fa-solid fa-crown podium-crown" style="color:#f59e0b;"></i>
+        {{#if podium.[0].imageUrl}}
+        <img src="{{podium.[0].imageUrl}}" alt="{{podium.[0].displayName}}" class="podium-avatar"
+             onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+        {{else}}
+        <div class="podium-avatar podium-initials">{{podium.[0].initials}}</div>
+        {{/if}}
+        <div class="podium-rank-badge">1</div>
+      </div>
+      <div class="pedestal">
+        <a href="{{#if ../teacherPanel}}/teacher/leaderboard/student/{{podium.[0]._id}}{{else}}/admin/leaderboard/student/{{podium.[0]._id}}{{/if}}" class="podium-name" title="{{podium.[0].displayName}}">
+          {{podium.[0].displayName}}
+        </a>
+        <span class="podium-username">{{podium.[0].username}}</span>
+        <span class="level-badge mb-2">
+          <i class="fa-solid fa-bolt"></i> Lvl {{podium.[0].level}}
+        </span>
+        <span class="podium-xp">
+          {{#if podium.[0].courseXP}}{{podium.[0].courseXP}}{{else}}{{podium.[0].points}}{{/if}}
+          <small style="font-size:12px;font-weight:600;">XP</small>
+        </span>
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- RANK 3 (BRONZE) --}}
+    {{#if podium.[2]}}
+    <div class="podium-slot rank-3">
+      <div class="podium-avatar-wrap">
+        {{#if podium.[2].imageUrl}}
+        <img src="{{podium.[2].imageUrl}}" alt="{{podium.[2].displayName}}" class="podium-avatar"
+             onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+        {{else}}
+        <div class="podium-avatar podium-initials">{{podium.[2].initials}}</div>
+        {{/if}}
+        <div class="podium-rank-badge">3</div>
+      </div>
+      <div class="pedestal">
+        <a href="{{#if ../teacherPanel}}/teacher/leaderboard/student/{{podium.[2]._id}}{{else}}/admin/leaderboard/student/{{podium.[2]._id}}{{/if}}" class="podium-name" title="{{podium.[2].displayName}}">
+          {{podium.[2].displayName}}
+        </a>
+        <span class="podium-username">{{podium.[2].username}}</span>
+        <span class="level-badge mb-2">
+          <i class="fa-solid fa-bolt"></i> Lvl {{podium.[2].level}}
+        </span>
+        <span class="podium-xp">
+          {{#if podium.[2].courseXP}}{{podium.[2].courseXP}}{{else}}{{podium.[2].points}}{{/if}}
+          <small style="font-size:12px;font-weight:600;">XP</small>
+        </span>
+      </div>
+    </div>
+    {{/if}}
+
+  </div>
+</div>
+{{/if}}

@@ -1,0 +1,85 @@
+<div class="kpi-grid">
+  {{#if isCourseLeaderboard}}
+    {{!-- Course Leaderboard KPIs --}}
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Enrolled Learners</small>
+        <h3>{{kpis.totalStudents}}</h3>
+      </div>
+      <div class="kpi-icon icon-mint">
+        <i class="fa-solid fa-user-graduate"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Highest Course XP</small>
+        <h3>{{kpis.highestXP}}</h3>
+      </div>
+      <div class="kpi-icon icon-gold">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Average Course XP</small>
+        <h3>{{kpis.averageXP}}</h3>
+      </div>
+      <div class="kpi-icon icon-purple">
+        <i class="fa-solid fa-chart-line"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Top Completion</small>
+        <h3>{{kpis.topCompletion}}%</h3>
+      </div>
+      <div class="kpi-icon icon-blue">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+    </div>
+  {{else}}
+    {{!-- Global Leaderboard KPIs --}}
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Total Students</small>
+        <h3>{{kpis.totalStudents}}</h3>
+      </div>
+      <div class="kpi-icon icon-mint">
+        <i class="fa-solid fa-user-graduate"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Active Learners</small>
+        <h3>{{kpis.activeStudents}}</h3>
+      </div>
+      <div class="kpi-icon icon-blue">
+        <i class="fa-solid fa-fire"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Total Points</small>
+        <h3>{{kpis.totalPoints}}</h3>
+      </div>
+      <div class="kpi-icon icon-gold">
+        <i class="fa-solid fa-star"></i>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-content">
+        <small>Average Points</small>
+        <h3>{{kpis.averagePoints}}</h3>
+      </div>
+      <div class="kpi-icon icon-purple">
+        <i class="fa-solid fa-chart-pie"></i>
+      </div>
+    </div>
+  {{/if}}
+</div>
