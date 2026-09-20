@@ -1,0 +1,163 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/learning-spaces">Learning Spaces</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-shapes me-2"></i> Create Learning Space
+            </h2>
+            <small class="text-muted">Set up a managed batch, cohort, or collaborative study group</small>
+        </div>
+
+        <a href="/learning-spaces" class="btn btn-outline-secondary px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card p-4 p-md-5">
+
+                <form action="/learning-spaces/create" method="POST" id="createSpaceForm" onsubmit="return validateSpaceForm(event)">
+
+                    <!-- ROW: NAME & CODE -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="spaceName" class="form-label fw-bold">
+                                Learning Space Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="spaceName" name="name" placeholder="e.g., German B1 Morning Batch 2026" required maxlength="120">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="spaceCode" class="form-label fw-bold">
+                                Space Identifier / Code
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="spaceCode" name="code" placeholder="e.g., BATCH-2026-B1" maxlength="30" style="text-transform: uppercase;">
+                            <small class="text-muted">Auto-generated if left blank.</small>
+                        </div>
+                    </div>
+
+                    <!-- ROW: CATEGORY, ACCESS MODE & STATUS -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="spaceCategory" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spaceCategory" name="category">
+                                <option value="Batch" selected>Batch</option>
+                                <option value="Study Group">Study Group</option>
+                                <option value="Department">Department</option>
+                                <option value="Program">Program</option>
+                                <option value="Training Group">Training Group</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="accessMode" class="form-label fw-bold">Access Mode <span class="text-danger">*</span></label>
+                            <select class="form-select" id="accessMode" name="accessMode">
+                                <option value="invite_only" selected>Invite / Admin Assigned Only</option>
+                                <option value="open">Open (Any student can join)</option>
+                                <option value="restricted">Restricted (Course Enrollees Only)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="spaceStatus" class="form-label fw-bold">Initial Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spaceStatus" name="status">
+                                <option value="active" selected>Active</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div class="mb-4">
+                        <label for="spaceDescription" class="form-label fw-bold">Description / Goals</label>
+                        <textarea class="form-control" id="spaceDescription" name="description" rows="4" placeholder="Describe the cohort schedule, goals, requirements, or study outline..."></textarea>
+                    </div>
+
+                    <!-- ASSIGN TEACHERS -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Assign Educators / Teachers</label>
+                        <p class="text-muted small mb-2">Select verified teachers who will oversee this learning space and manage member communication.</p>
+
+                        <div class="card p-3" style="max-height: 200px; overflow-y: auto; background: var(--surface-2);">
+                            {{#if teachers.length}}
+                                <div class="row g-2">
+                                    {{#each teachers}}
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="teachers" value="{{this._id}}" id="teacher_{{this._id}}">
+                                            <label class="form-check-label d-flex align-items-center gap-2" for="teacher_{{this._id}}">
+                                                <span class="fw-bold">{{this.name}}</span>
+                                                <small class="text-muted">({{this.email}})</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                            {{else}}
+                                <p class="text-muted mb-0 small">No teachers registered in the system yet.</p>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <!-- ROW: DATES & CAPACITY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label fw-bold">Start Date (Optional)</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label fw-bold">End Date (Optional)</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="maxMembers" class="form-label fw-bold">Member Limit</label>
+                            <input type="number" class="form-control" id="maxMembers" name="maxMembers" placeholder="0 for unlimited" min="0">
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/learning-spaces" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5" id="btnSubmitSpace">
+                            <i class="fa-solid fa-shapes me-2"></i> Create Space
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function validateSpaceForm(e) {
+    const name = document.getElementById('spaceName').value.trim();
+    if (!name) {
+        Swal.fire('Validation Error', 'Learning space name is required.', 'warning');
+        return false;
+    }
+
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    if (startDate && endDate) {
+        if (new Date(endDate) < new Date(startDate)) {
+            Swal.fire('Validation Error', 'End date cannot be earlier than start date.', 'warning');
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>

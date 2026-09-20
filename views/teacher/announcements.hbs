@@ -1,0 +1,169 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-bullhorn me-1"></i> Educator Portal
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">My Announcements</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Post and manage updates for your assigned courses and learning spaces.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/teacher/announcements/create" class="btn btn-success px-4 py-2" id="btnTeacherCreateAnnouncement">
+                    <i class="fa-solid fa-plus me-2"></i> Post Announcement
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <form class="toolbar-card mb-4" method="GET" action="/teacher/announcements" id="teacherAnnouncementsFilterForm">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" value="{{filters.search}}" placeholder="Search announcements by title or content...">
+        </div>
+
+        <select class="form-select filter-select" name="type" onchange="document.getElementById('teacherAnnouncementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.type 'all'}}selected{{/ifEquals}}>All Types</option>
+            <option value="general" {{#ifEquals filters.type 'general'}}selected{{/ifEquals}}>General</option>
+            <option value="course" {{#ifEquals filters.type 'course'}}selected{{/ifEquals}}>Course</option>
+            <option value="learning_space" {{#ifEquals filters.type 'learning_space'}}selected{{/ifEquals}}>Learning Space</option>
+        </select>
+
+        <select class="form-select filter-select" name="status" onchange="document.getElementById('teacherAnnouncementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+            <option value="published" {{#ifEquals filters.status 'published'}}selected{{/ifEquals}}>Published</option>
+            <option value="draft" {{#ifEquals filters.status 'draft'}}selected{{/ifEquals}}>Draft</option>
+        </select>
+
+        <button class="btn btn-primary filter-btn" type="submit" title="Apply Filters">
+            <i class="fa-solid fa-filter"></i>
+        </button>
+    </form>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table premium-table align-middle">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Audience / Scope</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#if announcements.length}}
+                    {{#each announcements}}
+                    <tr>
+                        <td>
+                            <strong class="d-block text-truncate" style="max-width: 280px;">{{this.title}}</strong>
+                            <small class="text-muted">{{truncate this.message 60}}</small>
+                        </td>
+                        <td>
+                            {{#ifEquals this.targetType 'course'}}
+                                <span class="badge bg-info text-dark"><i class="fa-solid fa-book-open me-1"></i> {{this.courseName}}</span>
+                            {{else}}{{#ifEquals this.targetType 'learning_space'}}
+                                <span class="badge bg-success text-white"><i class="fa-solid fa-shapes me-1"></i> {{this.learningSpaceName}}</span>
+                            {{else}}
+                                <span class="badge bg-secondary">{{this.targetType}}</span>
+                            {{/ifEquals}}{{/ifEquals}}
+                        </td>
+                        <td>
+                            <span class="badge {{#ifEquals this.priority 'important'}}bg-warning text-dark{{else}}bg-secondary{{/ifEquals}}">
+                                {{this.priority}}
+                            </span>
+                        </td>
+                        <td>
+                            {{#ifEquals this.status 'published'}}
+                                <span class="badge bg-success">Published</span>
+                            {{else}}
+                                <span class="badge bg-light text-dark border">Draft</span>
+                            {{/ifEquals}}
+                        </td>
+                        <td>
+                            <small>{{formatDateTime this.createdAt}}</small>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a href="/teacher/announcements/{{this._id}}/edit" class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement('{{this._id}}', '{{this.title}}')" title="Delete">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                {{else}}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-bullhorn fa-3x mb-3 opacity-50"></i>
+                            <h5>No announcements found</h5>
+                            <p class="mb-3">Post an announcement to notify students in your courses or learning spaces.</p>
+                            <a href="/teacher/announcements/create" class="btn btn-primary">
+                                <i class="fa-solid fa-plus me-1"></i> Post Announcement
+                            </a>
+                        </td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {{#ifGt totalPages 1}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+        <div class="text-muted small">
+            Showing page <strong>{{page}}</strong> of <strong>{{totalPages}}</strong> (Total: {{total}})
+        </div>
+
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/teacher/announcements?page={{dec page}}&search={{filters.search}}&type={{filters.type}}&status={{filters.status}}">Previous</a>
+                </li>
+                <li class="page-item active">
+                    <span class="page-link">{{page}}</span>
+                </li>
+                <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/teacher/announcements?page={{inc page}}&search={{filters.search}}&type={{filters.type}}&status={{filters.status}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {{/ifGt}}
+
+</div>
+
+<script>
+function deleteAnnouncement(id, title) {
+    Swal.fire({
+        title: 'Delete Announcement?',
+        text: `Are you sure you want to delete "${title}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Delete'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/teacher/announcements/${id}/delete`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) location.reload();
+                else Swal.fire('Error', d.message, 'error');
+            });
+        }
+    });
+}
+</script>

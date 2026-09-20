@@ -245,6 +245,41 @@ app.engine(
         if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
         if (minutes > 0) return `${minutes}m ${secs}s`;
         return `${secs}s`;
+      },
+
+      includes: function (arr, item) {
+        if (!arr) return false;
+        if (Array.isArray(arr)) {
+          return arr.map(String).includes(String(item));
+        }
+        return String(arr).includes(String(item));
+      },
+
+      json: function (context) {
+        return JSON.stringify(context || {});
+      },
+
+      truncate: function (str, len) {
+        if (!str) return '';
+        const max = Number(len) || 100;
+        if (str.length <= max) return str;
+        return str.substring(0, max) + '...';
+      },
+
+      badgeClass: function (type, val) {
+        const value = String(val || '').toLowerCase();
+        if (type === 'priority') {
+          if (value === 'critical') return 'badge-priority-critical';
+          if (value === 'important') return 'badge-priority-important';
+          return 'badge-priority-normal';
+        }
+        if (type === 'status') {
+          if (value === 'published' || value === 'active') return 'badge-status-active';
+          if (value === 'scheduled') return 'badge-status-scheduled';
+          if (value === 'archived' || value === 'blocked') return 'badge-status-archived';
+          return 'badge-status-draft';
+        }
+        return '';
       }
     }
   })

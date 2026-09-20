@@ -11,6 +11,8 @@ const assignmentHelper = require('../Helpers/assignment-helper');
 const courseHelper = require('../Helpers/course-helper');
 const classHelper = require('../Helpers/class-helper');
 const studentHelper = require('../Helpers/student-helper');
+const announcementHelper = require('../Helpers/announcement-helper');
+const learningSpaceHelper = require('../Helpers/learning-space-helper');
 const { ObjectId } = require('mongodb');
 const db = require('../config/connection');
 const collection = require('../config/collections');
@@ -1168,6 +1170,218 @@ router.get(
     }
   }
 );
+
+// ═══════════════════════════════════════════════════
+// TEACHER ANNOUNCEMENTS
+// ═══════════════════════════════════════════════════
+
+// 1. List Announcements (scoped to teacher)
+router.get('/announcements', verifyTeacherLogin, async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const filters = {
+      search: req.query.search || '',
+      type: req.query.type || 'all',
+      status: req.query.status || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 15,
+      actor: teacher
+    };
+
+    const result = await announcementHelper.getAnnouncements(filters);
+
+    res.render('teacher/announcements', {
+      teacherPanel: true,
+      currentPage: 'announcements',
+      teacher,
+      announcements: result.announcements,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages,
+      filters
+    });
+  } catch (err) {
+    logger.error('Teacher Announcements Error:', err.message);
+    res.redirect('/teacher/dashboard');
+  }
+});
+
+// 2. Create Announcement Form (scoped to teacher's courses & spaces)
+router.get('/announcements/create', verifyTeacherLogin, async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const scope = await announcementHelper.getTeacherPermittedScope(teacher._id);
+
+    res.render('teacher/add-announcement', {
+      teacherPanel: true,
+      currentPage: 'announcements',
+      teacher,
+      courses: scope.courses,
+      spaces: scope.spaces
+    });
+  } catch (err) {
+    logger.error('Teacher Create Announcement Form Error:', err.message);
+    res.redirect('/teacher/announcements');
+  }
+});
+
+// 3. Create Announcement Handler
+router.post('/announcements/create', verifyTeacherLogin, async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+
+    // Hard server-side security checks for teachers:
+    if (req.body.isCritical === true || req.body.isCritical === 'true' || req.body.priority === 'critical') {
+      return res.status(403).render('error', { message: 'Forbidden: Teachers are not permitted to create critical announcements.' });
+    }
+    if (!['course', 'learning_space'].includes(req.body.targetType)) {
+      return res.status(403).render('error', { message: 'Forbidden: Teachers can only target assigned courses or learning spaces.' });
+    }
+
+    await announcementHelper.createAnnouncement(req.body, teacher, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement posted successfully!' });
+    }
+    res.redirect('/teacher/announcements');
+  } catch (err) {
+    logger.error('Teacher Create Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 4. Edit Announcement Form (own announcements only)
+router.get('/announcements/:id/edit', verifyTeacherLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const announcement = await announcementHelper.getAnnouncementById(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).render('error', { message: 'Announcement not found.' });
+    }
+
+    if (announcement.createdBy.toString() !== teacher._id.toString()) {
+      return res.status(403).render('error', { message: 'Access Denied: You can only edit announcements created by you.' });
+    }
+
+    const scope = await announcementHelper.getTeacherPermittedScope(teacher._id);
+
+    res.render('teacher/edit-announcement', {
+      teacherPanel: true,
+      currentPage: 'announcements',
+      teacher,
+      announcement,
+      courses: scope.courses,
+      spaces: scope.spaces
+    });
+  } catch (err) {
+    logger.error('Teacher Edit Announcement Form Error:', err.message);
+    res.redirect('/teacher/announcements');
+  }
+});
+
+// 5. Edit Announcement Handler (own announcements only)
+router.post('/announcements/:id/edit', verifyTeacherLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+
+    if (req.body.isCritical === true || req.body.isCritical === 'true' || req.body.priority === 'critical') {
+      return res.status(403).render('error', { message: 'Forbidden: Teachers cannot make announcements critical.' });
+    }
+    if (req.body.targetType && !['course', 'learning_space'].includes(req.body.targetType)) {
+      return res.status(403).render('error', { message: 'Forbidden: Teachers can only target assigned courses or learning spaces.' });
+    }
+
+    await announcementHelper.updateAnnouncement(req.params.id, req.body, teacher, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement updated successfully.' });
+    }
+    res.redirect('/teacher/announcements');
+  } catch (err) {
+    logger.error('Teacher Update Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 6. Delete Announcement Handler (own announcements only)
+router.post('/announcements/:id/delete', verifyTeacherLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    await announcementHelper.deleteAnnouncement(req.params.id, teacher, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement deleted successfully.' });
+    }
+    res.redirect('/teacher/announcements');
+  } catch (err) {
+    logger.error('Teacher Delete Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// TEACHER LEARNING SPACES
+// ═══════════════════════════════════════════════════
+
+// 1. List Assigned Learning Spaces
+router.get('/learning-spaces', verifyTeacherLogin, async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const spaces = await learningSpaceHelper.getSpacesForTeacher(teacher._id);
+
+    res.render('teacher/learning-spaces', {
+      teacherPanel: true,
+      currentPage: 'learning-spaces',
+      teacher,
+      spaces
+    });
+  } catch (err) {
+    logger.error('Teacher Learning Spaces Error:', err.message);
+    res.redirect('/teacher/dashboard');
+  }
+});
+
+// 2. View Learning Space (must be assigned to teacher)
+router.get('/learning-spaces/:id', verifyTeacherLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const teacher = req.session.teacher;
+    const isAssigned = await learningSpaceHelper.isTeacherAssignedToSpace(teacher._id, req.params.id);
+
+    if (!isAssigned) {
+      return res.status(403).render('error', { message: 'Access Denied: You are not assigned to this learning space.' });
+    }
+
+    const [space, membersResult, announcementsResult] = await Promise.all([
+      learningSpaceHelper.getLearningSpaceById(req.params.id),
+      learningSpaceHelper.getSpaceMembers(req.params.id, { limit: 20 }),
+      announcementHelper.getAnnouncements({ targetType: 'learning_space', limit: 10, actor: teacher })
+    ]);
+
+    const spaceAnnouncements = announcementsResult.announcements.filter(a => a.learningSpaceId?.toString() === String(req.params.id));
+
+    res.render('teacher/view-learning-space', {
+      teacherPanel: true,
+      currentPage: 'learning-spaces',
+      teacher,
+      space,
+      members: membersResult.members,
+      announcements: spaceAnnouncements
+    });
+  } catch (err) {
+    logger.error('Teacher View Learning Space Error:', err.message);
+    res.redirect('/teacher/learning-spaces');
+  }
+});
 
 module.exports = router;
 

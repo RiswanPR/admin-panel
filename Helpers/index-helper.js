@@ -41,6 +41,21 @@ const ensureIndexes = async (db) => {
     [collection.AUDIT_LOG_COLLECTION, { createdAt: -1 }],
     [collection.COVER_IMAGES_COLLECTION, { status: 1, category: 1, createdAt: -1 }],
     [collection.RESERVED_USERNAMES_COLLECTION, { keyword: 1 }, { unique: true }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { status: 1, isPublished: 1, scheduledAt: 1 }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { targetType: 1, courseId: 1 }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { targetType: 1, learningSpaceId: 1 }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { createdBy: 1, createdAt: -1 }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { priority: 1, isCritical: 1 }],
+    [collection.ANNOUNCEMENTS_COLLECTION, { createdAt: -1 }],
+    [collection.LEARNING_SPACES_COLLECTION, { code: 1 }, { unique: true, sparse: true }],
+    [collection.LEARNING_SPACES_COLLECTION, { status: 1, createdAt: -1 }],
+    [collection.LEARNING_SPACES_COLLECTION, { teachers: 1 }],
+    [collection.LEARNING_SPACES_COLLECTION, { ownerId: 1 }],
+    [collection.LEARNING_SPACE_MEMBERS_COLLECTION, { spaceId: 1, userId: 1 }, { unique: true }],
+    [collection.LEARNING_SPACE_MEMBERS_COLLECTION, { userId: 1, status: 1 }],
+    [collection.LEARNING_SPACE_MEMBERS_COLLECTION, { spaceId: 1, status: 1 }],
+    [collection.COMMUNITY_FOLLOWERS_COLLECTION, { userId: 1, followerId: 1 }, { unique: true }],
+    [collection.COMMUNITY_FOLLOWERS_COLLECTION, { followerId: 1 }],
   ];
 
   await Promise.allSettled(

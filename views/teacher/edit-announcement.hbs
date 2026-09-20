@@ -1,0 +1,122 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/teacher/announcements">Announcements</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-pen-to-square me-2"></i> Edit Announcement
+            </h2>
+            <small class="text-muted">Update your announcement content or target audience</small>
+        </div>
+
+        <a href="/teacher/announcements" class="btn btn-outline-secondary px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card p-4 p-md-5">
+
+                <form action="/teacher/announcements/{{announcement._id}}/edit" method="POST" id="editTeacherAnnouncementForm">
+
+                    <!-- TITLE -->
+                    <div class="mb-4">
+                        <label for="announcementTitle" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-lg" id="announcementTitle" name="title" value="{{announcement.title}}" required maxlength="200">
+                    </div>
+
+                    <!-- ROW: TYPE & PRIORITY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="announcementType" class="form-label fw-bold">Type</label>
+                            <select class="form-select" id="announcementType" name="type">
+                                <option value="general" {{#ifEquals announcement.type 'general'}}selected{{/ifEquals}}>General</option>
+                                <option value="course" {{#ifEquals announcement.type 'course'}}selected{{/ifEquals}}>Course Notice</option>
+                                <option value="learning_space" {{#ifEquals announcement.type 'learning_space'}}selected{{/ifEquals}}>Learning Space Notice</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="announcementPriority" class="form-label fw-bold">Priority</label>
+                            <select class="form-select" id="announcementPriority" name="priority">
+                                <option value="normal" {{#ifEquals announcement.priority 'normal'}}selected{{/ifEquals}}>Normal</option>
+                                <option value="important" {{#ifEquals announcement.priority 'important'}}selected{{/ifEquals}}>Important</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- TARGET AUDIENCE -->
+                    <div class="mb-4">
+                        <label for="targetType" class="form-label fw-bold">Target Audience</label>
+                        <select class="form-select" id="targetType" name="targetType" onchange="handleTargetChange()">
+                            <option value="course" {{#ifEquals announcement.targetType 'course'}}selected{{/ifEquals}}>Students in Assigned Course</option>
+                            <option value="learning_space" {{#ifEquals announcement.targetType 'learning_space'}}selected{{/ifEquals}}>Members of Assigned Learning Space</option>
+                        </select>
+                    </div>
+
+                    <!-- COURSE SELECTOR -->
+                    <div class="mb-4" id="courseSelectorWrap" style="{{#ifEquals announcement.targetType 'course'}}display:block;{{else}}display:none;{{/ifEquals}}">
+                        <label for="courseId" class="form-label fw-bold">Select Course</label>
+                        <select class="form-select" id="courseId" name="courseId">
+                            <option value="">-- Choose Assigned Course --</option>
+                            {{#each courses}}
+                            <option value="{{this._id}}" {{selected ../announcement.courseId this._id}}>{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- LEARNING SPACE SELECTOR -->
+                    <div class="mb-4" id="spaceSelectorWrap" style="{{#ifEquals announcement.targetType 'learning_space'}}display:block;{{else}}display:none;{{/ifEquals}}">
+                        <label for="learningSpaceId" class="form-label fw-bold">Select Learning Space</label>
+                        <select class="form-select" id="learningSpaceId" name="learningSpaceId">
+                            <option value="">-- Choose Assigned Space --</option>
+                            {{#each spaces}}
+                            <option value="{{this._id}}" {{selected ../announcement.learningSpaceId this._id}}>{{this.name}} ({{this.code}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- MESSAGE -->
+                    <div class="mb-4">
+                        <label for="announcementMessage" class="form-label fw-bold">Message Content <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="announcementMessage" name="message" rows="6" required>{{announcement.message}}</textarea>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="mb-4">
+                        <label for="announcementStatus" class="form-label fw-bold">Status</label>
+                        <select class="form-select" id="announcementStatus" name="status">
+                            <option value="draft" {{#ifEquals announcement.status 'draft'}}selected{{/ifEquals}}>Draft</option>
+                            <option value="published" {{#ifEquals announcement.status 'published'}}selected{{/ifEquals}}>Published</option>
+                        </select>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/teacher/announcements" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5">
+                            <i class="fa-solid fa-save me-2"></i> Save Changes
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function handleTargetChange() {
+    const target = document.getElementById('targetType').value;
+    document.getElementById('courseSelectorWrap').style.display = target === 'course' ? 'block' : 'none';
+    document.getElementById('spaceSelectorWrap').style.display = target === 'learning_space' ? 'block' : 'none';
+}
+</script>

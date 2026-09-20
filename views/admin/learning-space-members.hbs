@@ -1,0 +1,228 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/learning-spaces">Learning Spaces</a></li>
+                    <li class="breadcrumb-item"><a href="/learning-spaces/{{space._id}}">{{space.name}}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Members</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border px-2 py-1 fs-6"><code>{{space.code}}</code></span>
+                <h2 class="fw-bold m-0" style="color:var(--brand);">Space Members</h2>
+            </div>
+            <small class="text-muted">Manage cohort learners, assign moderators, and enroll students</small>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Member
+            </button>
+            <button class="btn btn-outline-primary px-3" data-bs-toggle="modal" data-bs-target="#bulkAddModal">
+                <i class="fa-solid fa-users me-1"></i> Bulk Add
+            </button>
+            <a href="/learning-spaces/{{space._id}}" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Space
+            </a>
+        </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <form class="toolbar-card mb-4" method="GET" action="/learning-spaces/{{space._id}}/members" id="membersFilterForm">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" value="{{filters.search}}" placeholder="Search members by name, email, or @username...">
+        </div>
+
+        <select class="form-select filter-select" name="role" onchange="document.getElementById('membersFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.role 'all'}}selected{{/ifEquals}}>All Roles</option>
+            <option value="member" {{#ifEquals filters.role 'member'}}selected{{/ifEquals}}>Member</option>
+            <option value="moderator" {{#ifEquals filters.role 'moderator'}}selected{{/ifEquals}}>Moderator</option>
+            <option value="lead" {{#ifEquals filters.role 'lead'}}selected{{/ifEquals}}>Student Lead</option>
+        </select>
+
+        <button class="btn btn-primary filter-btn" type="submit" title="Apply Filters">
+            <i class="fa-solid fa-filter"></i>
+        </button>
+    </form>
+
+    <!-- MEMBERS TABLE -->
+    <div class="table-responsive">
+        <table class="table premium-table align-middle" id="spaceMembersTable">
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Role in Space</th>
+                    <th>Phone</th>
+                    <th>Course Status</th>
+                    <th>Joined Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#if members.length}}
+                    {{#each members}}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="{{this.avatar}}" alt="{{this.name}}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                                <div>
+                                    <strong class="d-block">{{this.name}}</strong>
+                                    <small class="text-muted">@{{this.username}} • {{this.email}}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary text-capitalize">{{this.role}}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{#if this.phone}}{{this.phone}}{{else}}—{{/if}}</small>
+                        </td>
+                        <td>
+                            {{#if this.isEnrolled}}
+                            <span class="badge bg-success">Enrolled Student</span>
+                            {{else}}
+                            <span class="badge bg-light text-dark border">Registered</span>
+                            {{/if}}
+                        </td>
+                        <td>
+                            <small>{{formatDate this.joinedAt}}</small>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeMember('{{../space._id}}', '{{this.userId}}', '{{this.name}}')" title="Remove from Space">
+                                <i class="fa-solid fa-user-minus me-1"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                {{else}}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-users fa-3x mb-3 opacity-50"></i>
+                            <h5>No members found</h5>
+                            <p class="mb-3">Start adding students or learners to this learning space.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                <i class="fa-solid fa-user-plus me-1"></i> Add Member
+                            </button>
+                        </td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {{#ifGt totalPages 1}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+        <div class="text-muted small">
+            Showing page <strong>{{page}}</strong> of <strong>{{totalPages}}</strong> (Total: {{total}})
+        </div>
+
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/learning-spaces/{{space._id}}/members?page={{dec page}}&search={{filters.search}}&role={{filters.role}}">Previous</a>
+                </li>
+                <li class="page-item active">
+                    <span class="page-link">{{page}}</span>
+                </li>
+                <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/learning-spaces/{{space._id}}/members?page={{inc page}}&search={{filters.search}}&role={{filters.role}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {{/ifGt}}
+
+</div>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="addMemberModalLabel">
+                    <i class="fa-solid fa-user-plus me-2 text-primary"></i> Add Member to Space
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/learning-spaces/{{space._id}}/members/add" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="memberUserId" class="form-label fw-bold">User / Student ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="memberUserId" name="userId" placeholder="Enter valid 24-char User ID" required>
+                        <small class="text-muted">You can copy User IDs from the <a href="/network" target="_blank">Network Directory</a>.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="memberRole" class="form-label fw-bold">Role in Space</label>
+                        <select class="form-select" id="memberRole" name="role">
+                            <option value="member" selected>Member</option>
+                            <option value="moderator">Moderator</option>
+                            <option value="lead">Student Lead</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- BULK ADD MODAL -->
+<div class="modal fade" id="bulkAddModal" tabindex="-1" aria-labelledby="bulkAddModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="bulkAddModalLabel">
+                    <i class="fa-solid fa-users me-2 text-primary"></i> Bulk Add Members
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/learning-spaces/{{space._id}}/members/add" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="bulkUserIds" class="form-label fw-bold">User IDs (Comma-separated)</label>
+                        <textarea class="form-control" id="bulkUserIds" name="bulkUserIds" rows="5" placeholder="60c72b2f9b1d8b0015f8a001, 60c72b2f9b1d8b0015f8a002..." required></textarea>
+                        <small class="text-muted">Paste comma-separated MongoDB User IDs. Existing members will be skipped automatically.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function removeMember(spaceId, userId, name) {
+    Swal.fire({
+        title: 'Remove Member?',
+        text: `Remove ${name} from this learning space?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Remove'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/learning-spaces/${spaceId}/members/${userId}/remove`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) location.reload();
+                else Swal.fire('Error', d.message, 'error');
+            });
+        }
+    });
+}
+</script>

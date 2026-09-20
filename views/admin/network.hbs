@@ -1,0 +1,285 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-users-rays me-1"></i> Directory &amp; People Management
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Network &amp; People</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Unified directory of students, registered learners, educators, and platform administrators.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/add-students" class="btn btn-light px-3 py-2">
+                    <i class="fa-solid fa-user-plus me-1"></i> Add Student
+                </a>
+                <a href="/add-teacher" class="btn btn-success px-3 py-2">
+                    <i class="fa-solid fa-chalkboard-user me-1"></i> Add Teacher
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total People</small>
+                    <h2>{{stats.totalPeople}}</h2>
+                </div>
+                <i class="fa-solid fa-users stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Students</small>
+                    <h2>{{stats.enrolledStudents}}</h2>
+                </div>
+                <i class="fa-solid fa-user-graduate stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>Registered</small>
+                    <h2>{{stats.registeredOnly}}</h2>
+                </div>
+                <i class="fa-solid fa-user-clock stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Teachers</small>
+                    <h2>{{stats.totalTeachers}}</h2>
+                </div>
+                <i class="fa-solid fa-chalkboard-user stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Admins</small>
+                    <h2>{{stats.totalAdmins}}</h2>
+                </div>
+                <i class="fa-solid fa-user-shield stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Blocked</small>
+                    <h2>{{stats.blockedCount}}</h2>
+                </div>
+                <i class="fa-solid fa-ban stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <form class="toolbar-card mb-4" method="GET" action="/network" id="networkFilterForm">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" id="networkSearchInput" value="{{filters.search}}" placeholder="Search by name, @username, email, or phone...">
+        </div>
+
+        <select class="form-select filter-select" name="role" onchange="document.getElementById('networkFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.role 'all'}}selected{{/ifEquals}}>All Roles</option>
+            <option value="student" {{#ifEquals filters.role 'student'}}selected{{/ifEquals}}>Enrolled Students</option>
+            <option value="registered" {{#ifEquals filters.role 'registered'}}selected{{/ifEquals}}>Registered Users</option>
+            <option value="teacher" {{#ifEquals filters.role 'teacher'}}selected{{/ifEquals}}>Teachers</option>
+            <option value="admin" {{#ifEquals filters.role 'admin'}}selected{{/ifEquals}}>Admins</option>
+        </select>
+
+        <select class="form-select filter-select" name="status" onchange="document.getElementById('networkFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+            <option value="active" {{#ifEquals filters.status 'active'}}selected{{/ifEquals}}>Active</option>
+            <option value="blocked" {{#ifEquals filters.status 'blocked'}}selected{{/ifEquals}}>Blocked</option>
+        </select>
+
+        <select class="form-select filter-select" name="verified" onchange="document.getElementById('networkFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.isVerified 'all'}}selected{{/ifEquals}}>All Verification</option>
+            <option value="true" {{#ifEquals filters.isVerified 'true'}}selected{{/ifEquals}}>Verified</option>
+            <option value="false" {{#ifEquals filters.isVerified 'false'}}selected{{/ifEquals}}>Unverified</option>
+        </select>
+
+        <select class="form-select filter-select" name="courseId" onchange="document.getElementById('networkFilterForm').submit()">
+            <option value="">Filter by Course</option>
+            {{#each courses}}
+            <option value="{{this._id}}" {{selected ../filters.courseId this._id}}>{{this.name}}</option>
+            {{/each}}
+        </select>
+
+        <select class="form-select filter-select" name="spaceId" onchange="document.getElementById('networkFilterForm').submit()">
+            <option value="">Filter by Space</option>
+            {{#each spaces}}
+            <option value="{{this._id}}" {{selected ../filters.spaceId this._id}}>{{this.name}}</option>
+            {{/each}}
+        </select>
+
+        <button class="btn btn-primary filter-btn" type="submit" title="Apply Filters">
+            <i class="fa-solid fa-filter"></i>
+        </button>
+    </form>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table premium-table align-middle" id="networkTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Verification</th>
+                    <th>Courses / Spaces</th>
+                    <th>Joined Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#if records.length}}
+                    {{#each records}}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="{{this.avatar}}" alt="{{this.name}}" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover; border: 2px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                                <div>
+                                    <a href="{{this.detailLink}}" class="fw-bold text-decoration-none" style="color:var(--text);">
+                                        {{this.name}}
+                                    </a>
+                                    <small class="text-muted d-block">@{{this.username}} • {{this.email}}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {{#ifEquals this.role 'superuser'}}
+                                <span class="badge bg-danger"><i class="fa-solid fa-crown me-1"></i> Superuser</span>
+                            {{else}}{{#ifEquals this.role 'admin'}}
+                                <span class="badge bg-dark"><i class="fa-solid fa-shield-halved me-1"></i> Admin</span>
+                            {{else}}{{#ifEquals this.role 'teacher'}}
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-chalkboard-user me-1"></i> Teacher</span>
+                            {{else}}{{#ifEquals this.role 'student'}}
+                                <span class="badge bg-success"><i class="fa-solid fa-user-graduate me-1"></i> Student</span>
+                            {{else}}
+                                <span class="badge bg-info text-dark"><i class="fa-solid fa-user-clock me-1"></i> Registered</span>
+                            {{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
+                        </td>
+                        <td>
+                            {{#if this.isBlocked}}
+                                <span class="badge bg-danger"><i class="fa-solid fa-ban me-1"></i> Blocked</span>
+                            {{else}}
+                                <span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{#if this.isVerified}}
+                                <span class="text-success small fw-bold"><i class="fa-solid fa-shield-check me-1"></i> Verified</span>
+                            {{else}}
+                                <span class="text-muted small"><i class="fa-regular fa-circle-question me-1"></i> Unverified</span>
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{#if this.coursesCount}}
+                                <span class="badge bg-light text-dark border">{{this.coursesCount}} Course(s)</span>
+                            {{else}}
+                                <small class="text-muted">—</small>
+                            {{/if}}
+                        </td>
+                        <td>
+                            <small>{{#if this.joinedAt}}{{formatDate this.joinedAt}}{{else}}—{{/if}}</small>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a href="{{this.detailLink}}" class="btn btn-sm btn-outline-primary" title="View Profile">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+
+                                {{#ifEquals this.role 'student'}}
+                                    <button class="btn btn-sm {{#if this.isBlocked}}btn-outline-success{{else}}btn-outline-danger{{/if}}" onclick="toggleUserStatus('{{this._id}}', {{this.isBlocked}})" title="{{#if this.isBlocked}}Unblock{{else}}Block{{/if}}">
+                                        <i class="fa-solid {{#if this.isBlocked}}fa-lock-open{{else}}fa-ban{{/if}}"></i>
+                                    </button>
+                                {{else}}{{#ifEquals this.role 'registered'}}
+                                    <button class="btn btn-sm {{#if this.isBlocked}}btn-outline-success{{else}}btn-outline-danger{{/if}}" onclick="toggleUserStatus('{{this._id}}', {{this.isBlocked}})" title="{{#if this.isBlocked}}Unblock{{else}}Block{{/if}}">
+                                        <i class="fa-solid {{#if this.isBlocked}}fa-lock-open{{else}}fa-ban{{/if}}"></i>
+                                    </button>
+                                {{/ifEquals}}{{/ifEquals}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                {{else}}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-users fa-3x mb-3 opacity-50"></i>
+                            <h5>No people found</h5>
+                            <p class="mb-0">Try clearing your filters or search terms.</p>
+                        </td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {{#ifGt totalPages 1}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+        <div class="text-muted small">
+            Showing page <strong>{{page}}</strong> of <strong>{{totalPages}}</strong> (Total: {{total}})
+        </div>
+
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/network?page={{dec page}}&search={{filters.search}}&role={{filters.role}}&status={{filters.status}}&verified={{filters.isVerified}}&courseId={{filters.courseId}}&spaceId={{filters.spaceId}}">Previous</a>
+                </li>
+                <li class="page-item active">
+                    <span class="page-link">{{page}}</span>
+                </li>
+                <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/network?page={{inc page}}&search={{filters.search}}&role={{filters.role}}&status={{filters.status}}&verified={{filters.isVerified}}&courseId={{filters.courseId}}&spaceId={{filters.spaceId}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {{/ifGt}}
+
+</div>
+
+<script>
+function toggleUserStatus(userId, isCurrentlyBlocked) {
+    const actionName = isCurrentlyBlocked ? 'Unblock' : 'Block';
+    Swal.fire({
+        title: `${actionName} User?`,
+        text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
+        icon: isCurrentlyBlocked ? 'question' : 'warning',
+        showCancelButton: true,
+        confirmButtonColor: isCurrentlyBlocked ? '#198754' : '#dc3545',
+        confirmButtonText: `Yes, ${actionName}`
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/network/user/${userId}/status`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isBlocked: !isCurrentlyBlocked, isActive: isCurrentlyBlocked })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    Swal.fire('Updated!', d.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', d.message, 'error');
+                }
+            });
+        }
+    });
+}
+</script>

@@ -1,0 +1,366 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/network">Network</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{user.Name}}{{user.name}}</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-user me-2"></i> User Profile &amp; Relationships
+            </h2>
+            <small class="text-muted">Inspect learner identity, course enrollments, learning spaces, and network connections</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/network" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Directory
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- USER PROFILE CARD (LEFT) -->
+        <div class="col-lg-4">
+            <div class="card p-4 text-center mb-4">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    <img src="{{user.profileImageUrl}}" alt="{{user.Name}}{{user.name}}" class="rounded-circle shadow" style="width: 110px; height: 110px; object-fit: cover; border: 4px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                    {{#if user.account_Status.isBlocked}}
+                    <span class="position-absolute bottom-0 end-0 badge bg-danger p-2 rounded-circle" title="Blocked">
+                        <i class="fa-solid fa-ban"></i>
+                    </span>
+                    {{else}}
+                    <span class="position-absolute bottom-0 end-0 badge bg-success p-2 rounded-circle" title="Active">
+                        <i class="fa-solid fa-check"></i>
+                    </span>
+                    {{/if}}
+                </div>
+
+                <h4 class="fw-bold m-0" style="color:var(--text);">{{user.Name}}{{user.name}}</h4>
+                <p class="text-muted mb-2">@{{user.username}}</p>
+
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <span class="badge {{#ifEquals userType 'teacher'}}bg-warning text-dark{{else}}{{#ifEquals userType 'admin'}}bg-dark text-white{{else}}{{#if isEnrolled}}bg-success text-white{{else}}bg-info text-dark{{/if}}{{/ifEquals}}{{/ifEquals}} px-3 py-2">
+                        {{#ifEquals userType 'teacher'}}Teacher{{else}}{{#ifEquals userType 'admin'}}Admin{{else}}{{#if isEnrolled}}Enrolled Student{{else}}Registered User{{/if}}{{/ifEquals}}{{/ifEquals}}
+                    </span>
+
+                    {{#if user.account_Status.isVerified}}
+                    <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-shield-check me-1"></i> Verified</span>
+                    {{else}}
+                    <span class="badge bg-secondary px-3 py-2">Unverified</span>
+                    {{/if}}
+                </div>
+
+                <hr class="my-3">
+
+                <div class="text-start d-flex flex-column gap-2 small">
+                    <div><strong>Email:</strong> <span class="text-muted">{{user.email}}{{user.Email}}</span></div>
+                    <div><strong>Phone:</strong> <span class="text-muted">{{#if user.Phone_Number}}{{user.Phone_Number}}{{else}}—{{/if}}</span></div>
+                    <div><strong>Joined:</strong> <span class="text-muted">{{formatDate user.createdAt}}</span></div>
+                    <div><strong>Last Activity:</strong> <span class="text-muted">{{#if user.account_Status.lastSeen}}{{formatDateTime user.account_Status.lastSeen}}{{else}}—{{/if}}</span></div>
+                </div>
+
+                <hr class="my-3">
+
+                <!-- STATUS TOGGLE BUTTON -->
+                <div class="d-grid">
+                    <button class="btn {{#if user.account_Status.isBlocked}}btn-success{{else}}btn-danger{{/if}}" onclick="toggleStatus('{{user._id}}', {{#if user.account_Status.isBlocked}}true{{else}}false{{/if}})">
+                        <i class="fa-solid {{#if user.account_Status.isBlocked}}fa-lock-open{{else}}fa-ban{{/if}} me-2"></i>
+                        {{#if user.account_Status.isBlocked}}Unblock User{{else}}Block User{{/if}}
+                    </button>
+                </div>
+            </div>
+
+            <!-- COMMUNITY GAMIFICATION PROFILE -->
+            {{#if communityProfile}}
+            <div class="card p-4">
+                <h6 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-trophy me-2 text-warning"></i> Community Standing
+                </h6>
+                <div class="row g-2 text-center">
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <small class="text-muted d-block">Level</small>
+                            <span class="fw-bold fs-5">{{communityProfile.level}}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <small class="text-muted d-block">Rank</small>
+                            <span class="fw-bold fs-6">{{communityProfile.rank}}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <small class="text-muted d-block">XP Points</small>
+                            <span class="fw-bold fs-5 text-primary">{{communityProfile.xp}}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-light border">
+                            <small class="text-muted d-block">Streak</small>
+                            <span class="fw-bold fs-5 text-danger">{{communityProfile.currentStreak}}d</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- DETAILS TABS (RIGHT) -->
+        <div class="col-lg-8">
+            <div class="card p-4">
+                <!-- TABS NAV -->
+                <ul class="nav nav-pills mb-4 gap-2" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="courses-tab" data-bs-toggle="tab" data-bs-target="#tabCourses" type="button" role="tab">
+                            <i class="fa-solid fa-book-open me-1"></i> Enrolled Courses ({{enrolledCourses.length}})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="spaces-tab" data-bs-toggle="tab" data-bs-target="#tabSpaces" type="button" role="tab">
+                            <i class="fa-solid fa-shapes me-1"></i> Learning Spaces ({{spaces.length}})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="followers-tab" data-bs-toggle="tab" data-bs-target="#tabFollowers" type="button" role="tab">
+                            <i class="fa-solid fa-user-group me-1"></i> Followers ({{followers.length}})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="following-tab" data-bs-toggle="tab" data-bs-target="#tabFollowing" type="button" role="tab">
+                            <i class="fa-solid fa-user-check me-1"></i> Following ({{following.length}})
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- TABS CONTENT -->
+                <div class="tab-content" id="userTabsContent">
+
+                    <!-- TAB 1: COURSES -->
+                    <div class="tab-pane fade show active" id="tabCourses" role="tabpanel">
+                        {{#if enrolledCourses.length}}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Course Name</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Progress</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#each enrolledCourses}}
+                                        <tr>
+                                            <td class="fw-bold">{{this.courseName}}{{this.name}}</td>
+                                            <td><small>{{formatDate this.Start_Date}}</small></td>
+                                            <td><small>{{formatDate this.End_Date}}</small></td>
+                                            <td>
+                                                {{#if this.learningProgress}}
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{this.learningProgress.completionPercent}}%;"></div>
+                                                </div>
+                                                <small class="text-muted">{{this.learningProgress.completionPercent}}%</small>
+                                                {{else}}
+                                                <small class="text-muted">Active</small>
+                                                {{/if}}
+                                            </td>
+                                        </tr>
+                                        {{/each}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{else}}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-book-open fa-2x mb-2 opacity-50"></i>
+                                <p class="mb-0">No course enrollments found for this user.</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- TAB 2: LEARNING SPACES -->
+                    <div class="tab-pane fade" id="tabSpaces" role="tabpanel">
+                        {{#if spaces.length}}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Space Name</th>
+                                            <th>Code</th>
+                                            <th>Role</th>
+                                            <th>Joined Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#each spaces}}
+                                        <tr>
+                                            <td class="fw-bold">
+                                                <a href="/learning-spaces/{{this.spaceId}}" class="text-decoration-none">
+                                                    {{this.name}}
+                                                </a>
+                                            </td>
+                                            <td><code>{{this.code}}</code></td>
+                                            <td><span class="badge bg-secondary text-capitalize">{{this.role}}</span></td>
+                                            <td><small>{{formatDate this.joinedAt}}</small></td>
+                                            <td>
+                                                <a href="/learning-spaces/{{this.spaceId}}/members" class="btn btn-sm btn-outline-primary">
+                                                    Manage
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {{/each}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{else}}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-shapes fa-2x mb-2 opacity-50"></i>
+                                <p class="mb-0">User is not a member of any learning space.</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- TAB 3: FOLLOWERS -->
+                    <div class="tab-pane fade" id="tabFollowers" role="tabpanel">
+                        {{#if followers.length}}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Follower</th>
+                                            <th>Since</th>
+                                            <th class="text-end">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#each followers}}
+                                        <tr>
+                                            <td>
+                                                <strong>{{this.name}}</strong>
+                                                <small class="text-muted d-block">@{{this.username}}</small>
+                                            </td>
+                                            <td><small>{{formatDate this.createdAt}}</small></td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-danger" onclick="removeRelationship('{{../user._id}}', '{{this.followerId}}', 'follower')" title="Remove Follower">
+                                                    <i class="fa-solid fa-user-xmark me-1"></i> Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {{/each}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{else}}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-user-group fa-2x mb-2 opacity-50"></i>
+                                <p class="mb-0">No followers found.</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- TAB 4: FOLLOWING -->
+                    <div class="tab-pane fade" id="tabFollowing" role="tabpanel">
+                        {{#if following.length}}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Following</th>
+                                            <th>Since</th>
+                                            <th class="text-end">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#each following}}
+                                        <tr>
+                                            <td>
+                                                <strong>{{this.name}}</strong>
+                                                <small class="text-muted d-block">@{{this.username}}</small>
+                                            </td>
+                                            <td><small>{{formatDate this.createdAt}}</small></td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-danger" onclick="removeRelationship('{{../user._id}}', '{{this.userId}}', 'following')" title="Unfollow">
+                                                    <i class="fa-solid fa-user-minus me-1"></i> Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {{/each}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{else}}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-user-check fa-2x mb-2 opacity-50"></i>
+                                <p class="mb-0">User is not following anyone.</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function toggleStatus(userId, isCurrentlyBlocked) {
+    const actionName = isCurrentlyBlocked ? 'Unblock' : 'Block';
+    Swal.fire({
+        title: `${actionName} User?`,
+        text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
+        icon: isCurrentlyBlocked ? 'question' : 'warning',
+        showCancelButton: true,
+        confirmButtonColor: isCurrentlyBlocked ? '#198754' : '#dc3545',
+        confirmButtonText: `Yes, ${actionName}`
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/network/user/${userId}/status`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isBlocked: !isCurrentlyBlocked, isActive: isCurrentlyBlocked })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    Swal.fire('Updated!', d.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', d.message, 'error');
+                }
+            });
+        }
+    });
+}
+
+function removeRelationship(userId, targetId, relationshipType) {
+    Swal.fire({
+        title: 'Remove Relationship?',
+        text: `Are you sure you want to remove this ${relationshipType} relationship?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Remove'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/network/user/${userId}/relationship/remove`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId, relationshipType })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    Swal.fire('Removed', d.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', d.message, 'error');
+                }
+            });
+        }
+    });
+}
+</script>

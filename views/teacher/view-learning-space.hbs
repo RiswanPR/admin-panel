@@ -1,0 +1,116 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/teacher/learning-spaces">Learning Spaces</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{space.name}}</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border px-2 py-1 fs-6"><code>{{space.code}}</code></span>
+                <h2 class="fw-bold m-0" style="color:var(--brand);">{{space.name}}</h2>
+                <span class="badge bg-success px-2 py-1 text-capitalize">{{space.status}}</span>
+            </div>
+            <small class="text-muted">{{space.category}} • Access: <span class="text-capitalize">{{space.accessMode}}</span></small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/teacher/announcements/create?spaceId={{space._id}}" class="btn btn-success px-3">
+                <i class="fa-solid fa-bullhorn me-1"></i> Post Announcement
+            </a>
+            <a href="/teacher/learning-spaces" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- MAIN CONTENT (LEFT) -->
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-circle-info me-2"></i> Space Overview
+                </h5>
+                <p style="font-size: 15px; line-height: 1.7; color: var(--text);">
+                    {{#if space.description}}{{space.description}}{{else}}No description provided for this learning space.{{/if}}
+                </p>
+
+                <div class="row g-3 mt-2 pt-3 border-top">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">START DATE</small>
+                        <strong>{{#if space.startDate}}{{formatDate space.startDate}}{{else}}Ongoing{{/if}}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">END DATE</small>
+                        <strong>{{#if space.endDate}}{{formatDate space.endDate}}{{else}}Indefinite{{/if}}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SPACE ANNOUNCEMENTS -->
+            <div class="card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-bullhorn me-2 text-primary"></i> Space Announcements
+                    </h5>
+                    <a href="/teacher/announcements/create?spaceId={{space._id}}" class="btn btn-sm btn-success">
+                        <i class="fa-solid fa-plus me-1"></i> Post Announcement
+                    </a>
+                </div>
+
+                {{#if announcements.length}}
+                <div class="d-flex flex-column gap-3">
+                    {{#each announcements}}
+                    <div class="p-3 rounded-3 border" style="background: var(--surface-2);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold m-0">{{this.title}}</h6>
+                            <span class="badge bg-secondary">{{this.priority}}</span>
+                        </div>
+                        <small class="text-muted d-block mb-2">Posted on {{formatDateTime this.createdAt}} by {{this.createdByName}}</small>
+                        <p class="mb-0 text-muted small">{{truncate this.message 140}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-muted p-4 text-center">
+                    <p class="mb-0">No announcements posted for this space yet.</p>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+
+        <!-- MEMBERS LIST (RIGHT) -->
+        <div class="col-lg-4">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-users me-2"></i> Members ({{members.length}})
+                </h5>
+
+                {{#if members.length}}
+                <div class="d-flex flex-column gap-2" style="max-height: 500px; overflow-y: auto;">
+                    {{#each members}}
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;">
+                                {{this.name.[0]}}
+                            </div>
+                            <div>
+                                <strong class="d-block small">{{this.name}}</strong>
+                                <small class="text-muted">@{{this.username}}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-secondary text-capitalize" style="font-size: 10px;">{{this.role}}</span>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="text-muted small mb-0">No members enrolled in this learning space yet.</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,240 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/announcements">Announcements</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-pen-to-square me-2"></i> Edit Announcement
+            </h2>
+            <small class="text-muted">Update content, priority, audience, or publication schedule</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/announcements/{{announcement._id}}" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-eye me-1"></i> View Details
+            </a>
+            <a href="/announcements" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card p-4 p-md-5">
+
+                <form action="/announcements/{{announcement._id}}/edit" method="POST" id="editAnnouncementForm" onsubmit="return validateAnnouncementForm(event)">
+
+                    <!-- TITLE -->
+                    <div class="mb-4">
+                        <label for="announcementTitle" class="form-label fw-bold">
+                            Announcement Title <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="announcementTitle" name="title" value="{{announcement.title}}" required maxlength="200">
+                    </div>
+
+                    <!-- ROW: TYPE & PRIORITY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="announcementType" class="form-label fw-bold">Announcement Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="announcementType" name="type" onchange="handleTypeChange()">
+                                <option value="general" {{#ifEquals announcement.type 'general'}}selected{{/ifEquals}}>General Announcement</option>
+                                <option value="course" {{#ifEquals announcement.type 'course'}}selected{{/ifEquals}}>Course Announcement</option>
+                                <option value="learning_space" {{#ifEquals announcement.type 'learning_space'}}selected{{/ifEquals}}>Learning Space Notice</option>
+                                <option value="platform" {{#ifEquals announcement.type 'platform'}}selected{{/ifEquals}}>Platform Broadcast</option>
+                                <option value="maintenance" {{#ifEquals announcement.type 'maintenance'}}selected{{/ifEquals}}>Maintenance Notice</option>
+                                <option value="critical" {{#ifEquals announcement.type 'critical'}}selected{{/ifEquals}}>Critical Safety Alert</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="announcementPriority" class="form-label fw-bold">Priority Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="announcementPriority" name="priority" onchange="handlePriorityChange()">
+                                <option value="normal" {{#ifEquals announcement.priority 'normal'}}selected{{/ifEquals}}>Normal</option>
+                                <option value="important" {{#ifEquals announcement.priority 'important'}}selected{{/ifEquals}}>Important</option>
+                                <option value="critical" {{#ifEquals announcement.priority 'critical'}}selected{{/ifEquals}}>Critical (Urgent Alert)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CRITICAL TOGGLE (ADMIN ONLY) -->
+                    <div class="card mb-4 p-3 border-danger" id="criticalCard" style="background: rgba(220, 53, 69, 0.05); {{#if announcement.isCritical}}display:block;{{else}}display:none;{{/if}}">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-danger fw-bold mb-1">
+                                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Critical Safety Alert
+                                </h6>
+                                <small class="text-muted">
+                                    Critical announcements trigger high-priority alerts across the LMS.
+                                </small>
+                            </div>
+                            <div class="form-check form-switch fs-4">
+                                <input class="form-check-input" type="checkbox" role="switch" id="isCritical" name="isCritical" value="true" {{#if announcement.isCritical}}checked{{/if}}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TARGET AUDIENCE -->
+                    <div class="mb-4">
+                        <label for="targetType" class="form-label fw-bold">Target Audience <span class="text-danger">*</span></label>
+                        <select class="form-select" id="targetType" name="targetType" onchange="handleTargetChange()">
+                            <option value="platform" {{#ifEquals announcement.targetType 'platform'}}selected{{/ifEquals}}>Platform-wide (All Users)</option>
+                            <option value="course" {{#ifEquals announcement.targetType 'course'}}selected{{/ifEquals}}>Students in Specific Course</option>
+                            <option value="learning_space" {{#ifEquals announcement.targetType 'learning_space'}}selected{{/ifEquals}}>Members of a Learning Space</option>
+                            <option value="role" {{#ifEquals announcement.targetType 'role'}}selected{{/ifEquals}}>Specific Role Group</option>
+                        </select>
+                    </div>
+
+                    <!-- CONDITIONAL: COURSE SELECTOR -->
+                    <div class="mb-4" id="courseSelectorWrap" style="{{#ifEquals announcement.targetType 'course'}}display:block;{{else}}display:none;{{/ifEquals}}">
+                        <label for="courseId" class="form-label fw-bold">Select Course <span class="text-danger">*</span></label>
+                        <select class="form-select" id="courseId" name="courseId">
+                            <option value="">-- Choose Course --</option>
+                            {{#each courses}}
+                            <option value="{{this._id}}" {{selected ../announcement.courseId this._id}}>{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- CONDITIONAL: LEARNING SPACE SELECTOR -->
+                    <div class="mb-4" id="spaceSelectorWrap" style="{{#ifEquals announcement.targetType 'learning_space'}}display:block;{{else}}display:none;{{/ifEquals}}">
+                        <label for="learningSpaceId" class="form-label fw-bold">Select Learning Space <span class="text-danger">*</span></label>
+                        <select class="form-select" id="learningSpaceId" name="learningSpaceId">
+                            <option value="">-- Choose Learning Space --</option>
+                            {{#each spaces}}
+                            <option value="{{this._id}}" {{selected ../announcement.learningSpaceId this._id}}>{{this.name}} ({{this.code}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- MESSAGE (CONTENT) -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="announcementMessage" class="form-label fw-bold m-0">
+                                Announcement Message <span class="text-danger">*</span>
+                            </label>
+                            <small class="text-muted">HTML tags (b, i, u, a, p, ul, ol, li) allowed</small>
+                        </div>
+                        <textarea class="form-control" id="announcementMessage" name="message" rows="7" required>{{announcement.message}}</textarea>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="announcementStatus" class="form-label fw-bold">Status</label>
+                            <select class="form-select" id="announcementStatus" name="status">
+                                <option value="draft" {{#ifEquals announcement.status 'draft'}}selected{{/ifEquals}}>Draft</option>
+                                <option value="published" {{#ifEquals announcement.status 'published'}}selected{{/ifEquals}}>Published</option>
+                                <option value="scheduled" {{#ifEquals announcement.status 'scheduled'}}selected{{/ifEquals}}>Scheduled</option>
+                                <option value="archived" {{#ifEquals announcement.status 'archived'}}selected{{/ifEquals}}>Archived</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="scheduledAt" class="form-label fw-bold">Scheduled Time</label>
+                            <input type="datetime-local" class="form-control" id="scheduledAt" name="scheduledAt" value="{{formatDate announcement.scheduledAt}}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="expiresAt" class="form-label fw-bold">Expiry Date &amp; Time</label>
+                            <input type="datetime-local" class="form-control" id="expiresAt" name="expiresAt" value="{{formatDate announcement.expiresAt}}">
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/announcements" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5" id="btnUpdateAnnouncement">
+                            <i class="fa-solid fa-save me-2"></i> Save Changes
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function handleTypeChange() {
+    const type = document.getElementById('announcementType').value;
+    const prioritySelect = document.getElementById('announcementPriority');
+    const criticalCard = document.getElementById('criticalCard');
+    const targetSelect = document.getElementById('targetType');
+
+    if (type === 'critical') {
+        prioritySelect.value = 'critical';
+        criticalCard.style.display = 'block';
+        document.getElementById('isCritical').checked = true;
+    } else if (type === 'course') {
+        targetSelect.value = 'course';
+        handleTargetChange();
+    } else if (type === 'learning_space') {
+        targetSelect.value = 'learning_space';
+        handleTargetChange();
+    }
+}
+
+function handlePriorityChange() {
+    const priority = document.getElementById('announcementPriority').value;
+    const criticalCard = document.getElementById('criticalCard');
+    const isCriticalCheckbox = document.getElementById('isCritical');
+
+    if (priority === 'critical') {
+        criticalCard.style.display = 'block';
+        isCriticalCheckbox.checked = true;
+    } else {
+        if (document.getElementById('announcementType').value !== 'critical') {
+            criticalCard.style.display = 'none';
+            isCriticalCheckbox.checked = false;
+        }
+    }
+}
+
+function handleTargetChange() {
+    const target = document.getElementById('targetType').value;
+    document.getElementById('courseSelectorWrap').style.display = target === 'course' ? 'block' : 'none';
+    document.getElementById('spaceSelectorWrap').style.display = target === 'learning_space' ? 'block' : 'none';
+}
+
+function validateAnnouncementForm(e) {
+    const title = document.getElementById('announcementTitle').value.trim();
+    const message = document.getElementById('announcementMessage').value.trim();
+    const target = document.getElementById('targetType').value;
+
+    if (!title) {
+        Swal.fire('Validation Error', 'Announcement title is required.', 'warning');
+        return false;
+    }
+
+    if (!message) {
+        Swal.fire('Validation Error', 'Announcement message is required.', 'warning');
+        return false;
+    }
+
+    if (target === 'course') {
+        const courseId = document.getElementById('courseId').value;
+        if (!courseId) {
+            Swal.fire('Validation Error', 'Please select a target course.', 'warning');
+            return false;
+        }
+    }
+
+    if (target === 'learning_space') {
+        const spaceId = document.getElementById('learningSpaceId').value;
+        if (!spaceId) {
+            Swal.fire('Validation Error', 'Please select a target learning space.', 'warning');
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>

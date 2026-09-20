@@ -1,0 +1,378 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-bullhorn me-1"></i> Communication Hub
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Platform Announcements</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Broadcast platform alerts, course updates, learning space notices, and critical messages.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/announcements/create" class="btn btn-success px-4 py-2" id="btnCreateAnnouncement">
+                    <i class="fa-solid fa-plus me-2"></i> Create Announcement
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Announcements</small>
+                    <h2>{{total}}</h2>
+                </div>
+                <i class="fa-solid fa-bullhorn stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Published</small>
+                    <h2 id="kpiPublished">{{#if announcements}}{{announcements.length}}{{else}}0{{/if}}</h2>
+                </div>
+                <i class="fa-solid fa-circle-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Current Page</small>
+                    <h2>{{page}} / {{totalPages}}</h2>
+                </div>
+                <i class="fa-solid fa-file-lines stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Critical Safety</small>
+                    <h2>Active</h2>
+                </div>
+                <i class="fa-solid fa-shield-halved stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <form class="toolbar-card mb-4" method="GET" action="/announcements" id="announcementsFilterForm">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" id="announcementSearchInput" value="{{filters.search}}" placeholder="Search by title, message, or author...">
+        </div>
+
+        <select class="form-select filter-select" name="type" onchange="document.getElementById('announcementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.type 'all'}}selected{{/ifEquals}}>All Types</option>
+            <option value="general" {{#ifEquals filters.type 'general'}}selected{{/ifEquals}}>General</option>
+            <option value="course" {{#ifEquals filters.type 'course'}}selected{{/ifEquals}}>Course</option>
+            <option value="learning_space" {{#ifEquals filters.type 'learning_space'}}selected{{/ifEquals}}>Learning Space</option>
+            <option value="platform" {{#ifEquals filters.type 'platform'}}selected{{/ifEquals}}>Platform</option>
+            <option value="maintenance" {{#ifEquals filters.type 'maintenance'}}selected{{/ifEquals}}>Maintenance</option>
+            <option value="critical" {{#ifEquals filters.type 'critical'}}selected{{/ifEquals}}>Critical</option>
+        </select>
+
+        <select class="form-select filter-select" name="priority" onchange="document.getElementById('announcementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.priority 'all'}}selected{{/ifEquals}}>All Priorities</option>
+            <option value="normal" {{#ifEquals filters.priority 'normal'}}selected{{/ifEquals}}>Normal</option>
+            <option value="important" {{#ifEquals filters.priority 'important'}}selected{{/ifEquals}}>Important</option>
+            <option value="critical" {{#ifEquals filters.priority 'critical'}}selected{{/ifEquals}}>Critical</option>
+        </select>
+
+        <select class="form-select filter-select" name="status" onchange="document.getElementById('announcementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+            <option value="published" {{#ifEquals filters.status 'published'}}selected{{/ifEquals}}>Published</option>
+            <option value="draft" {{#ifEquals filters.status 'draft'}}selected{{/ifEquals}}>Draft</option>
+            <option value="scheduled" {{#ifEquals filters.status 'scheduled'}}selected{{/ifEquals}}>Scheduled</option>
+            <option value="archived" {{#ifEquals filters.status 'archived'}}selected{{/ifEquals}}>Archived</option>
+        </select>
+
+        <select class="form-select filter-select" name="target" onchange="document.getElementById('announcementsFilterForm').submit()">
+            <option value="all" {{#ifEquals filters.targetType 'all'}}selected{{/ifEquals}}>All Audiences</option>
+            <option value="platform" {{#ifEquals filters.targetType 'platform'}}selected{{/ifEquals}}>Platform-wide</option>
+            <option value="course" {{#ifEquals filters.targetType 'course'}}selected{{/ifEquals}}>Course</option>
+            <option value="learning_space" {{#ifEquals filters.targetType 'learning_space'}}selected{{/ifEquals}}>Learning Space</option>
+            <option value="role" {{#ifEquals filters.targetType 'role'}}selected{{/ifEquals}}>Specific Role</option>
+        </select>
+
+        <button class="btn btn-primary filter-btn" type="submit" title="Apply Filters">
+            <i class="fa-solid fa-filter"></i>
+        </button>
+    </form>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table premium-table align-middle" id="announcementsTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type &amp; Priority</th>
+                    <th>Audience / Scope</th>
+                    <th>Created By</th>
+                    <th>Status</th>
+                    <th>Published Date</th>
+                    <th>Expiry</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#if announcements.length}}
+                    {{#each announcements}}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {{#if this.isCritical}}
+                                <span class="badge bg-danger text-white px-2 py-1" title="Critical Safety Announcement">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </span>
+                                {{/if}}
+                                <div>
+                                    <a href="/announcements/{{this._id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
+                                        {{this.title}}
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {{#ifEquals this.priority 'critical'}}bg-danger{{else}}{{#ifEquals this.priority 'important'}}bg-warning text-dark{{else}}bg-secondary{{/ifEquals}}{{/ifEquals}} me-1">
+                                {{this.priority}}
+                            </span>
+                            <span class="badge bg-light text-dark border">
+                                {{this.type}}
+                            </span>
+                        </td>
+                        <td>
+                            {{#ifEquals this.targetType 'platform'}}
+                                <span class="badge bg-primary text-white"><i class="fa-solid fa-globe me-1"></i> Platform-wide</span>
+                            {{else}}{{#ifEquals this.targetType 'course'}}
+                                <span class="badge bg-info text-dark"><i class="fa-solid fa-book-open me-1"></i> {{this.courseName}}</span>
+                            {{else}}{{#ifEquals this.targetType 'learning_space'}}
+                                <span class="badge bg-success text-white"><i class="fa-solid fa-shapes me-1"></i> {{this.learningSpaceName}}</span>
+                            {{else}}{{#ifEquals this.targetType 'role'}}
+                                <span class="badge bg-secondary"><i class="fa-solid fa-users me-1"></i> Role Target</span>
+                            {{else}}
+                                <span class="badge bg-secondary">{{this.targetType}}</span>
+                            {{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
+                        </td>
+                        <td>
+                            <div>
+                                <small class="fw-bold d-block">{{this.createdByName}}</small>
+                                <small class="text-muted text-capitalize">{{this.createdByRole}}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {{#ifEquals this.status 'published'}}
+                                <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Published</span>
+                            {{else}}{{#ifEquals this.status 'scheduled'}}
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Scheduled</span>
+                            {{else}}{{#ifEquals this.status 'archived'}}
+                                <span class="badge bg-secondary"><i class="fa-solid fa-box-archive me-1"></i> Archived</span>
+                            {{else}}
+                                <span class="badge bg-light text-dark border"><i class="fa-solid fa-pen-ruler me-1"></i> Draft</span>
+                            {{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
+                        </td>
+                        <td>
+                            <small>{{#if this.publishedAt}}{{formatDateTime this.publishedAt}}{{else}}—{{/if}}</small>
+                        </td>
+                        <td>
+                            <small>{{#if this.expiresAt}}{{formatDateTime this.expiresAt}}{{else}}Never{{/if}}</small>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a href="/announcements/{{this._id}}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+
+                                <a href="/announcements/{{this._id}}/edit" class="btn btn-sm btn-outline-secondary" title="Edit Announcement">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+
+                                {{#ifEquals this.status 'published'}}
+                                <button class="btn btn-sm btn-outline-warning" onclick="unpublishAnnouncement('{{this._id}}', '{{this.title}}')" title="Unpublish to Draft">
+                                    <i class="fa-solid fa-eye-slash"></i>
+                                </button>
+                                {{else}}
+                                <button class="btn btn-sm btn-outline-success" onclick="publishAnnouncement('{{this._id}}', '{{this.title}}', {{this.isCritical}})" title="Publish Now">
+                                    <i class="fa-solid fa-upload"></i>
+                                </button>
+                                {{/ifEquals}}
+
+                                <button class="btn btn-sm btn-outline-info" onclick="duplicateAnnouncement('{{this._id}}')" title="Duplicate">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement('{{this._id}}', '{{this.title}}')" title="Delete Announcement">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fa-solid fa-bullhorn fa-3x mb-3 opacity-50"></i>
+                                <h5>No announcements found</h5>
+                                <p class="mb-3">Get started by broadcasting your first platform or course announcement.</p>
+                                <a href="/announcements/create" class="btn btn-primary px-4">
+                                    <i class="fa-solid fa-plus me-2"></i> Create Announcement
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {{/if}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {{#ifGt totalPages 1}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+        <div class="text-muted small">
+            Showing page <strong>{{page}}</strong> of <strong>{{totalPages}}</strong> (Total: {{total}})
+        </div>
+
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/announcements?page={{dec page}}&search={{filters.search}}&type={{filters.type}}&priority={{filters.priority}}&status={{filters.status}}&target={{filters.targetType}}">Previous</a>
+                </li>
+                <li class="page-item active">
+                    <span class="page-link">{{page}}</span>
+                </li>
+                <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/announcements?page={{inc page}}&search={{filters.search}}&type={{filters.type}}&priority={{filters.priority}}&status={{filters.status}}&target={{filters.targetType}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {{/ifGt}}
+
+</div>
+
+<script>
+function publishAnnouncement(id, title, isCritical) {
+    if (isCritical) {
+        Swal.fire({
+            title: 'Publish Critical Announcement?',
+            html: `You are about to publish <strong>"${title}"</strong> as a <strong>CRITICAL</strong> announcement. This will be prominently visible to all targeted users immediately and will be logged in the audit trail.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Publish Critical'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                executePublish(id);
+            }
+        });
+    } else {
+        Swal.fire({
+            title: 'Publish Announcement?',
+            text: `Publish "${title}" now?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Publish'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                executePublish(id);
+            }
+        });
+    }
+}
+
+function executePublish(id) {
+    fetch(`/announcements/${id}/publish`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Published!', data.message, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Error', data.message || 'Could not publish.', 'error');
+        }
+    })
+    .catch(err => Swal.fire('Error', err.message, 'error'));
+}
+
+function unpublishAnnouncement(id, title) {
+    Swal.fire({
+        title: 'Unpublish Announcement?',
+        text: `Move "${title}" back to draft state?`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#f6ed4a',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Unpublish'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/announcements/${id}/unpublish`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Unpublished!', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            });
+        }
+    });
+}
+
+function duplicateAnnouncement(id) {
+    fetch(`/announcements/${id}/duplicate`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Duplicated!', data.message, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    });
+}
+
+function deleteAnnouncement(id, title) {
+    Swal.fire({
+        title: 'Delete Announcement?',
+        text: `Are you sure you want to permanently delete "${title}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Delete'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/announcements/${id}/delete`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            });
+        }
+    });
+}
+</script>

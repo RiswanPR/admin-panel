@@ -1,0 +1,290 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/learning-spaces">Learning Spaces</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{space.name}}</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border px-2 py-1 fs-6"><code>{{space.code}}</code></span>
+                <h2 class="fw-bold m-0" style="color:var(--brand);">{{space.name}}</h2>
+                <span class="badge {{#ifEquals space.status 'active'}}bg-success{{else}}{{#ifEquals space.status 'draft'}}bg-warning text-dark{{else}}bg-secondary{{/ifEquals}}{{/ifEquals}} px-2 py-1 text-capitalize">
+                    {{space.status}}
+                </span>
+            </div>
+            <small class="text-muted">{{space.category}} • Access: <span class="text-capitalize">{{space.accessMode}}</span></small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/learning-spaces/{{space._id}}/members" class="btn btn-primary px-3">
+                <i class="fa-solid fa-users me-1"></i> Manage Members ({{space.memberCount}})
+            </a>
+            <a href="/learning-spaces/{{space._id}}/edit" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Edit Space
+            </a>
+            <a href="/learning-spaces" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- ROW: DETAILS & METRICS -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-circle-info me-2"></i> About this Learning Space
+                </h5>
+                <p style="font-size: 15px; line-height: 1.7; color: var(--text);">
+                    {{#if space.description}}{{space.description}}{{else}}No description provided for this learning space.{{/if}}
+                </p>
+
+                <div class="row g-3 mt-2 pt-3 border-top">
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">START DATE</small>
+                        <strong>{{#if space.startDate}}{{formatDate space.startDate}}{{else}}Not specified{{/if}}</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">END DATE</small>
+                        <strong>{{#if space.endDate}}{{formatDate space.endDate}}{{else}}Ongoing / Indefinite{{/if}}</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">CAPACITY</small>
+                        <strong>{{#if space.maxMembers}}{{space.maxMembers}} Max Members{{else}}Unlimited{{/if}}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ASSIGNED EDUCATORS -->
+            <div class="card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-chalkboard-user me-2 text-warning"></i> Assigned Teachers &amp; Mentors
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
+                        <i class="fa-solid fa-user-plus me-1"></i> Assign Teacher
+                    </button>
+                </div>
+
+                {{#if space.teacherDocs.length}}
+                <div class="row g-3">
+                    {{#each space.teacherDocs}}
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: var(--surface-2); border: 1px solid var(--border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="{{this.profileImageUrl}}" alt="{{this.name}}" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                                <div>
+                                    <strong class="d-block">{{this.name}}</strong>
+                                    <small class="text-muted">{{this.email}}</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeTeacher('{{../space._id}}', '{{this._id}}', '{{this.name}}')" title="Remove from Space">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-muted p-3 text-center rounded bg-light border">
+                    <i class="fa-solid fa-chalkboard-user fa-2x mb-2 opacity-50"></i>
+                    <p class="mb-2">No educators currently assigned to this learning space.</p>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
+                        Assign an Educator
+                    </button>
+                </div>
+                {{/if}}
+            </div>
+
+            <!-- SPACE ANNOUNCEMENTS -->
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-bullhorn me-2 text-primary"></i> Space Announcements
+                    </h5>
+                    <a href="/announcements/create?spaceId={{space._id}}" class="btn btn-sm btn-success">
+                        <i class="fa-solid fa-plus me-1"></i> Post Announcement
+                    </a>
+                </div>
+
+                {{#if announcements.length}}
+                <div class="d-flex flex-column gap-3">
+                    {{#each announcements}}
+                    <div class="p-3 rounded-3 border" style="background: var(--surface-2);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold m-0">
+                                <a href="/announcements/{{this._id}}" class="text-decoration-none" style="color:var(--text);">
+                                    {{this.title}}
+                                </a>
+                            </h6>
+                            <span class="badge bg-secondary">{{this.priority}}</span>
+                        </div>
+                        <small class="text-muted d-block mb-2">Posted by {{this.createdByName}} on {{formatDateTime this.createdAt}}</small>
+                        <p class="mb-0 text-muted small">{{truncate this.message 140}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-muted p-4 text-center">
+                    <p class="mb-0">No announcements posted for this learning space yet.</p>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+
+        <!-- SIDEBAR: MEMBERS PREVIEW & ACTIONS -->
+        <div class="col-lg-4">
+            <!-- MEMBERS OVERVIEW CARD -->
+            <div class="card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-users me-2"></i> Members ({{space.memberCount}})
+                    </h6>
+                    <a href="/learning-spaces/{{space._id}}/members" class="small fw-bold text-decoration-none">
+                        View All
+                    </a>
+                </div>
+
+                {{#if recentMembers.length}}
+                <div class="d-flex flex-column gap-2 mb-3">
+                    {{#each recentMembers}}
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 12px;">
+                                {{this.name.[0]}}
+                            </div>
+                            <div>
+                                <small class="fw-bold d-block">{{this.name}}</small>
+                                <small class="text-muted">{{this.email}}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-secondary text-capitalize" style="font-size: 10px;">{{this.role}}</span>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="text-muted small mb-3">No members enrolled in this learning space yet.</p>
+                {{/if}}
+
+                <div class="d-grid">
+                    <a href="/learning-spaces/{{space._id}}/members" class="btn btn-outline-primary">
+                        <i class="fa-solid fa-user-gear me-2"></i> Member Directory &amp; Add
+                    </a>
+                </div>
+            </div>
+
+            <!-- DANGER ZONE / ACTIONS CARD -->
+            <div class="card p-4">
+                <h6 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-sliders me-2"></i> Space Controls
+                </h6>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-warning" onclick="toggleStatus('{{space._id}}')">
+                        <i class="fa-solid fa-box-archive me-2"></i>
+                        {{#ifEquals space.status 'archived'}}Activate Space{{else}}Archive Space{{/ifEquals}}
+                    </button>
+
+                    <button class="btn btn-outline-danger" onclick="deleteSpace('{{space._id}}', '{{space.name}}')">
+                        <i class="fa-solid fa-trash-can me-2"></i> Delete Space
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ASSIGN TEACHER MODAL -->
+<div class="modal fade" id="assignTeacherModal" tabindex="-1" aria-labelledby="assignTeacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="assignTeacherModalLabel">
+                    <i class="fa-solid fa-chalkboard-user me-2 text-warning"></i> Assign Teacher
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/learning-spaces/{{space._id}}/teachers/assign" method="POST">
+                <div class="modal-body">
+                    <label for="assignTeacherSelect" class="form-label fw-bold">Select Verified Teacher</label>
+                    <select class="form-select" id="assignTeacherSelect" name="teacherId" required>
+                        <option value="">-- Choose Teacher --</option>
+                        {{#each allTeachers}}
+                        <option value="{{this._id}}">{{this.name}} ({{this.email}})</option>
+                        {{/each}}
+                    </select>
+                    <small class="text-muted mt-2 d-block">Only registered teachers from the teacher directory are eligible.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Teacher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function removeTeacher(spaceId, teacherId, teacherName) {
+    Swal.fire({
+        title: 'Remove Teacher?',
+        text: `Remove ${teacherName} from this learning space?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Remove'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/learning-spaces/${spaceId}/teachers/${teacherId}/remove`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) location.reload();
+                else Swal.fire('Error', d.message, 'error');
+            });
+        }
+    });
+}
+
+function toggleStatus(spaceId) {
+    fetch(`/learning-spaces/${spaceId}/status`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) location.reload();
+        else Swal.fire('Error', d.message, 'error');
+    });
+}
+
+function deleteSpace(spaceId, name) {
+    Swal.fire({
+        title: 'Delete Learning Space?',
+        text: `Are you sure you want to delete "${name}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Delete'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/learning-spaces/${spaceId}/delete`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) window.location.href = '/learning-spaces';
+                else Swal.fire('Error', d.message, 'error');
+            });
+        }
+    });
+}
+</script>

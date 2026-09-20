@@ -1,0 +1,142 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/learning-spaces">Learning Spaces</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-pen-to-square me-2"></i> Edit Learning Space
+            </h2>
+            <small class="text-muted">Update cohort settings, schedule, or access controls</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/learning-spaces/{{space._id}}" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-eye me-1"></i> View Space
+            </a>
+            <a href="/learning-spaces" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card p-4 p-md-5">
+
+                <form action="/learning-spaces/{{space._id}}/edit" method="POST" id="editSpaceForm" onsubmit="return validateSpaceForm(event)">
+
+                    <!-- ROW: NAME & CODE -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="spaceName" class="form-label fw-bold">
+                                Learning Space Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="spaceName" name="name" value="{{space.name}}" required maxlength="120">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="spaceCode" class="form-label fw-bold">
+                                Space Identifier / Code <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="spaceCode" name="code" value="{{space.code}}" required maxlength="30" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+
+                    <!-- ROW: CATEGORY, ACCESS MODE & STATUS -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="spaceCategory" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spaceCategory" name="category">
+                                <option value="Batch" {{#ifEquals space.category 'Batch'}}selected{{/ifEquals}}>Batch</option>
+                                <option value="Study Group" {{#ifEquals space.category 'Study Group'}}selected{{/ifEquals}}>Study Group</option>
+                                <option value="Department" {{#ifEquals space.category 'Department'}}selected{{/ifEquals}}>Department</option>
+                                <option value="Program" {{#ifEquals space.category 'Program'}}selected{{/ifEquals}}>Program</option>
+                                <option value="Training Group" {{#ifEquals space.category 'Training Group'}}selected{{/ifEquals}}>Training Group</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="accessMode" class="form-label fw-bold">Access Mode <span class="text-danger">*</span></label>
+                            <select class="form-select" id="accessMode" name="accessMode">
+                                <option value="invite_only" {{#ifEquals space.accessMode 'invite_only'}}selected{{/ifEquals}}>Invite / Admin Assigned Only</option>
+                                <option value="open" {{#ifEquals space.accessMode 'open'}}selected{{/ifEquals}}>Open (Any student can join)</option>
+                                <option value="restricted" {{#ifEquals space.accessMode 'restricted'}}selected{{/ifEquals}}>Restricted (Course Enrollees Only)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="spaceStatus" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spaceStatus" name="status">
+                                <option value="active" {{#ifEquals space.status 'active'}}selected{{/ifEquals}}>Active</option>
+                                <option value="draft" {{#ifEquals space.status 'draft'}}selected{{/ifEquals}}>Draft</option>
+                                <option value="archived" {{#ifEquals space.status 'archived'}}selected{{/ifEquals}}>Archived</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div class="mb-4">
+                        <label for="spaceDescription" class="form-label fw-bold">Description / Goals</label>
+                        <textarea class="form-control" id="spaceDescription" name="description" rows="4">{{space.description}}</textarea>
+                    </div>
+
+                    <!-- ROW: DATES & CAPACITY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label fw-bold">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" value="{{formatDate space.startDate}}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label fw-bold">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" value="{{formatDate space.endDate}}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="maxMembers" class="form-label fw-bold">Member Limit</label>
+                            <input type="number" class="form-control" id="maxMembers" name="maxMembers" value="{{space.maxMembers}}" min="0">
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/learning-spaces/{{space._id}}" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5" id="btnUpdateSpace">
+                            <i class="fa-solid fa-save me-2"></i> Save Changes
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function validateSpaceForm(e) {
+    const name = document.getElementById('spaceName').value.trim();
+    if (!name) {
+        Swal.fire('Validation Error', 'Learning space name is required.', 'warning');
+        return false;
+    }
+
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    if (startDate && endDate) {
+        if (new Date(endDate) < new Date(startDate)) {
+            Swal.fire('Validation Error', 'End date cannot be earlier than start date.', 'warning');
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>

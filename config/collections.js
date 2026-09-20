@@ -11,4 +11,8 @@ module.exports = {
     RESERVED_USERNAMES_COLLECTION: 'reserved_usernames',
     COMMUNITY_PROFILES_COLLECTION: 'community_profiles',
     POINT_TRANSACTIONS_COLLECTION: 'point_transactions',
+    ANNOUNCEMENTS_COLLECTION: 'announcements',
+    LEARNING_SPACES_COLLECTION: 'learning_spaces',
+    LEARNING_SPACE_MEMBERS_COLLECTION: 'learning_space_members',
+    COMMUNITY_FOLLOWERS_COLLECTION: 'community_followers',
 }

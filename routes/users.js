@@ -13,6 +13,9 @@ const settingsHelper = require('../Helpers/settings-helper');
 const classHelper = require('../Helpers/class-helper');
 const adminHelpers = require('../Helpers/admin-helper');
 const teacherHelpers = require('../Helpers/teacher-helper');
+const announcementHelper = require('../Helpers/announcement-helper');
+const networkHelper = require('../Helpers/network-helper');
+const learningSpaceHelper = require('../Helpers/learning-space-helper');
 const { getVideoDurationInSeconds } = require('get-video-duration');
 const ffprobeStatic = require('ffprobe-static');
 const db = require('../config/connection');
@@ -3372,6 +3375,607 @@ router.post('/admin/gamification/reconcile/fix-all', verifyLogin, verifySuperuse
   } catch (err) {
     logger.error('Reconcile all error:', err.message);
     res.redirect('/admin/gamification/reconcile');
+  }
+});
+
+// ==========================================
+// ANNOUNCEMENT MANAGEMENT SYSTEM (ADMIN)
+// ==========================================
+
+// 1. List Announcements
+router.get('/announcements', verifyLogin, async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search || '',
+      type: req.query.type || 'all',
+      priority: req.query.priority || 'all',
+      status: req.query.status || 'all',
+      targetType: req.query.target || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 15,
+      actor: req.session.admin
+    };
+
+    const result = await announcementHelper.getAnnouncements(filters);
+
+    res.render('admin/announcements', {
+      admins: true,
+      currentPage: 'announcements',
+      announcements: result.announcements,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages,
+      filters
+    });
+  } catch (err) {
+    logger.error('Get Announcements Error:', err.message);
+    res.redirect('/');
+  }
+});
+
+// 2. Create Announcement Form
+router.get('/announcements/create', verifyLogin, async (req, res) => {
+  try {
+    const [courses, spaces] = await Promise.all([
+      db.get().collection(collection.COURSE_COLLECTION).find({}, { projection: { _id: 1, name: 1 } }).toArray(),
+      db.get().collection(collection.LEARNING_SPACES_COLLECTION).find({ status: { $ne: 'archived' } }, { projection: { _id: 1, name: 1, code: 1 } }).toArray()
+    ]);
+
+    res.render('admin/add-announcement', {
+      admins: true,
+      currentPage: 'announcements',
+      courses,
+      spaces,
+      isSuperuser: req.session.admin?.role === 'superuser'
+    });
+  } catch (err) {
+    logger.error('Create Announcement Form Error:', err.message);
+    res.redirect('/announcements');
+  }
+});
+
+// 3. Create Announcement Handler
+router.post('/announcements/create', verifyLogin, async (req, res) => {
+  try {
+    const announcement = await announcementHelper.createAnnouncement(req.body, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement created successfully!', announcementId: announcement._id });
+    }
+    res.redirect('/announcements');
+  } catch (err) {
+    logger.error('Create Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 4. View Announcement
+router.get('/announcements/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const announcement = await announcementHelper.getAnnouncementById(req.params.id);
+    if (!announcement) {
+      return res.status(404).render('error', { message: 'Announcement not found.' });
+    }
+
+    const auditLogs = await auditHelper.getLogs({
+      entityType: 'announcement',
+      limit: 20
+    });
+    const entityLogs = auditLogs.filter(l => l.entityId === String(req.params.id));
+
+    res.render('admin/view-announcement', {
+      admins: true,
+      currentPage: 'announcements',
+      announcement,
+      auditLogs: entityLogs
+    });
+  } catch (err) {
+    logger.error('View Announcement Error:', err.message);
+    res.redirect('/announcements');
+  }
+});
+
+// 5. Edit Announcement Form
+router.get('/announcements/:id/edit', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const [announcement, courses, spaces] = await Promise.all([
+      announcementHelper.getAnnouncementById(req.params.id),
+      db.get().collection(collection.COURSE_COLLECTION).find({}, { projection: { _id: 1, name: 1 } }).toArray(),
+      db.get().collection(collection.LEARNING_SPACES_COLLECTION).find({ status: { $ne: 'archived' } }, { projection: { _id: 1, name: 1, code: 1 } }).toArray()
+    ]);
+
+    if (!announcement) {
+      return res.status(404).render('error', { message: 'Announcement not found.' });
+    }
+
+    res.render('admin/edit-announcement', {
+      admins: true,
+      currentPage: 'announcements',
+      announcement,
+      courses,
+      spaces,
+      isSuperuser: req.session.admin?.role === 'superuser'
+    });
+  } catch (err) {
+    logger.error('Edit Announcement Form Error:', err.message);
+    res.redirect('/announcements');
+  }
+});
+
+// 6. Edit Announcement Handler
+router.post('/announcements/:id/edit', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await announcementHelper.updateAnnouncement(req.params.id, req.body, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement updated successfully!' });
+    }
+    res.redirect(`/announcements/${req.params.id}`);
+  } catch (err) {
+    logger.error('Update Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 7. Publish Announcement
+router.post('/announcements/:id/publish', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await announcementHelper.publishAnnouncement(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement published successfully!' });
+    }
+    res.redirect('/announcements');
+  } catch (err) {
+    logger.error('Publish Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 8. Unpublish Announcement
+router.post('/announcements/:id/unpublish', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await announcementHelper.unpublishAnnouncement(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement unpublished successfully!' });
+    }
+    res.redirect('/announcements');
+  } catch (err) {
+    logger.error('Unpublish Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 9. Duplicate Announcement
+router.post('/announcements/:id/duplicate', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const clone = await announcementHelper.duplicateAnnouncement(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement duplicated!', newId: clone._id });
+    }
+    res.redirect(`/announcements/${clone._id}/edit`);
+  } catch (err) {
+    logger.error('Duplicate Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 10. Delete Announcement
+router.post('/announcements/:id/delete', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await announcementHelper.deleteAnnouncement(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Announcement deleted successfully.' });
+    }
+    res.redirect('/announcements');
+  } catch (err) {
+    logger.error('Delete Announcement Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// ==========================================
+// NETWORK / PEOPLE MANAGEMENT (ADMIN)
+// ==========================================
+
+// 1. Network Directory
+router.get('/network', verifyLogin, async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search || '',
+      role: req.query.role || 'all',
+      status: req.query.status || 'all',
+      isVerified: req.query.verified || 'all',
+      courseId: req.query.courseId || '',
+      spaceId: req.query.spaceId || '',
+      page: req.query.page || 1,
+      limit: req.query.limit || 20
+    };
+
+    const [stats, result, courses, spaces] = await Promise.all([
+      networkHelper.getNetworkStats(),
+      networkHelper.getNetworkUsers(filters),
+      db.get().collection(collection.COURSE_COLLECTION).find({}, { projection: { _id: 1, name: 1 } }).toArray(),
+      db.get().collection(collection.LEARNING_SPACES_COLLECTION).find({ status: { $ne: 'archived' } }, { projection: { _id: 1, name: 1, code: 1 } }).toArray()
+    ]);
+
+    res.render('admin/network', {
+      admins: true,
+      currentPage: 'network',
+      stats,
+      records: result.records,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages,
+      filters,
+      courses,
+      spaces
+    });
+  } catch (err) {
+    logger.error('Network Directory Error:', err.message);
+    res.redirect('/');
+  }
+});
+
+// 2. User Detail / Relationships View
+router.get('/network/user/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const details = await networkHelper.getNetworkUserDetails(req.params.id, req.query.role || '');
+    if (!details) {
+      return res.status(404).render('error', { message: 'User not found.' });
+    }
+
+    const spaces = await db.get().collection(collection.LEARNING_SPACES_COLLECTION).find({ status: 'active' }, { projection: { _id: 1, name: 1, code: 1 } }).toArray();
+
+    res.render('admin/network-user', {
+      admins: true,
+      currentPage: 'network',
+      ...details,
+      availableSpaces: spaces
+    });
+  } catch (err) {
+    logger.error('Network User Details Error:', err.message);
+    res.redirect('/network');
+  }
+});
+
+// 3. Update User Status (active / blocked)
+router.post('/network/user/:id/status', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const isBlocked = req.body.isBlocked === 'true' || req.body.isBlocked === true;
+    const isActive = req.body.isActive === 'true' || req.body.isActive === true;
+
+    await networkHelper.updateUserAccountStatus(req.params.id, { isBlocked, isActive }, req.session.admin, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'User status updated successfully.' });
+    }
+    res.redirect(`/network/user/${req.params.id}`);
+  } catch (err) {
+    logger.error('Update User Status Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 4. Remove Relationship
+router.post('/network/user/:id/relationship/remove', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { targetId, relationshipType } = req.body;
+    if (!targetId || !ObjectId.isValid(targetId)) {
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(400).json({ success: false, message: 'Valid target user ID is required.' });
+      }
+      return res.status(400).render('error', { message: 'Valid target user ID is required.' });
+    }
+
+    await networkHelper.removeRelationship({ userId: req.params.id, targetId, relationshipType }, req.session.admin, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Relationship removed.' });
+    }
+    res.redirect(`/network/user/${req.params.id}`);
+  } catch (err) {
+    logger.error('Remove Relationship Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// ==========================================
+// LEARNING SPACES MANAGEMENT (ADMIN)
+// ==========================================
+
+// 1. List Learning Spaces
+router.get('/learning-spaces', verifyLogin, async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search || '',
+      status: req.query.status || 'all',
+      category: req.query.category || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 12
+    };
+
+    const result = await learningSpaceHelper.getLearningSpaces(filters);
+
+    res.render('admin/learning-spaces', {
+      admins: true,
+      currentPage: 'learning-spaces',
+      spaces: result.spaces,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages,
+      filters
+    });
+  } catch (err) {
+    logger.error('Get Learning Spaces Error:', err.message);
+    res.redirect('/');
+  }
+});
+
+// 2. Create Learning Space Form
+router.get('/learning-spaces/create', verifyLogin, async (req, res) => {
+  try {
+    const teachers = await teacherHelpers.getAllTeachers();
+    res.render('admin/add-learning-space', {
+      admins: true,
+      currentPage: 'learning-spaces',
+      teachers
+    });
+  } catch (err) {
+    logger.error('Create Space Form Error:', err.message);
+    res.redirect('/learning-spaces');
+  }
+});
+
+// 3. Create Learning Space Handler
+router.post('/learning-spaces/create', verifyLogin, async (req, res) => {
+  try {
+    const space = await learningSpaceHelper.createLearningSpace(req.body, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Learning space created successfully!', spaceId: space._id });
+    }
+    res.redirect(`/learning-spaces/${space._id}`);
+  } catch (err) {
+    logger.error('Create Learning Space Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 4. View Learning Space Dashboard
+router.get('/learning-spaces/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const space = await learningSpaceHelper.getLearningSpaceById(req.params.id);
+    if (!space) {
+      return res.status(404).render('error', { message: 'Learning Space not found.' });
+    }
+
+    const [recentMembers, announcementsResult, allTeachers] = await Promise.all([
+      learningSpaceHelper.getSpaceMembers(req.params.id, { limit: 6 }),
+      announcementHelper.getAnnouncements({ targetType: 'learning_space', limit: 20 }),
+      teacherHelpers.getAllTeachers()
+    ]);
+
+    const spaceAnnouncements = announcementsResult.announcements.filter(a => a.learningSpaceId?.toString() === String(req.params.id));
+
+    res.render('admin/view-learning-space', {
+      admins: true,
+      currentPage: 'learning-spaces',
+      space,
+      recentMembers: recentMembers.members,
+      announcements: spaceAnnouncements,
+      allTeachers
+    });
+  } catch (err) {
+    logger.error('View Learning Space Error:', err.message);
+    res.redirect('/learning-spaces');
+  }
+});
+
+// 5. Edit Learning Space Form
+router.get('/learning-spaces/:id/edit', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const space = await learningSpaceHelper.getLearningSpaceById(req.params.id);
+    if (!space) {
+      return res.status(404).render('error', { message: 'Learning Space not found.' });
+    }
+
+    res.render('admin/edit-learning-space', {
+      admins: true,
+      currentPage: 'learning-spaces',
+      space
+    });
+  } catch (err) {
+    logger.error('Edit Learning Space Form Error:', err.message);
+    res.redirect('/learning-spaces');
+  }
+});
+
+// 6. Edit Learning Space Handler
+router.post('/learning-spaces/:id/edit', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await learningSpaceHelper.updateLearningSpace(req.params.id, req.body, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Learning Space updated successfully.' });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}`);
+  } catch (err) {
+    logger.error('Update Learning Space Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 7. Toggle Learning Space Status (archive / active)
+router.post('/learning-spaces/:id/status', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const newStatus = await learningSpaceHelper.archiveLearningSpace(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, status: newStatus });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}`);
+  } catch (err) {
+    logger.error('Archive Learning Space Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 8. Delete Learning Space
+router.post('/learning-spaces/:id/delete', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    await learningSpaceHelper.deleteLearningSpace(req.params.id, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Learning Space deleted successfully.' });
+    }
+    res.redirect('/learning-spaces');
+  } catch (err) {
+    logger.error('Delete Learning Space Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 9. Space Members Management Page
+router.get('/learning-spaces/:id/members', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const space = await learningSpaceHelper.getLearningSpaceById(req.params.id);
+    if (!space) {
+      return res.status(404).render('error', { message: 'Learning Space not found.' });
+    }
+
+    const filters = {
+      search: req.query.search || '',
+      role: req.query.role || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 20
+    };
+
+    const membersResult = await learningSpaceHelper.getSpaceMembers(req.params.id, filters);
+
+    res.render('admin/learning-space-members', {
+      admins: true,
+      currentPage: 'learning-spaces',
+      space,
+      members: membersResult.members,
+      total: membersResult.total,
+      page: membersResult.page,
+      totalPages: membersResult.totalPages,
+      filters
+    });
+  } catch (err) {
+    logger.error('Get Space Members Error:', err.message);
+    res.redirect(`/learning-spaces/${req.params.id}`);
+  }
+});
+
+// 10. Add Member to Space
+router.post('/learning-spaces/:id/members/add', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { userId, role, bulkUserIds } = req.body;
+
+    if (bulkUserIds) {
+      const ids = String(bulkUserIds).split(',').map(s => s.trim()).filter(Boolean);
+      const result = await learningSpaceHelper.addBulkMembersToSpace(req.params.id, ids, req.session.admin, req);
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.json({ success: true, ...result });
+      }
+      return res.redirect(`/learning-spaces/${req.params.id}/members`);
+    }
+
+    await learningSpaceHelper.addMemberToSpace(req.params.id, userId, role || 'member', req.session.admin, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Member added successfully.' });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}/members`);
+  } catch (err) {
+    logger.error('Add Space Member Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 11. Remove Member from Space
+router.post('/learning-spaces/:id/members/:userId/remove', verifyLogin, validateObjectIds(['id', 'userId']), async (req, res) => {
+  try {
+    await learningSpaceHelper.removeMemberFromSpace(req.params.id, req.params.userId, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Member removed from learning space.' });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}/members`);
+  } catch (err) {
+    logger.error('Remove Space Member Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 12. Assign Teacher to Space
+router.post('/learning-spaces/:id/teachers/assign', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { teacherId } = req.body;
+    await learningSpaceHelper.assignTeacherToSpace(req.params.id, teacherId, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Teacher assigned successfully.' });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}`);
+  } catch (err) {
+    logger.error('Assign Space Teacher Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
+// 13. Remove Teacher from Space
+router.post('/learning-spaces/:id/teachers/:teacherId/remove', verifyLogin, validateObjectIds(['id', 'teacherId']), async (req, res) => {
+  try {
+    await learningSpaceHelper.removeTeacherFromSpace(req.params.id, req.params.teacherId, req.session.admin, req);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Teacher removed from learning space.' });
+    }
+    res.redirect(`/learning-spaces/${req.params.id}`);
+  } catch (err) {
+    logger.error('Remove Space Teacher Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
   }
 });
 

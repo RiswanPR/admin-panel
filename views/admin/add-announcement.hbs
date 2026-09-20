@@ -1,0 +1,271 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/announcements">Announcements</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-bullhorn me-2"></i> Create Announcement
+            </h2>
+            <small class="text-muted">Compose and target platform updates, alerts, and course notices</small>
+        </div>
+
+        <a href="/announcements" class="btn btn-outline-secondary px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card p-4 p-md-5">
+
+                <form action="/announcements/create" method="POST" id="createAnnouncementForm" onsubmit="return validateAnnouncementForm(event)">
+
+                    <!-- TITLE -->
+                    <div class="mb-4">
+                        <label for="announcementTitle" class="form-label fw-bold">
+                            Announcement Title <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="announcementTitle" name="title" placeholder="e.g., Scheduled Platform Maintenance on Sunday" required maxlength="200">
+                        <small class="text-muted">Keep it concise and descriptive (max 200 characters).</small>
+                    </div>
+
+                    <!-- ROW: TYPE & PRIORITY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="announcementType" class="form-label fw-bold">Announcement Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="announcementType" name="type" onchange="handleTypeChange()">
+                                <option value="general" selected>General Announcement</option>
+                                <option value="course">Course Announcement</option>
+                                <option value="learning_space">Learning Space Notice</option>
+                                <option value="platform">Platform Broadcast</option>
+                                <option value="maintenance">Maintenance Notice</option>
+                                <option value="critical">Critical Safety Alert</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="announcementPriority" class="form-label fw-bold">Priority Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="announcementPriority" name="priority" onchange="handlePriorityChange()">
+                                <option value="normal" selected>Normal</option>
+                                <option value="important">Important</option>
+                                <option value="critical">Critical (Urgent Alert)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CRITICAL TOGGLE (ADMIN ONLY) -->
+                    <div class="card mb-4 p-3 border-danger" id="criticalCard" style="background: rgba(220, 53, 69, 0.05); display: none;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-danger fw-bold mb-1">
+                                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Mark as Critical Platform Announcement
+                                </h6>
+                                <small class="text-muted">
+                                    Critical announcements will be highlighted with top banner placement and require user dismissal.
+                                </small>
+                            </div>
+                            <div class="form-check form-switch fs-4">
+                                <input class="form-check-input" type="checkbox" role="switch" id="isCritical" name="isCritical" value="true">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TARGET AUDIENCE -->
+                    <div class="mb-4">
+                        <label for="targetType" class="form-label fw-bold">Target Audience <span class="text-danger">*</span></label>
+                        <select class="form-select" id="targetType" name="targetType" onchange="handleTargetChange()">
+                            <option value="platform" selected>Platform-wide (All Students, Teachers, Admins)</option>
+                            <option value="course">Students in Specific Course</option>
+                            <option value="learning_space">Members of a Learning Space</option>
+                            <option value="role">Specific Role Group</option>
+                        </select>
+                    </div>
+
+                    <!-- CONDITIONAL: COURSE SELECTOR -->
+                    <div class="mb-4" id="courseSelectorWrap" style="display: none;">
+                        <label for="courseId" class="form-label fw-bold">Select Course <span class="text-danger">*</span></label>
+                        <select class="form-select" id="courseId" name="courseId">
+                            <option value="">-- Choose Course --</option>
+                            {{#each courses}}
+                            <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- CONDITIONAL: LEARNING SPACE SELECTOR -->
+                    <div class="mb-4" id="spaceSelectorWrap" style="display: none;">
+                        <label for="learningSpaceId" class="form-label fw-bold">Select Learning Space <span class="text-danger">*</span></label>
+                        <select class="form-select" id="learningSpaceId" name="learningSpaceId">
+                            <option value="">-- Choose Learning Space --</option>
+                            {{#each spaces}}
+                            <option value="{{this._id}}">{{this.name}} ({{this.code}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- CONDITIONAL: ROLE SELECTOR -->
+                    <div class="mb-4" id="roleSelectorWrap" style="display: none;">
+                        <label class="form-label fw-bold">Select Target Role(s)</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="targetRoles" value="students" id="roleStudents" checked>
+                                <label class="form-check-label" for="roleStudents">Students</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="targetRoles" value="teachers" id="roleTeachers">
+                                <label class="form-check-label" for="roleTeachers">Teachers</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="targetRoles" value="admins" id="roleAdmins">
+                                <label class="form-check-label" for="roleAdmins">Admins</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MESSAGE (CONTENT) -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="announcementMessage" class="form-label fw-bold m-0">
+                                Announcement Message <span class="text-danger">*</span>
+                            </label>
+                            <small class="text-muted">Supports basic HTML (b, i, u, a, p, ul, ol, li)</small>
+                        </div>
+                        <textarea class="form-control" id="announcementMessage" name="message" rows="7" placeholder="Write your announcement content here..." required></textarea>
+                    </div>
+
+                    <!-- ROW: SCHEDULE & EXPIRY -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="scheduledAt" class="form-label fw-bold">Schedule Publication (Optional)</label>
+                            <input type="datetime-local" class="form-control" id="scheduledAt" name="scheduledAt">
+                            <small class="text-muted">Leave empty to publish immediately or save as draft.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="expiresAt" class="form-label fw-bold">Expiry Date &amp; Time (Optional)</label>
+                            <input type="datetime-local" class="form-control" id="expiresAt" name="expiresAt">
+                            <small class="text-muted">Announcement will be automatically archived after this date.</small>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS / PUBLISH STATE -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-3 border-top">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="publishNow" id="statusDraft" value="false" checked>
+                                <label class="form-check-label" for="statusDraft">Save as Draft</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="publishNow" id="statusPublish" value="true">
+                                <label class="form-check-label fw-bold text-success" for="statusPublish">Publish Immediately</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="/announcements" class="btn btn-light px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5" id="btnSubmitAnnouncement">
+                                <i class="fa-solid fa-paper-plane me-2"></i> Submit Announcement
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function handleTypeChange() {
+    const type = document.getElementById('announcementType').value;
+    const prioritySelect = document.getElementById('announcementPriority');
+    const criticalCard = document.getElementById('criticalCard');
+    const targetSelect = document.getElementById('targetType');
+
+    if (type === 'critical') {
+        prioritySelect.value = 'critical';
+        criticalCard.style.display = 'block';
+        document.getElementById('isCritical').checked = true;
+    } else if (type === 'course') {
+        targetSelect.value = 'course';
+        handleTargetChange();
+    } else if (type === 'learning_space') {
+        targetSelect.value = 'learning_space';
+        handleTargetChange();
+    }
+}
+
+function handlePriorityChange() {
+    const priority = document.getElementById('announcementPriority').value;
+    const criticalCard = document.getElementById('criticalCard');
+    const isCriticalCheckbox = document.getElementById('isCritical');
+
+    if (priority === 'critical') {
+        criticalCard.style.display = 'block';
+        isCriticalCheckbox.checked = true;
+    } else {
+        if (document.getElementById('announcementType').value !== 'critical') {
+            criticalCard.style.display = 'none';
+            isCriticalCheckbox.checked = false;
+        }
+    }
+}
+
+function handleTargetChange() {
+    const target = document.getElementById('targetType').value;
+    document.getElementById('courseSelectorWrap').style.display = target === 'course' ? 'block' : 'none';
+    document.getElementById('spaceSelectorWrap').style.display = target === 'learning_space' ? 'block' : 'none';
+    document.getElementById('roleSelectorWrap').style.display = target === 'role' ? 'block' : 'none';
+}
+
+function validateAnnouncementForm(e) {
+    const title = document.getElementById('announcementTitle').value.trim();
+    const message = document.getElementById('announcementMessage').value.trim();
+    const target = document.getElementById('targetType').value;
+
+    if (!title) {
+        Swal.fire('Validation Error', 'Announcement title is required.', 'warning');
+        return false;
+    }
+
+    if (!message) {
+        Swal.fire('Validation Error', 'Announcement message is required.', 'warning');
+        return false;
+    }
+
+    if (target === 'course') {
+        const courseId = document.getElementById('courseId').value;
+        if (!courseId) {
+            Swal.fire('Validation Error', 'Please select a target course.', 'warning');
+            return false;
+        }
+    }
+
+    if (target === 'learning_space') {
+        const spaceId = document.getElementById('learningSpaceId').value;
+        if (!spaceId) {
+            Swal.fire('Validation Error', 'Please select a target learning space.', 'warning');
+            return false;
+        }
+    }
+
+    const scheduledAt = document.getElementById('scheduledAt').value;
+    const expiresAt = document.getElementById('expiresAt').value;
+
+    if (scheduledAt && expiresAt) {
+        if (new Date(expiresAt) <= new Date(scheduledAt)) {
+            Swal.fire('Validation Error', 'Expiry date must be after scheduled publication date.', 'warning');
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>
