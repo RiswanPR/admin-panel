@@ -238,6 +238,51 @@ const createAnnouncement = async (data, actor, req = null) => {
     status = 'archived';
   }
 
+  const database = db.get();
+  let platformAnnouncementId = null;
+  let communityAnnouncementId = null;
+
+  // Platform Architecture: Route to appropriate platform collection
+  if (targetType === 'learning_space' && learningSpaceId) {
+    const space = await database.collection(collection.LEARNING_SPACES_COLLECTION).findOne({ _id: learningSpaceId });
+    if (space && space.communityId) {
+      const commAnnDoc = {
+        communityId: new ObjectId(space.communityId),
+        authorId: new ObjectId(actor._id),
+        title,
+        content: sanitizedMessage,
+        pinned: Boolean(data.isPinned),
+        createdAt: now,
+        updatedAt: now
+      };
+      const commAnnResult = await database.collection(collection.NETWORK_COMMUNITY_ANNOUNCEMENTS_COLLECTION).insertOne(commAnnDoc);
+      communityAnnouncementId = commAnnResult.insertedId;
+    }
+  } else {
+    // Route to platform_announcements
+    const platformType = isCritical ? 'CRITICAL' : (priority === 'critical' ? 'CRITICAL' : (priority === 'important' || priority === 'high' ? 'IMPORTANT' : 'INFO'));
+    const platformPriority = isCritical ? 'CRITICAL' : (priority === 'critical' ? 'CRITICAL' : (priority === 'important' || priority === 'high' ? 'HIGH' : 'LOW'));
+    const audience = targetType === 'course' ? 'COURSE_STUDENTS' : (targetType === 'role' ? (data.targetRoles?.includes('teachers') ? 'TEACHERS' : 'STUDENTS') : 'ALL_USERS');
+
+    const platformAnnDoc = {
+      title,
+      message: sanitizedMessage,
+      type: platformType,
+      priority: platformPriority,
+      audience,
+      target: targetType === 'course' && courseId ? { courseId: courseId.toString() } : undefined,
+      status: isPublished ? 'PUBLISHED' : (status === 'archived' ? 'ARCHIVED' : 'DRAFT'),
+      startsAt: scheduledAt || now,
+      expiresAt: expiresAt || null,
+      dismissedBy: [],
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const platformAnnResult = await database.collection(collection.PLATFORM_ANNOUNCEMENTS_COLLECTION).insertOne(platformAnnDoc);
+    platformAnnouncementId = platformAnnResult.insertedId;
+  }
+
   const doc = {
     title,
     message: sanitizedMessage,
@@ -246,6 +291,8 @@ const createAnnouncement = async (data, actor, req = null) => {
     status,
     isCritical,
     isPublished,
+    platformAnnouncementId,
+    communityAnnouncementId,
     createdBy: new ObjectId(actor._id),
     createdByRole: actor.role || 'admin',
     createdByName: actor.Name || actor.name || actor.Email || actor.email || 'User',
@@ -260,11 +307,31 @@ const createAnnouncement = async (data, actor, req = null) => {
     updatedAt: now
   };
 
-  const result = await db.get()
+  const result = await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .insertOne(doc);
 
   const announcementId = result.insertedId;
+
+  // If published, write a notification record
+  if (isPublished) {
+    try {
+      await database.collection(collection.NOTIFICATIONS_COLLECTION).insertOne({
+        recipientId: null,
+        actorId: new ObjectId(actor._id),
+        type: 'ANNOUNCEMENT',
+        category: targetType === 'learning_space' ? 'COMMUNITY' : 'SYSTEM',
+        priority: isCritical ? 'HIGH' : 'NORMAL',
+        title,
+        message: title,
+        isRead: false,
+        idempotencyKey: `announcement_${announcementId}`,
+        createdAt: now
+      });
+    } catch (notifErr) {
+      logger.warn(`Notification log warning: ${notifErr.message}`);
+    }
+  }
 
   // Audit Logging
   await auditHelper.logAction({
@@ -281,6 +348,8 @@ const createAnnouncement = async (data, actor, req = null) => {
       targetType,
       courseId: courseId ? courseId.toString() : null,
       learningSpaceId: learningSpaceId ? learningSpaceId.toString() : null,
+      platformAnnouncementId: platformAnnouncementId ? platformAnnouncementId.toString() : null,
+      communityAnnouncementId: communityAnnouncementId ? communityAnnouncementId.toString() : null,
       status
     }
   });
@@ -393,9 +462,49 @@ const updateAnnouncement = async (id, data, actor, req = null) => {
     }
   }
 
-  await db.get()
+  const database = db.get();
+  await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
+
+  // Sync with platform collections
+  if (existing.platformAnnouncementId) {
+    const platformType = isCritical ? 'CRITICAL' : (priority === 'critical' ? 'CRITICAL' : (priority === 'important' || priority === 'high' ? 'IMPORTANT' : 'INFO'));
+    const platformPriority = isCritical ? 'CRITICAL' : (priority === 'critical' ? 'CRITICAL' : (priority === 'important' || priority === 'high' ? 'HIGH' : 'LOW'));
+    const audience = targetType === 'course' ? 'COURSE_STUDENTS' : (targetType === 'role' ? (data.targetRoles?.includes('teachers') ? 'TEACHERS' : 'STUDENTS') : 'ALL_USERS');
+
+    await database.collection(collection.PLATFORM_ANNOUNCEMENTS_COLLECTION).updateOne(
+      { _id: new ObjectId(existing.platformAnnouncementId) },
+      {
+        $set: {
+          title,
+          message,
+          type: platformType,
+          priority: platformPriority,
+          audience,
+          target: targetType === 'course' && courseId ? { courseId: courseId.toString() } : undefined,
+          status: updateFields.status ? (updateFields.status === 'published' ? 'PUBLISHED' : (updateFields.status === 'archived' ? 'ARCHIVED' : 'DRAFT')) : undefined,
+          startsAt: scheduledAt || undefined,
+          expiresAt: expiresAt !== undefined ? expiresAt : undefined,
+          updatedAt: new Date()
+        }
+      }
+    );
+  }
+
+  if (existing.communityAnnouncementId) {
+    await database.collection(collection.NETWORK_COMMUNITY_ANNOUNCEMENTS_COLLECTION).updateOne(
+      { _id: new ObjectId(existing.communityAnnouncementId) },
+      {
+        $set: {
+          title,
+          content: message,
+          pinned: data.isPinned !== undefined ? Boolean(data.isPinned) : undefined,
+          updatedAt: new Date()
+        }
+      }
+    );
+  }
 
   await auditHelper.logAction({
     req,
@@ -469,6 +578,14 @@ const getAnnouncements = async (filters = {}) => {
 
   if (filters.creatorRole && filters.creatorRole !== 'all') {
     query.createdByRole = filters.creatorRole;
+  }
+
+  if (filters.learningSpaceId && ObjectId.isValid(filters.learningSpaceId)) {
+    query.learningSpaceId = new ObjectId(filters.learningSpaceId);
+  }
+
+  if (filters.courseId && ObjectId.isValid(filters.courseId)) {
+    query.courseId = new ObjectId(filters.courseId);
   }
 
   // Teacher scope filter: teacher can only see announcements they created, or targeted to their courses/spaces
@@ -562,8 +679,9 @@ const publishAnnouncement = async (id, actor, req = null) => {
     }
   }
 
+  const database = db.get();
   const now = new Date();
-  await db.get()
+  await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .updateOne(
       { _id: new ObjectId(id) },
@@ -576,6 +694,30 @@ const publishAnnouncement = async (id, actor, req = null) => {
         }
       }
     );
+
+  if (announcement.platformAnnouncementId) {
+    await database.collection(collection.PLATFORM_ANNOUNCEMENTS_COLLECTION).updateOne(
+      { _id: new ObjectId(announcement.platformAnnouncementId) },
+      { $set: { status: 'PUBLISHED', updatedAt: now } }
+    );
+  }
+
+  try {
+    await database.collection(collection.NOTIFICATIONS_COLLECTION).insertOne({
+      recipientId: null,
+      actorId: new ObjectId(actor._id),
+      type: 'ANNOUNCEMENT',
+      category: announcement.targetType === 'learning_space' ? 'COMMUNITY' : 'SYSTEM',
+      priority: announcement.isCritical ? 'HIGH' : 'NORMAL',
+      title: announcement.title,
+      message: announcement.title,
+      isRead: false,
+      idempotencyKey: `announcement_publish_${id}`,
+      createdAt: now
+    });
+  } catch (notifErr) {
+    logger.warn(`Notification publish warning: ${notifErr.message}`);
+  }
 
   await auditHelper.logAction({
     req,
@@ -594,7 +736,8 @@ const publishAnnouncement = async (id, actor, req = null) => {
 const unpublishAnnouncement = async (id, actor, req = null) => {
   if (!ObjectId.isValid(id)) throw new Error('Invalid announcement ID.');
 
-  const announcement = await db.get()
+  const database = db.get();
+  const announcement = await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
@@ -610,7 +753,7 @@ const unpublishAnnouncement = async (id, actor, req = null) => {
   }
 
   const now = new Date();
-  await db.get()
+  await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .updateOne(
       { _id: new ObjectId(id) },
@@ -622,6 +765,13 @@ const unpublishAnnouncement = async (id, actor, req = null) => {
         }
       }
     );
+
+  if (announcement.platformAnnouncementId) {
+    await database.collection(collection.PLATFORM_ANNOUNCEMENTS_COLLECTION).updateOne(
+      { _id: new ObjectId(announcement.platformAnnouncementId) },
+      { $set: { status: 'DRAFT', updatedAt: now } }
+    );
+  }
 
   await auditHelper.logAction({
     req,
@@ -682,7 +832,8 @@ const duplicateAnnouncement = async (id, actor, req = null) => {
 const deleteAnnouncement = async (id, actor, req = null) => {
   if (!ObjectId.isValid(id)) throw new Error('Invalid announcement ID.');
 
-  const announcement = await db.get()
+  const database = db.get();
+  const announcement = await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
@@ -697,7 +848,19 @@ const deleteAnnouncement = async (id, actor, req = null) => {
     throw new Error('Forbidden: You can only delete your own announcements.');
   }
 
-  await db.get()
+  if (announcement.platformAnnouncementId) {
+    await database.collection(collection.PLATFORM_ANNOUNCEMENTS_COLLECTION).deleteOne({
+      _id: new ObjectId(announcement.platformAnnouncementId)
+    });
+  }
+
+  if (announcement.communityAnnouncementId) {
+    await database.collection(collection.NETWORK_COMMUNITY_ANNOUNCEMENTS_COLLECTION).deleteOne({
+      _id: new ObjectId(announcement.communityAnnouncementId)
+    });
+  }
+
+  await database
     .collection(collection.ANNOUNCEMENTS_COLLECTION)
     .deleteOne({ _id: new ObjectId(id) });
 

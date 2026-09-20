@@ -20,6 +20,7 @@ var db = require('./config/connection');
 const cron = require('node-cron');
 const studentHelper = require('./Helpers/student-helper');
 const { ensureIndexes } = require('./Helpers/index-helper');
+const { runPlatformMigration } = require('./Helpers/migration-helper');
 
 // ── Orphaned Temporary Upload Housekeeping ──
 // Cleans up interrupted or stale multipart temp files (>2h old) to prevent disk exhaustion
@@ -435,9 +436,11 @@ const connectWithRetry = (attempt = 1) => {
       }
     } else {
       console.log('✅ Database Connected (MongoDB)');
-      ensureIndexes(db.get()).catch((indexErr) => {
-        console.warn('⚠️ Database index setup warning:', indexErr.message);
-      });
+      ensureIndexes(db.get())
+        .then(() => runPlatformMigration(db.get()))
+        .catch((err) => {
+          console.warn('⚠️ Database setup / migration warning:', err.message);
+        });
     }
   });
 };

@@ -473,71 +473,128 @@ async function runTests() {
         Password: '$2b$10$secretHashTeacher'
       }
     ],
-    [collection.AUDIT_LOG_COLLECTION]: []
+    [collection.AUDIT_LOG_COLLECTION]: [],
+    [collection.PLATFORM_ANNOUNCEMENTS_COLLECTION]: [],
+    [collection.NETWORK_COMMUNITIES_COLLECTION]: [],
+    [collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION]: [],
+    [collection.NETWORK_COMMUNITY_ANNOUNCEMENTS_COLLECTION]: [],
+    [collection.NETWORK_CONNECTIONS_COLLECTION]: [],
+    [collection.NOTIFICATIONS_COLLECTION]: [],
+    [collection.LEARNING_SPACE_MEMBERS_COLLECTION]: [],
+    [collection.COMMUNITY_FOLLOWERS_COLLECTION]: []
+  };
+
+  const matchesQuery = (doc, query = {}) => {
+    if (!query || Object.keys(query).length === 0) return true;
+    for (const key of Object.keys(query)) {
+      if (key === '_id') {
+        if (query._id && query._id.$ne) {
+          if (doc._id && doc._id.toString() === query._id.$ne.toString()) return false;
+        } else if (doc._id && doc._id.toString() !== query._id.toString()) {
+          return false;
+        }
+      } else if (key === '$or') {
+        const orMatch = query.$or.some(subQ => matchesQuery(doc, subQ));
+        if (!orMatch) return false;
+      } else if (key === '$and') {
+        const andMatch = query.$and.every(subQ => matchesQuery(doc, subQ));
+        if (!andMatch) return false;
+      } else if (typeof query[key] === 'object' && query[key] !== null) {
+        if (query[key].$in) {
+          const inList = query[key].$in.map(String);
+          if (Array.isArray(doc[key])) {
+            if (!doc[key].some(v => inList.includes(v.toString()))) return false;
+          } else if (!doc[key] || !inList.includes(doc[key].toString())) {
+            return false;
+          }
+        } else if (query[key].$ne !== undefined) {
+          if (doc[key] === query[key].$ne || (doc[key] && doc[key].toString() === query[key].$ne.toString())) return false;
+        } else if (query[key] instanceof ObjectId) {
+          if (!doc[key] || doc[key].toString() !== query[key].toString()) return false;
+        }
+      } else {
+        if (doc[key] instanceof ObjectId && query[key]) {
+          if (doc[key].toString() !== query[key].toString()) return false;
+        } else if (doc[key] !== query[key]) {
+          return false;
+        }
+      }
+    }
+    return true;
   };
 
   const createMockCollection = (colName) => ({
     findOne: async (query) => {
       const items = mockStorage[colName] || [];
-      return items.find(doc => {
-        for (const key of Object.keys(query)) {
-          if (key === '_id') {
-            if (doc._id.toString() !== query._id.toString()) return false;
-          } else if (key === '$or') {
-            const orMatch = query.$or.some(subQ => {
-              for (const sKey of Object.keys(subQ)) {
-                if (Array.isArray(doc[sKey])) {
-                  if (doc[sKey].some(val => val.toString() === subQ[sKey].toString())) return true;
-                } else if (doc[sKey] && doc[sKey].toString() === subQ[sKey].toString()) {
-                  return true;
-                }
-              }
-              return false;
-            });
-            if (!orMatch) return false;
-          } else if (doc[key] !== query[key]) {
-            return false;
-          }
-        }
-        return true;
-      }) || null;
+      return items.find(doc => matchesQuery(doc, query)) || null;
     },
-    find: (query = {}, options = {}) => ({
-      sort: () => ({
-        skip: () => ({
-          limit: () => ({
-            toArray: async () => mockStorage[colName] || []
-          })
-        }),
-        toArray: async () => mockStorage[colName] || []
-      }),
-      toArray: async () => mockStorage[colName] || []
-    }),
+    find: (query = {}, options = {}) => {
+      const cursor = {
+        sort: () => cursor,
+        skip: () => cursor,
+        limit: () => cursor,
+        project: () => cursor,
+        toArray: async () => (mockStorage[colName] || []).filter(doc => matchesQuery(doc, query))
+      };
+      return cursor;
+    },
     insertOne: async (doc) => {
       const inserted = { ...doc, _id: doc._id || new ObjectId() };
       mockStorage[colName] = mockStorage[colName] || [];
       mockStorage[colName].push(inserted);
       return { insertedId: inserted._id };
     },
-    updateOne: async (query, update) => {
+    insertMany: async (docs) => {
+      mockStorage[colName] = mockStorage[colName] || [];
+      const insertedDocs = docs.map(d => ({ ...d, _id: d._id || new ObjectId() }));
+      mockStorage[colName].push(...insertedDocs);
+      return { insertedCount: insertedDocs.length };
+    },
+    updateOne: async (query, update, opts = {}) => {
       const items = mockStorage[colName] || [];
-      const item = items.find(doc => doc._id.toString() === query._id.toString());
-      if (item && update.$set) {
-        Object.assign(item, update.$set);
+      let item = items.find(doc => matchesQuery(doc, query));
+      if (!item && opts.upsert) {
+        item = { ...(query || {}), _id: new ObjectId() };
+        if (update.$setOnInsert) Object.assign(item, update.$setOnInsert);
+        items.push(item);
+      }
+      if (item) {
+        if (update.$set) Object.assign(item, update.$set);
+        if (update.$inc) {
+          for (const k of Object.keys(update.$inc)) {
+            item[k] = (item[k] || 0) + update.$inc[k];
+          }
+        }
         return { modifiedCount: 1 };
       }
       return { modifiedCount: 0 };
     },
+    updateMany: async (query, update) => {
+      const items = (mockStorage[colName] || []).filter(doc => matchesQuery(doc, query));
+      items.forEach(item => {
+        if (update.$set) Object.assign(item, update.$set);
+      });
+      return { modifiedCount: items.length };
+    },
     deleteOne: async (query) => {
       const items = mockStorage[colName] || [];
-      const idx = items.findIndex(doc => doc._id.toString() === query._id.toString());
+      const idx = items.findIndex(doc => matchesQuery(doc, query));
       if (idx !== -1) {
         items.splice(idx, 1);
         return { deletedCount: 1 };
       }
       return { deletedCount: 0 };
     },
-    countDocuments: async () => (mockStorage[colName] || []).length
+    deleteMany: async (query) => {
+      const items = mockStorage[colName] || [];
+      const kept = items.filter(doc => !matchesQuery(doc, query));
+      const deletedCount = items.length - kept.length;
+      mockStorage[colName] = kept;
+      return { deletedCount };
+    },
+    countDocuments: async (query = {}) => {
+      return (mockStorage[colName] || []).filter(doc => matchesQuery(doc, query)).length;
+    }
   });
 
   const mockDb = {
@@ -653,6 +710,82 @@ async function runTests() {
       assert.strictEqual(duplicate.status, 'draft');
       assert.strictEqual(duplicate.isPublished, false);
       assert.strictEqual(duplicate.expiresAt, null);
+    });
+
+    // ─────────────────────────────────────────────
+    // 8. PLATFORM ARCHITECTURE INTEGRATION TESTS
+    // ─────────────────────────────────────────────
+    console.log('\n--- 8. Platform Architecture Integration Tests ---');
+
+    // 10. Learning Space creation bridges to network_communities
+    await testAsync('Platform Alignment: Space creation creates linked network_communities document', async () => {
+      const newSpace = await learningSpaceHelper.createLearningSpace(
+        { name: 'Platform AI Cohort', description: 'Deep learning cohort' },
+        { _id: adminId, role: 'admin' }
+      );
+
+      assert.ok(newSpace.communityId, 'Learning space must have communityId');
+      const comm = mockStorage[collection.NETWORK_COMMUNITIES_COLLECTION].find(c => c._id.toString() === newSpace.communityId.toString());
+      assert.ok(comm, 'network_communities document must exist');
+      assert.strictEqual(comm.name, 'Platform AI Cohort');
+      assert.strictEqual(comm.slug, 'platform-ai-cohort');
+      assert.strictEqual(comm.status, 'active');
+    });
+
+    // 11. Space membership addition uses network_community_memberships
+    await testAsync('Platform Alignment: Member addition persists to network_community_memberships', async () => {
+      const student = mockStorage[collection.STUDENTS_COLLECTION][0];
+      const space = mockStorage[collection.LEARNING_SPACES_COLLECTION][0];
+
+      await learningSpaceHelper.addMemberToSpace(space._id.toString(), student._id.toString(), 'member');
+
+      const commMember = mockStorage[collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION].find(m =>
+        m.communityId.toString() === space.communityId.toString() && m.userId.toString() === student._id.toString()
+      );
+      assert.ok(commMember, 'network_community_memberships document must exist');
+      assert.strictEqual(commMember.status, 'active');
+      assert.strictEqual(commMember.role, 'member');
+    });
+
+    // 12. Platform announcement creation routes to platform_announcements
+    await testAsync('Platform Alignment: Platform announcement routes to platform_announcements collection', async () => {
+      const platformAnn = await announcementHelper.createAnnouncement(
+        { title: 'Global Platform Update', message: 'Platform maintenance scheduled.', targetType: 'platform', publishNow: true },
+        { _id: adminId, role: 'admin' }
+      );
+
+      assert.ok(platformAnn.platformAnnouncementId, 'Must have platformAnnouncementId');
+      const pDoc = mockStorage[collection.PLATFORM_ANNOUNCEMENTS_COLLECTION].find(p => p._id.toString() === platformAnn.platformAnnouncementId.toString());
+      assert.ok(pDoc, 'platform_announcements document must exist');
+      assert.strictEqual(pDoc.title, 'Global Platform Update');
+      assert.strictEqual(pDoc.audience, 'ALL_USERS');
+      assert.strictEqual(pDoc.status, 'PUBLISHED');
+
+      // Check notification entry was created
+      const notif = mockStorage[collection.NOTIFICATIONS_COLLECTION].find(n => n.title === 'Global Platform Update');
+      assert.ok(notif, 'notifications document must exist for published announcement');
+    });
+
+    // 13. Space announcement routes to network_community_announcements
+    await testAsync('Platform Alignment: Space announcement routes to network_community_announcements', async () => {
+      const space = mockStorage[collection.LEARNING_SPACES_COLLECTION][0];
+      const spaceAnn = await announcementHelper.createAnnouncement(
+        { title: 'Cohort Notice', message: 'Assignment deadline extended.', targetType: 'learning_space', learningSpaceId: space._id.toString() },
+        { _id: adminId, role: 'admin' }
+      );
+
+      assert.ok(spaceAnn.communityAnnouncementId, 'Must have communityAnnouncementId');
+      const cDoc = mockStorage[collection.NETWORK_COMMUNITY_ANNOUNCEMENTS_COLLECTION].find(c => c._id.toString() === spaceAnn.communityAnnouncementId.toString());
+      assert.ok(cDoc, 'network_community_announcements document must exist');
+      assert.strictEqual(cDoc.title, 'Cohort Notice');
+      assert.strictEqual(cDoc.communityId.toString(), space.communityId.toString());
+    });
+
+    // 14. Non-destructive migration runs successfully
+    await testAsync('Platform Alignment: Non-destructive migration runs and syncs data', async () => {
+      const { runPlatformMigration } = require('../Helpers/migration-helper');
+      const result = await runPlatformMigration(mockDb);
+      assert.strictEqual(result.success, true);
     });
 
   } finally {

@@ -67,13 +67,22 @@ const getNetworkUsers = async (filters = {}) => {
   const search = (filters.search || '').trim();
   const searchRegex = search ? new RegExp(escapeRegex(search), 'i') : null;
 
-  // Space filter: if spaceId is provided, get member userIds first
+  // Space filter: if spaceId is provided, get member userIds first from platform memberships or legacy
   let spaceUserIds = null;
   if (filters.spaceId && ObjectId.isValid(filters.spaceId)) {
-    const members = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
-      .find({ spaceId: new ObjectId(filters.spaceId), status: 'active' }, { projection: { userId: 1 } })
-      .toArray();
-    spaceUserIds = members.map(m => m.userId);
+    const space = await database.collection(collection.LEARNING_SPACES_COLLECTION).findOne({ _id: new ObjectId(filters.spaceId) });
+    let memberDocs = [];
+    if (space && space.communityId) {
+      memberDocs = await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+        .find({ communityId: space.communityId, status: 'active' }, { projection: { userId: 1 } })
+        .toArray();
+    }
+    if (!memberDocs.length) {
+      memberDocs = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+        .find({ spaceId: new ObjectId(filters.spaceId), status: 'active' }, { projection: { userId: 1 } })
+        .toArray();
+    }
+    spaceUserIds = memberDocs.map(m => m.userId).filter(Boolean);
   }
 
   // If role is specific to Teacher
@@ -325,35 +334,77 @@ const getNetworkUserDetails = async (userId, roleHint = '') => {
   if (userType === 'user') {
     enrolledCourses = user.course || [];
 
-    // Find learning spaces member of
-    const spaceMemberships = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
-      .find({ userId: objId })
-      .toArray();
+    // Find learning spaces member of via network_community_memberships and legacy
+    try {
+      const [commMemberships, legacyMemberships] = await Promise.all([
+        database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+          .find({ userId: objId, status: 'active' })
+          .toArray(),
+        database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+          .find({ userId: objId, status: 'active' })
+          .toArray()
+      ]);
 
-    if (spaceMemberships.length) {
-      const spaceIds = spaceMemberships.map(m => m.spaceId);
-      const spaceDocs = await database.collection(collection.LEARNING_SPACES_COLLECTION)
-        .find({ _id: { $in: spaceIds } })
-        .toArray();
+      const commIds = commMemberships.map(m => m.communityId).filter(Boolean);
+      const legacySpaceIds = legacyMemberships.map(m => m.spaceId).filter(Boolean);
 
-      const spaceMap = {};
-      spaceDocs.forEach(s => { spaceMap[s._id.toString()] = s; });
+      const [commSpaces, legacySpaces] = await Promise.all([
+        commIds.length ? database.collection(collection.LEARNING_SPACES_COLLECTION).find({ communityId: { $in: commIds } }).toArray() : [],
+        legacySpaceIds.length ? database.collection(collection.LEARNING_SPACES_COLLECTION).find({ _id: { $in: legacySpaceIds } }).toArray() : []
+      ]);
 
-      spaces = spaceMemberships.map(m => {
-        const s = spaceMap[m.spaceId.toString()];
-        return {
-          spaceId: m.spaceId,
-          name: s?.name || 'Unknown Space',
-          code: s?.code || '',
-          role: m.role || 'member',
-          status: m.status || 'active',
-          joinedAt: m.joinedAt
-        };
+      const allSpacesMap = {};
+      commSpaces.forEach(s => { allSpacesMap[s._id.toString()] = s; });
+      legacySpaces.forEach(s => { allSpacesMap[s._id.toString()] = s; });
+
+      const spaceEntries = [];
+      commMemberships.forEach(m => {
+        const space = commSpaces.find(s => s.communityId && s.communityId.toString() === m.communityId.toString());
+        if (space) {
+          spaceEntries.push({
+            spaceId: space._id,
+            name: space.name || 'Learning Space',
+            code: space.code || '',
+            role: m.role || 'member',
+            status: m.status || 'active',
+            joinedAt: m.joinedAt
+          });
+        }
       });
+
+      legacyMemberships.forEach(m => {
+        const space = allSpacesMap[m.spaceId.toString()];
+        if (space && !spaceEntries.some(e => e.spaceId.toString() === space._id.toString())) {
+          spaceEntries.push({
+            spaceId: space._id,
+            name: space.name || 'Learning Space',
+            code: space.code || '',
+            role: m.role || 'member',
+            status: m.status || 'active',
+            joinedAt: m.joinedAt
+          });
+        }
+      });
+      spaces = spaceEntries;
+    } catch (spaceErr) {
+      logger.warn(`Error resolving user spaces: ${spaceErr.message}`);
     }
 
-    // Followers & Following from community_followers
+    // Followers & Following from network_connections (canonical) and community_followers (legacy)
     try {
+      const connections = await database.collection(collection.NETWORK_CONNECTIONS_COLLECTION)
+        .find({
+          $or: [
+            { requesterId: objId },
+            { recipientId: objId },
+            { userLow: objId },
+            { userHigh: objId }
+          ],
+          status: 'accepted'
+        })
+        .limit(50)
+        .toArray();
+
       const [followerDocs, followingDocs] = await Promise.all([
         database.collection(collection.COMMUNITY_FOLLOWERS_COLLECTION)
           .find({ userId: idStr })
@@ -365,40 +416,68 @@ const getNetworkUserDetails = async (userId, roleHint = '') => {
           .toArray()
       ]);
 
-      // Resolve follower and following names/usernames
-      const otherUserIds = [
-        ...followerDocs.map(f => f.followerId),
-        ...followingDocs.map(f => f.userId)
-      ].filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+      const otherConnUserIds = connections.map(c => {
+        if (c.requesterId && c.requesterId.toString() === idStr) return c.recipientId;
+        if (c.recipientId && c.recipientId.toString() === idStr) return c.requesterId;
+        if (c.userLow && c.userLow.toString() === idStr) return c.userHigh;
+        return c.userLow;
+      }).filter(id => id && ObjectId.isValid(id));
 
-      const otherUsers = otherUserIds.length ? await database.collection(collection.STUDENTS_COLLECTION)
-        .find({ _id: { $in: otherUserIds } }, { projection: { _id: 1, Name: 1, name: 1, username: 1, email: 1 } })
+      const legacyFollowerIds = followerDocs.map(f => f.followerId).filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+      const legacyFollowingIds = followingDocs.map(f => f.userId).filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+
+      const allTargetUserIds = [...new Set([
+        ...otherConnUserIds.map(String),
+        ...legacyFollowerIds.map(String),
+        ...legacyFollowingIds.map(String)
+      ])].map(id => new ObjectId(id));
+
+      const otherUsers = allTargetUserIds.length ? await database.collection(collection.STUDENTS_COLLECTION)
+        .find({ _id: { $in: allTargetUserIds } }, { projection: { _id: 1, Name: 1, name: 1, username: 1, email: 1 } })
         .toArray() : [];
 
       const userMap = {};
       otherUsers.forEach(u => { userMap[u._id.toString()] = u; });
 
-      followers = followerDocs.map(f => {
-        const u = userMap[f.followerId];
-        return {
-          followerId: f.followerId,
-          name: u?.Name || u?.name || 'Learner',
-          username: u?.username || (u?.email ? u.email.split('@')[0] : 'user'),
-          createdAt: f.createdAt
-        };
-      });
+      if (connections.length > 0) {
+        followers = connections.map(c => {
+          const otherId = (c.requesterId && c.requesterId.toString() === idStr)
+            ? c.recipientId
+            : ((c.recipientId && c.recipientId.toString() === idStr)
+              ? c.requesterId
+              : (c.userLow && c.userLow.toString() === idStr ? c.userHigh : c.userLow));
+          const u = userMap[otherId.toString()];
+          return {
+            followerId: otherId.toString(),
+            name: u?.Name || u?.name || 'Learner',
+            username: u?.username || (u?.email ? u.email.split('@')[0] : 'user'),
+            createdAt: c.createdAt
+          };
+        });
+        following = followers;
+      } else {
+        followers = followerDocs.map(f => {
+          const u = userMap[f.followerId];
+          return {
+            followerId: f.followerId,
+            name: u?.Name || u?.name || 'Learner',
+            username: u?.username || (u?.email ? u.email.split('@')[0] : 'user'),
+            createdAt: f.createdAt
+          };
+        });
 
-      following = followingDocs.map(f => {
-        const u = userMap[f.userId];
-        return {
-          userId: f.userId,
-          name: u?.Name || u?.name || 'Learner',
-          username: u?.username || (u?.email ? u.email.split('@')[0] : 'user'),
-          createdAt: f.createdAt
-        };
-      });
+        following = followingDocs.map(f => {
+          const u = userMap[f.userId];
+          return {
+            userId: f.userId,
+            name: u?.Name || u?.name || 'Learner',
+            username: u?.username || (u?.email ? u.email.split('@')[0] : 'user'),
+            createdAt: f.createdAt
+          };
+        });
+      }
     } catch (e) {
-      // Non-fatal if community_followers collection has no records
+      logger.warn(`Error resolving connections: ${e.message}`);
     }
 
     // Community Profile
@@ -517,7 +596,19 @@ const removeRelationship = async ({ userId, targetId, relationshipType }, actor,
   }
 
   const database = db.get();
+  const u1 = new ObjectId(userId);
+  const u2 = new ObjectId(targetId);
+  const s1 = u1.toString();
+  const s2 = u2.toString();
+  const [userLow, userHigh] = s1 < s2 ? [u1, u2] : [u2, u1];
 
+  // 1. Remove from platform network_connections
+  await database.collection(collection.NETWORK_CONNECTIONS_COLLECTION).deleteOne({
+    userLow,
+    userHigh
+  });
+
+  // 2. Remove from legacy community_followers
   if (relationshipType === 'follower') {
     // userId is being followed by targetId
     await database.collection(collection.COMMUNITY_FOLLOWERS_COLLECTION).deleteOne({

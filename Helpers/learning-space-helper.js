@@ -3,8 +3,54 @@ const collection = require('../config/collections');
 const { ObjectId } = require('mongodb');
 const auditHelper = require('./audit-helper');
 const logger = require('./logger');
+const { generateUniqueSlug, toObjectId } = require('./migration-helper');
 
 const escapeRegex = (str) => String(str).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// ─────────────────────────────────────────────────────────
+// COMMUNITY BRIDGE HELPER
+// ─────────────────────────────────────────────────────────
+
+const ensureSpaceCommunity = async (database, space) => {
+  if (space.communityId && ObjectId.isValid(space.communityId)) {
+    const existing = await database
+      .collection(collection.NETWORK_COMMUNITIES_COLLECTION)
+      .findOne({ _id: new ObjectId(space.communityId) });
+    if (existing) return existing;
+  }
+
+  const spaceName = space.name || space.title || 'Learning Space';
+  const slug = await generateUniqueSlug(database, spaceName, space.communityId);
+  const now = new Date();
+  const communityDoc = {
+    name: spaceName,
+    slug,
+    description: space.description || '',
+    type: space.courseId ? 'COURSE' : 'GENERAL',
+    courseId: space.courseId ? toObjectId(space.courseId) : null,
+    memberCount: Number(space.memberCount || 0),
+    discussionCount: 0,
+    visibility: space.isPrivate ? 'private' : (space.accessMode === 'open' ? 'public' : 'restricted'),
+    status: space.status === 'archived' ? 'archived' : 'active',
+    creatorId: toObjectId(space.ownerId) || toObjectId(space.createdBy) || null,
+    rules: [],
+    topics: Array.isArray(space.tags) ? space.tags : [],
+    createdAt: space.createdAt ? new Date(space.createdAt) : now,
+    updatedAt: now,
+  };
+
+  const insertResult = await database
+    .collection(collection.NETWORK_COMMUNITIES_COLLECTION)
+    .insertOne(communityDoc);
+  const communityId = insertResult.insertedId;
+
+  await database
+    .collection(collection.LEARNING_SPACES_COLLECTION)
+    .updateOne({ _id: space._id }, { $set: { communityId, updatedAt: now } });
+
+  space.communityId = communityId;
+  return { ...communityDoc, _id: communityId };
+};
 
 // ─────────────────────────────────────────────────────────
 // CODE GENERATOR / SLUGIFY
@@ -76,7 +122,31 @@ const createLearningSpace = async (data, actor, req = null) => {
     }
   }
 
+  const database = db.get();
   const now = new Date();
+
+  // Create linked network_communities document
+  const slug = await generateUniqueSlug(database, name);
+  const communityDoc = {
+    name,
+    slug,
+    description,
+    type: data.courseId && ObjectId.isValid(data.courseId) ? 'COURSE' : 'GENERAL',
+    courseId: data.courseId && ObjectId.isValid(data.courseId) ? new ObjectId(data.courseId) : null,
+    memberCount: 0,
+    discussionCount: 0,
+    visibility: accessMode === 'open' ? 'public' : 'restricted',
+    status: status === 'archived' ? 'archived' : 'active',
+    creatorId: actor?._id && ObjectId.isValid(actor._id) ? new ObjectId(actor._id) : null,
+    rules: [],
+    topics: Array.isArray(data.tags) ? data.tags : [],
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const commResult = await database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).insertOne(communityDoc);
+  const communityId = commResult.insertedId;
+
   const spaceDoc = {
     name,
     code,
@@ -85,8 +155,9 @@ const createLearningSpace = async (data, actor, req = null) => {
     coverImage: data.coverImage || '/img/placeholders/course-cover.svg',
     status,
     accessMode,
-    ownerId: new ObjectId(actor._id),
-    ownerType: actor.role === 'teacher' ? 'teacher' : 'admin',
+    communityId,
+    ownerId: actor?._id && ObjectId.isValid(actor._id) ? new ObjectId(actor._id) : null,
+    ownerType: actor?.role === 'teacher' ? 'teacher' : 'admin',
     teachers: teacherIds,
     startDate,
     endDate,
@@ -96,7 +167,7 @@ const createLearningSpace = async (data, actor, req = null) => {
     updatedAt: now
   };
 
-  const result = await db.get()
+  const result = await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .insertOne(spaceDoc);
 
@@ -109,8 +180,8 @@ const createLearningSpace = async (data, actor, req = null) => {
     entityId: spaceId.toString(),
     entityName: name,
     status: 'success',
-    message: `Learning space "${name}" (${code}) created.`,
-    metadata: { code, category, status, teachersCount: teacherIds.length }
+    message: `Learning space "${name}" (${code}) created and bridged to community ${communityId}.`,
+    metadata: { code, category, status, communityId: communityId.toString(), teachersCount: teacherIds.length }
   });
 
   return { ...spaceDoc, _id: spaceId };
@@ -119,7 +190,8 @@ const createLearningSpace = async (data, actor, req = null) => {
 const updateLearningSpace = async (id, data, actor, req = null) => {
   if (!ObjectId.isValid(id)) throw new Error('Invalid Learning Space ID.');
 
-  const existing = await db.get()
+  const database = db.get();
+  const existing = await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
@@ -136,7 +208,7 @@ const updateLearningSpace = async (id, data, actor, req = null) => {
   let code = existing.code;
   if (data.code && data.code !== existing.code) {
     code = String(data.code).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-    const codeConflict = await db.get()
+    const codeConflict = await database
       .collection(collection.LEARNING_SPACES_COLLECTION)
       .findOne({ code, _id: { $ne: existing._id } });
 
@@ -168,7 +240,24 @@ const updateLearningSpace = async (id, data, actor, req = null) => {
     updateFields.coverImage = data.coverImage;
   }
 
-  await db.get()
+  // Ensure community is linked and synchronize community metadata
+  const community = await ensureSpaceCommunity(database, existing);
+  if (community) {
+    await database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne(
+      { _id: community._id },
+      {
+        $set: {
+          name,
+          description,
+          status: status === 'archived' ? 'archived' : 'active',
+          visibility: accessMode === 'open' ? 'public' : 'restricted',
+          updatedAt: new Date()
+        }
+      }
+    );
+  }
+
+  await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
 
@@ -183,22 +272,26 @@ const updateLearningSpace = async (id, data, actor, req = null) => {
     metadata: { status, category }
   });
 
-  return { ...existing, ...updateFields };
+  return { ...existing, ...updateFields, communityId: existing.communityId || community?._id };
 };
 
 const getLearningSpaceById = async (id) => {
   if (!ObjectId.isValid(id)) return null;
 
-  const space = await db.get()
+  const database = db.get();
+  const space = await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
   if (!space) return null;
 
+  // Ensure community is linked
+  const community = await ensureSpaceCommunity(database, space);
+
   // Resolve teachers
   const teacherIds = (space.teachers || []).filter(tId => ObjectId.isValid(tId)).map(tId => new ObjectId(tId));
   if (teacherIds.length) {
-    space.teacherDocs = await db.get()
+    space.teacherDocs = await database
       .collection(collection.TEACHER_COLLECTION)
       .find({ _id: { $in: teacherIds } }, { projection: { _id: 1, name: 1, email: 1, designation: 1, profileImage: 1 } })
       .toArray();
@@ -206,10 +299,26 @@ const getLearningSpaceById = async (id) => {
     space.teacherDocs = [];
   }
 
-  // Count active members accurately
-  space.memberCount = await db.get()
-    .collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
-    .countDocuments({ spaceId: space._id, status: 'active' });
+  // Count active members accurately from network_community_memberships (primary)
+  let activeMemberCount = 0;
+  if (space.communityId) {
+    activeMemberCount = await database
+      .collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+      .countDocuments({ communityId: space.communityId, status: 'active' });
+  }
+
+  // Fallback check on legacy collection if count is 0
+  if (activeMemberCount === 0) {
+    const legacyCount = await database
+      .collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+      .countDocuments({ spaceId: space._id, status: 'active' });
+    if (legacyCount > 0) {
+      activeMemberCount = legacyCount;
+    }
+  }
+
+  space.memberCount = activeMemberCount;
+  space.community = community;
 
   return space;
 };
@@ -287,7 +396,8 @@ const getLearningSpaces = async (filters = {}) => {
 const archiveLearningSpace = async (id, actor, req = null) => {
   if (!ObjectId.isValid(id)) throw new Error('Invalid space ID.');
 
-  const space = await db.get()
+  const database = db.get();
+  const space = await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
@@ -295,9 +405,17 @@ const archiveLearningSpace = async (id, actor, req = null) => {
 
   const newStatus = space.status === 'archived' ? 'active' : 'archived';
 
-  await db.get()
+  await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .updateOne({ _id: new ObjectId(id) }, { $set: { status: newStatus, updatedAt: new Date() } });
+
+  const community = await ensureSpaceCommunity(database, space);
+  if (community) {
+    await database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne(
+      { _id: community._id },
+      { $set: { status: newStatus, updatedAt: new Date() } }
+    );
+  }
 
   await auditHelper.logAction({
     req,
@@ -315,19 +433,31 @@ const archiveLearningSpace = async (id, actor, req = null) => {
 const deleteLearningSpace = async (id, actor, req = null) => {
   if (!ObjectId.isValid(id)) throw new Error('Invalid space ID.');
 
-  const space = await db.get()
+  const database = db.get();
+  const space = await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .findOne({ _id: new ObjectId(id) });
 
   if (!space) throw new Error('Learning Space not found.');
 
-  // Delete space members
-  await db.get()
+  // Delete / archive linked community and memberships
+  if (space.communityId) {
+    await database
+      .collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+      .deleteMany({ communityId: space.communityId });
+
+    await database
+      .collection(collection.NETWORK_COMMUNITIES_COLLECTION)
+      .deleteOne({ _id: space.communityId });
+  }
+
+  // Delete legacy space members
+  await database
     .collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
     .deleteMany({ spaceId: new ObjectId(id) });
 
   // Delete space
-  await db.get()
+  await database
     .collection(collection.LEARNING_SPACES_COLLECTION)
     .deleteOne({ _id: new ObjectId(id) });
 
@@ -338,7 +468,7 @@ const deleteLearningSpace = async (id, actor, req = null) => {
     entityId: id.toString(),
     entityName: space.name,
     status: 'success',
-    message: `Learning space "${space.name}" deleted along with member records.`
+    message: `Learning space "${space.name}" deleted along with member records and community.`
   });
 
   return true;
@@ -364,46 +494,80 @@ const addMemberToSpace = async (spaceId, userId, role = 'member', actor = null, 
   if (!space) throw new Error('Learning Space not found.');
   if (!user) throw new Error('User not found in system.');
 
-  // Check duplicate membership
-  const existing = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+  // Ensure linked community exists
+  const community = await ensureSpaceCommunity(database, space);
+  const cId = community._id;
+
+  const normalizedRole = ['owner', 'moderator', 'member'].includes(role)
+    ? role
+    : (role === 'lead' || role === 'admin' ? 'owner' : (role === 'moderator' ? 'moderator' : 'member'));
+
+  // Check existing in NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION
+  const existingCommMember = await database
+    .collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+    .findOne({ communityId: cId, userId: uId });
+
+  // Also check legacy
+  const existingLegacy = await database
+    .collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
     .findOne({ spaceId: sId, userId: uId });
 
-  if (existing) {
-    if (existing.status === 'removed') {
-      // Re-activate member atomically
-      const updateResult = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).updateOne(
-        { _id: existing._id, status: 'removed' },
-        { $set: { status: 'active', role, updatedAt: new Date() } }
-      );
-      if (updateResult.modifiedCount > 0) {
-        await database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne(
-          { _id: sId },
-          { $inc: { memberCount: 1 } }
-        );
-      }
-      return { success: true, reactivated: true };
-    }
+  if (existingCommMember && existingCommMember.status === 'active') {
     throw new Error('User is already a member of this learning space.');
   }
 
-  const memberDoc = {
+  const now = new Date();
+
+  // If removed, reactivate
+  if ((existingCommMember && existingCommMember.status === 'removed') || (existingLegacy && existingLegacy.status === 'removed')) {
+    await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).updateOne(
+      { communityId: cId, userId: uId },
+      { $set: { status: 'active', role: normalizedRole, updatedAt: now } },
+      { upsert: true }
+    );
+
+    await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).updateOne(
+      { spaceId: sId, userId: uId },
+      { $set: { status: 'active', role, updatedAt: now } },
+      { upsert: true }
+    );
+
+    await Promise.all([
+      database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne({ _id: sId }, { $inc: { memberCount: 1 } }),
+      database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne({ _id: cId }, { $inc: { memberCount: 1 } })
+    ]);
+
+    return { success: true, reactivated: true };
+  }
+
+  // Insert new membership
+  await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).insertOne({
+    communityId: cId,
+    userId: uId,
+    role: normalizedRole,
+    status: 'active',
+    joinedAt: now,
+    createdAt: now,
+    updatedAt: now
+  });
+
+  // Sync to legacy collection
+  await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).insertOne({
     spaceId: sId,
     userId: uId,
     role: ['member', 'moderator', 'lead'].includes(role) ? role : 'member',
     status: 'active',
-    joinedAt: new Date(),
+    joinedAt: now,
     addedBy: actor?._id ? new ObjectId(actor._id) : null,
     addedByRole: actor?.role || 'admin',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
+    createdAt: now,
+    updatedAt: now
+  });
 
-  await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).insertOne(memberDoc);
-
-  await database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne(
-    { _id: sId },
-    { $inc: { memberCount: 1 } }
-  );
+  await Promise.all([
+    database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne({ _id: sId }, { $inc: { memberCount: 1 } }),
+    database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne({ _id: cId }, { $inc: { memberCount: 1 } })
+  ]);
 
   await auditHelper.logAction({
     req,
@@ -413,7 +577,7 @@ const addMemberToSpace = async (spaceId, userId, role = 'member', actor = null, 
     entityName: user.Name || user.name || user.email,
     status: 'success',
     message: `Added user ${user.email} to space "${space.name}".`,
-    metadata: { spaceId: spaceId.toString(), userId: userId.toString(), role }
+    metadata: { spaceId: spaceId.toString(), userId: userId.toString(), role: normalizedRole, communityId: cId.toString() }
   });
 
   return { success: true };
@@ -429,6 +593,9 @@ const addBulkMembersToSpace = async (spaceId, userIds, actor = null, req = null)
   const space = await database.collection(collection.LEARNING_SPACES_COLLECTION).findOne({ _id: sId });
   if (!space) throw new Error('Learning Space not found.');
 
+  const community = await ensureSpaceCommunity(database, space);
+  const cId = community._id;
+
   const validUIds = [...new Set(userIds.filter(id => id && ObjectId.isValid(id)).map(String))].map(id => new ObjectId(id));
   if (!validUIds.length) throw new Error('No valid user IDs found.');
 
@@ -439,28 +606,37 @@ const addBulkMembersToSpace = async (spaceId, userIds, actor = null, req = null)
 
   const realUserIds = existingUsers.map(u => u._id);
 
-  // Find already existing memberships
-  const currentMembers = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
-    .find({ spaceId: sId, userId: { $in: realUserIds } }, { projection: { userId: 1, status: 1 } })
+  // Find already existing memberships in network_community_memberships
+  const currentMembers = await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+    .find({ communityId: cId, userId: { $in: realUserIds } }, { projection: { userId: 1, status: 1 } })
     .toArray();
 
   const currentMemberMap = {};
   currentMembers.forEach(m => { currentMemberMap[m.userId.toString()] = m.status; });
 
-  const toInsert = [];
+  const toInsertComm = [];
+  const toInsertLegacy = [];
   const toReactivate = [];
 
   const now = new Date();
   realUserIds.forEach(uId => {
     const idStr = uId.toString();
     if (currentMemberMap[idStr] === 'active') {
-      // already active, skip
       return;
     }
     if (currentMemberMap[idStr] === 'removed') {
       toReactivate.push(uId);
     } else {
-      toInsert.push({
+      toInsertComm.push({
+        communityId: cId,
+        userId: uId,
+        role: 'member',
+        status: 'active',
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now
+      });
+      toInsertLegacy.push({
         spaceId: sId,
         userId: uId,
         role: 'member',
@@ -474,23 +650,28 @@ const addBulkMembersToSpace = async (spaceId, userIds, actor = null, req = null)
     }
   });
 
-  if (toInsert.length) {
-    await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).insertMany(toInsert);
+  if (toInsertComm.length) {
+    await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).insertMany(toInsertComm);
+    await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).insertMany(toInsertLegacy);
   }
 
   if (toReactivate.length) {
+    await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).updateMany(
+      { communityId: cId, userId: { $in: toReactivate } },
+      { $set: { status: 'active', updatedAt: now } }
+    );
     await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).updateMany(
       { spaceId: sId, userId: { $in: toReactivate } },
       { $set: { status: 'active', updatedAt: now } }
     );
   }
 
-  const addedCount = toInsert.length + toReactivate.length;
+  const addedCount = toInsertComm.length + toReactivate.length;
   if (addedCount > 0) {
-    await database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne(
-      { _id: sId },
-      { $inc: { memberCount: addedCount } }
-    );
+    await Promise.all([
+      database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne({ _id: sId }, { $inc: { memberCount: addedCount } }),
+      database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne({ _id: cId }, { $inc: { memberCount: addedCount } })
+    ]);
 
     await auditHelper.logAction({
       req,
@@ -516,22 +697,50 @@ const removeMemberFromSpace = async (spaceId, userId, actor = null, req = null) 
   const sId = new ObjectId(spaceId);
   const uId = new ObjectId(userId);
 
-  const existing = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+  const space = await database.collection(collection.LEARNING_SPACES_COLLECTION).findOne({ _id: sId });
+  if (!space) throw new Error('Learning Space not found.');
+
+  const community = await ensureSpaceCommunity(database, space);
+  const cId = community._id;
+
+  const now = new Date();
+
+  // Check in community memberships
+  const commMember = await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+    .findOne({ communityId: cId, userId: uId, status: 'active' });
+
+  // Also check legacy
+  const legacyMember = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
     .findOne({ spaceId: sId, userId: uId, status: 'active' });
 
-  if (!existing) throw new Error('Member not found in this space.');
+  if (!commMember && !legacyMember) {
+    throw new Error('Member not found in this space.');
+  }
 
-  const updateResult = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).updateOne(
-    { _id: existing._id, status: 'active' },
-    { $set: { status: 'removed', removedAt: new Date(), updatedAt: new Date() } }
-  );
-
-  if (updateResult.modifiedCount > 0) {
-    await database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne(
-      { _id: sId, memberCount: { $gt: 0 } },
-      { $inc: { memberCount: -1 } }
+  if (commMember) {
+    await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).updateOne(
+      { _id: commMember._id },
+      { $set: { status: 'removed', updatedAt: now } }
     );
   }
+
+  if (legacyMember) {
+    await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).updateOne(
+      { _id: legacyMember._id },
+      { $set: { status: 'removed', removedAt: now, updatedAt: now } }
+    );
+  }
+
+  await Promise.all([
+    database.collection(collection.LEARNING_SPACES_COLLECTION).updateOne(
+      { _id: sId, memberCount: { $gt: 0 } },
+      { $inc: { memberCount: -1 } }
+    ),
+    database.collection(collection.NETWORK_COMMUNITIES_COLLECTION).updateOne(
+      { _id: cId, memberCount: { $gt: 0 } },
+      { $inc: { memberCount: -1 } }
+    )
+  ]);
 
   await auditHelper.logAction({
     req,
@@ -552,12 +761,14 @@ const getSpaceMembers = async (spaceId, filters = {}) => {
   const database = db.get();
   const sId = new ObjectId(spaceId);
 
-  const query = { spaceId: sId };
-  if (filters.status && filters.status !== 'all') {
-    query.status = filters.status;
-  } else {
-    query.status = 'active';
-  }
+  const space = await database.collection(collection.LEARNING_SPACES_COLLECTION).findOne({ _id: sId });
+  if (!space) throw new Error('Learning Space not found.');
+
+  const community = await ensureSpaceCommunity(database, space);
+  const cId = community._id;
+
+  const status = filters.status && filters.status !== 'all' ? filters.status : 'active';
+  const query = { communityId: cId, status };
 
   if (filters.role && filters.role !== 'all') {
     query.role = filters.role;
@@ -567,15 +778,30 @@ const getSpaceMembers = async (spaceId, filters = {}) => {
   const limit = Math.min(Math.max(1, Number(filters.limit) || 20), 100);
   const skip = (page - 1) * limit;
 
-  const total = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).countDocuments(query);
-  const memberships = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
-    .find(query)
-    .sort({ joinedAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .toArray();
+  let total = await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION).countDocuments(query);
+  let memberships = [];
 
-  const userIds = memberships.map(m => m.userId);
+  if (total > 0) {
+    memberships = await database.collection(collection.NETWORK_COMMUNITY_MEMBERSHIPS_COLLECTION)
+      .find(query)
+      .sort({ joinedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+  } else {
+    // Fallback to legacy collection if community memberships haven't been populated yet
+    const legacyQuery = { spaceId: sId, status };
+    if (filters.role && filters.role !== 'all') legacyQuery.role = filters.role;
+    total = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION).countDocuments(legacyQuery);
+    memberships = await database.collection(collection.LEARNING_SPACE_MEMBERS_COLLECTION)
+      .find(legacyQuery)
+      .sort({ joinedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+  }
+
+  const userIds = memberships.map(m => m.userId).filter(Boolean);
   const userDocs = userIds.length ? await database.collection(collection.STUDENTS_COLLECTION)
     .find({ _id: { $in: userIds } }, {
       projection: {
