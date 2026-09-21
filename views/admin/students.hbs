@@ -1073,7 +1073,9 @@ function submitStudentUsernameChange() {
                 <h5 class="modal-title fw-bold text-white">
                     <i class="fa-solid fa-id-badge text-success me-2"></i> Manage Student Handle
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size:24px;background:none;border:none;opacity:0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body p-4">
@@ -1117,7 +1119,7 @@ function submitStudentUsernameChange() {
             </div>
 
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success px-4" id="modalStudentSaveBtn" onclick="submitStudentUsernameChange()" disabled>
                     Save Username
                 </button>

@@ -131,11 +131,51 @@ const deleteAdmin = async (id) => {
   }
 };
 
+// ─────────────────────────────────────────────
+// UPDATE ADMIN PASSWORD
+// ─────────────────────────────────────────────
+const updateAdminPassword = async (adminId, currentPassword, newPassword) => {
+  try {
+    if (!ObjectId.isValid(adminId)) {
+      return { status: false, message: 'Invalid admin ID' };
+    }
+
+    const admin = await getAdminById(adminId);
+    if (!admin) {
+      return { status: false, message: 'Admin not found' };
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.Password);
+    if (!isMatch) {
+      return { status: false, message: 'Current password is incorrect' };
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      return { status: false, message: 'New password must be at least 8 characters' };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await db.get()
+      .collection(collection.ADMIN_COLLECTION)
+      .updateOne(
+        { _id: new ObjectId(adminId) },
+        { $set: { Password: hashedPassword, updatedAt: new Date() } }
+      );
+
+    return { status: true, message: 'Password updated successfully' };
+  } catch (err) {
+    logger.error('updateAdminPassword Error:', err.message);
+    return { status: false, message: err.message };
+  }
+};
+
 module.exports = {
   getAdminByEmail,
   getAdminById,
   verifyAdminPassword,
   doSignupAdmin,
   getAllAdmins,
-  deleteAdmin
+  deleteAdmin,
+  updateAdminPassword
 };

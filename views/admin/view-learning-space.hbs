@@ -65,7 +65,7 @@
                     <h5 class="fw-bold m-0" style="color:var(--brand);">
                         <i class="fa-solid fa-chalkboard-user me-2 text-warning"></i> Assigned Teachers &amp; Mentors
                     </h5>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
+                    <button class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#assignTeacherModal" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
                         <i class="fa-solid fa-user-plus me-1"></i> Assign Teacher
                     </button>
                 </div>
@@ -93,7 +93,7 @@
                 <div class="text-muted p-3 text-center rounded bg-light border">
                     <i class="fa-solid fa-chalkboard-user fa-2x mb-2 opacity-50"></i>
                     <p class="mb-2">No educators currently assigned to this learning space.</p>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
+                    <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#assignTeacherModal" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
                         Assign an Educator
                     </button>
                 </div>
@@ -207,7 +207,9 @@
                 <h5 class="modal-title fw-bold" id="assignTeacherModalLabel">
                     <i class="fa-solid fa-chalkboard-user me-2 text-warning"></i> Assign Teacher
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size:24px;background:none;border:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <form action="/learning-spaces/{{space._id}}/teachers/assign" method="POST">
                 <div class="modal-body">
@@ -221,7 +223,7 @@
                     <small class="text-muted mt-2 d-block">Only registered teachers from the teacher directory are eligible.</small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-light" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Assign Teacher</button>
                 </div>
             </form>

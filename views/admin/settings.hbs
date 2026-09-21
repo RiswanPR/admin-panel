@@ -135,29 +135,32 @@
                     Admin Account
                 </div>
 
-                <div class="mb-3">
-                    <label>Username</label>
-                    <input type="text" class="form-control" value="admin">
-                </div>
+                <form id="adminAccountForm">
+                    <div class="mb-3">
+                        <label>Username / Email</label>
+                        <input type="text" class="form-control" value="{{#if adminUser.Email}}{{adminUser.Email}}{{else if adminUser.Name}}{{adminUser.Name}}{{else}}admin{{/if}}" disabled readonly>
+                    </div>
 
-                <div class="mb-3">
-                    <label>Current Password</label>
-                    <input type="password" class="form-control">
-                </div>
+                    <div class="mb-3">
+                        <label>Current Password</label>
+                        <input type="password" name="currentPassword" id="currentPassword" class="form-control" required placeholder="Enter current password">
+                    </div>
 
-                <div class="mb-3">
-                    <label>New Password</label>
-                    <input type="password" class="form-control">
-                </div>
+                    <div class="mb-3">
+                        <label>New Password</label>
+                        <input type="password" name="newPassword" id="newPassword" class="form-control" required minlength="8" placeholder="At least 8 characters">
+                    </div>
 
-                <div class="mb-3">
-                    <label>Confirm Password</label>
-                    <input type="password" class="form-control">
-                </div>
+                    <div class="mb-3">
+                        <label>Confirm Password</label>
+                        <input type="password" name="confirmPassword" id="confirmPassword" class="form-control" required minlength="8" placeholder="Re-enter new password">
+                    </div>
 
-                <button class="btn btn-primary w-100">
-                    Update Account
-                </button>
+                    <button type="submit" id="updateAccountBtn" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-key me-2"></i>
+                        Update Password
+                    </button>
+                </form>
 
             </div>
         </div>
@@ -626,6 +629,54 @@ document
     }
 
 });
+
+// Admin Account Password Update Form Handler
+const adminAccountForm = document.getElementById('adminAccountForm');
+if (adminAccountForm) {
+    adminAccountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return Swal.fire("Required", "All password fields are required", "warning");
+        }
+
+        if (newPassword.length < 8) {
+            return Swal.fire("Invalid Password", "New password must be at least 8 characters long", "warning");
+        }
+
+        if (newPassword !== confirmPassword) {
+            return Swal.fire("Mismatch", "New password and confirm password do not match", "warning");
+        }
+
+        const btn = document.getElementById('updateAccountBtn');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Updating...';
+
+        try {
+            const res = await fetch('/admin/update-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+            });
+            const data = await res.json();
+            if (data.status) {
+                Swal.fire("Success", data.message || "Password updated successfully", "success");
+                adminAccountForm.reset();
+            } else {
+                Swal.fire("Failed", data.message || "Failed to update password", "error");
+            }
+        } catch (err) {
+            Swal.fire("Error", err.message || "Something went wrong", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    });
+}
 
 async function triggerEmailTest() {
     const { value: email } = await Swal.fire({

@@ -549,6 +549,61 @@
   <script src="/javascripts/popper.min.js"></script>
   <script src="/javascripts/bootstrap.min.js"></script>
 
+  <!-- Bootstrap 5 to Bootstrap 4 Compatibility Bridge -->
+  <script>
+    (function () {
+      if (typeof window !== 'undefined') {
+        window.bootstrap = window.bootstrap || {};
+        if (!window.bootstrap.Modal) {
+          window.bootstrap.Modal = class {
+            constructor(element) {
+              this.el = typeof element === 'string' ? document.querySelector(element) : element;
+            }
+            show() {
+              if (window.jQuery && this.el) {
+                window.jQuery(this.el).modal('show');
+              }
+            }
+            hide() {
+              if (window.jQuery && this.el) {
+                window.jQuery(this.el).modal('hide');
+              }
+            }
+            static getInstance(element) {
+              return new window.bootstrap.Modal(element);
+            }
+            static getOrCreateInstance(element) {
+              return new window.bootstrap.Modal(element);
+            }
+          };
+        }
+
+        if (window.jQuery) {
+          window.jQuery(document).on('click', '[data-bs-toggle="modal"]', function (e) {
+            e.preventDefault();
+            var target = window.jQuery(this).attr('data-bs-target') || window.jQuery(this).attr('href');
+            if (target) window.jQuery(target).modal('show');
+          });
+
+          window.jQuery(document).on('click', '[data-bs-dismiss="modal"]', function (e) {
+            e.preventDefault();
+            window.jQuery(this).closest('.modal').modal('hide');
+          });
+
+          window.jQuery(document).on('click', '[data-bs-toggle="tab"]', function (e) {
+            e.preventDefault();
+            window.jQuery(this).tab('show');
+          });
+
+          window.jQuery(document).on('click', '[data-bs-toggle="dropdown"]', function (e) {
+            e.preventDefault();
+            window.jQuery(this).dropdown('toggle');
+          });
+        }
+      }
+    })();
+  </script>
+
   <script>
     (function () {
       const blockShortcut = (e) => {

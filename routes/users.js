@@ -94,6 +94,17 @@ const verifyLogin = (req, res, next) => {
   }
 };
 
+const verifyAdminOrTeacherLogin = (req, res, next) => {
+  if (req.session.adminloggedIn || req.session.teacherLoggedIn) {
+    next();
+  } else {
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.method === 'POST') {
+      return res.status(401).json({ success: false, message: 'Unauthorized. Please log in again.' });
+    }
+    res.redirect('/login');
+  }
+};
+
 // Only the superuser can access these routes
 const verifySuperuser = (req, res, next) => {
   if (req.session.adminloggedIn && req.session.admin && req.session.admin.role === 'superuser') {
@@ -1331,7 +1342,7 @@ router.post(
 );
 router.get(
   '/class-video/:videoId',
-  verifyLogin,
+  verifyAdminOrTeacherLogin,
   async (req, res) => {
     try {
 
@@ -2063,6 +2074,7 @@ router.get('/settings', verifyLogin, verifySuperuser, async (req, res) => {
     res.render('admin/settings', {
       admins: true,
       currentPage: 'settings',
+      adminUser: req.session.admin,
       settings,
       emailHealth
     });
@@ -2097,6 +2109,41 @@ router.post('/update-settings', verifyLogin, verifySuperuser, async (req, res) =
     res.json({
       status: false
     });
+  }
+});
+
+// UPDATE ADMIN ACCOUNT PASSWORD
+router.post('/admin/update-account', verifyLogin, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ status: false, message: 'All password fields are required' });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ status: false, message: 'New password and confirm password do not match' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ status: false, message: 'New password must be at least 8 characters long' });
+    }
+
+    const adminId = req.session.admin?._id;
+    if (!adminId) {
+      return res.status(401).json({ status: false, message: 'Admin session not found' });
+    }
+
+    const result = await adminHelpers.updateAdminPassword(adminId, currentPassword, newPassword);
+    if (result.status) {
+      logAudit(req, {
+        action: 'admin.password.update',
+        entityType: 'admin',
+        entityId: adminId,
+        message: 'Admin updated account password'
+      });
+    }
+    return res.json(result);
+  } catch (err) {
+    logger.error('Update Admin Account Error:', err.message);
+    return res.status(500).json({ status: false, message: 'Failed to update password' });
   }
 });
 

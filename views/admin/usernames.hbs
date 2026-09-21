@@ -465,7 +465,9 @@
                 <h5 class="modal-title fw-bold text-white">
                     <i class="fa-solid fa-id-badge text-primary me-2"></i> Manage Username
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size:24px;background:none;border:none;opacity:0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body p-4">
@@ -513,7 +515,7 @@
             </div>
 
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="modalSaveBtn" onclick="submitUsernameChange()" disabled>
                     Update Username
                 </button>
@@ -532,7 +534,9 @@
                 <h5 class="modal-title fw-bold text-white">
                     <i class="fa-solid fa-shield-halved text-info me-2"></i> Add Reserved Handle
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size:24px;background:none;border:none;opacity:0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body p-4">
@@ -551,7 +555,7 @@
             </div>
 
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="submitAddReserved()">Save Reserved Handle</button>
             </div>
         </div>
