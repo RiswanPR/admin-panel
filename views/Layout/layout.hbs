@@ -29,6 +29,9 @@
   <!-- SweetAlert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
   <style>
     :root {
       --bg: #f4f6fa;
@@ -502,6 +505,208 @@
         transform: translateY(0);
       }
     }
+
+    /* Skeleton Loading Styles */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface-2) 25%, var(--card) 37%, var(--surface-2) 63%);
+      background-size: 400% 100%;
+      animation: skeletonShimmer 1.4s ease infinite;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    @keyframes skeletonShimmer {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0 50%; }
+    }
+    .skeleton-text { height: 14px; margin-bottom: 8px; width: 100%; }
+    .skeleton-title { height: 24px; margin-bottom: 12px; width: 60%; }
+    .skeleton-card { height: 110px; border-radius: 18px; margin-bottom: 16px; }
+    .skeleton-chart { height: 300px; border-radius: 18px; margin-bottom: 16px; }
+    .skeleton-avatar { width: 44px; height: 44px; border-radius: 50%; }
+
+    /* Micro-animations */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(159, 213, 178, 0.2); }
+      50% { box-shadow: 0 0 30px rgba(159, 213, 178, 0.45); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes subtlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    /* Global Command Palette */
+    .cmd-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 17, 26, 0.7);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 10vh;
+      animation: cmdFadeIn .2s ease-out;
+    }
+    @keyframes cmdFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .cmd-modal {
+      width: 90%;
+      max-width: 620px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.5), 0 0 25px var(--shadow-brand);
+      overflow: hidden;
+      animation: cmdSlideDown .25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      max-height: 75vh;
+    }
+    @keyframes cmdSlideDown {
+      from { transform: translateY(-20px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .cmd-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      background: var(--surface-2);
+    }
+    .cmd-search-icon {
+      color: var(--brand);
+      font-size: 18px;
+    }
+    .cmd-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 500;
+      outline: none;
+      font-family: inherit;
+    }
+    .cmd-input::placeholder {
+      color: var(--muted);
+      opacity: 0.8;
+    }
+    .cmd-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      background: var(--card);
+      color: var(--muted);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      letter-spacing: 0.5px;
+    }
+    .cmd-body {
+      padding: 12px;
+      overflow-y: auto;
+      max-height: 420px;
+    }
+    .cmd-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 12px 4px;
+    }
+    .cmd-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration: none !important;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .cmd-item:hover, .cmd-item.selected {
+      background: var(--surface-2);
+      color: var(--brand);
+      transform: translateX(4px);
+    }
+    .cmd-item-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--brand);
+      font-size: 14px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .cmd-item-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .cmd-item-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+    .cmd-item-sub {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cmd-item-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--card);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .cmd-empty {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .cmd-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-2);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .cmd-footer kbd {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-size: 10px;
+      font-family: inherit;
+      color: var(--text);
+      margin: 0 2px;
+    }
   </style>
 
   <script>
@@ -544,6 +749,25 @@
   <main class="page-fade">
     {{{body}}}
   </main>
+
+  <!-- GLOBAL COMMAND PALETTE (Ctrl+K / Cmd+K) -->
+  <div id="cmdPaletteOverlay" class="cmd-overlay" style="display:none;" tabindex="-1">
+    <div class="cmd-modal" role="dialog" aria-modal="true" aria-label="Command Palette">
+      <div class="cmd-header">
+        <i class="fa-solid fa-magnifying-glass cmd-search-icon"></i>
+        <input type="text" id="cmdPaletteInput" class="cmd-input" placeholder="Type to search pages, actions, students, courses..." autocomplete="off">
+        <span class="cmd-badge">ESC</span>
+      </div>
+      <div class="cmd-body" id="cmdPaletteBody">
+        <!-- Results rendered dynamically -->
+      </div>
+      <div class="cmd-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Open</span>
+        <span><kbd>ESC</kbd> Close</span>
+      </div>
+    </div>
+  </div>
 
   <script src="/javascripts/jquery/jquery-2.2.4.min.js"></script>
   <script src="/javascripts/popper.min.js"></script>
@@ -621,11 +845,202 @@
           return false;
         }
       }, true);
+    })();
+  </script>
 
-      document.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        return false;
-      }, true);
+  <script>
+    (function () {
+      // Mark page as loaded to dismiss skeleton loaders
+      window.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('page-loaded');
+      });
+
+      const overlay = document.getElementById('cmdPaletteOverlay');
+      const input = document.getElementById('cmdPaletteInput');
+      const body = document.getElementById('cmdPaletteBody');
+      if (!overlay || !input || !body) return;
+
+      const staticItems = [
+        { title: 'Dashboard', sub: 'Overview & analytics', url: '/', icon: 'fa-solid fa-chart-line', group: 'Navigation', badge: 'Page' },
+        { title: 'Students', sub: 'Manage enrolled learners', url: '/students', icon: 'fa-solid fa-user-graduate', group: 'Navigation', badge: 'Page' },
+        { title: 'Add Student', sub: 'Register a new learner', url: '/add-students', icon: 'fa-solid fa-user-plus', group: 'Quick Actions', badge: 'Action' },
+        { title: 'Registered Users', sub: 'Self-registered accounts', url: '/registered-users', icon: 'fa-solid fa-users', group: 'Navigation', badge: 'Page' },
+        { title: 'Usernames', sub: 'Handle management & identity', url: '/usernames', icon: 'fa-solid fa-at', group: 'Navigation', badge: 'Page' },
+        { title: 'Courses', sub: 'Course catalog & curriculum', url: '/courses', icon: 'fa-solid fa-layer-group', group: 'Navigation', badge: 'Page' },
+        { title: 'Add Course', sub: 'Create a new course', url: '/add-courses', icon: 'fa-solid fa-plus', group: 'Quick Actions', badge: 'Action' },
+        { title: 'Add Chapter', sub: 'Create a new chapter', url: '/add-chapters', icon: 'fa-solid fa-book-open', group: 'Quick Actions', badge: 'Action' },
+        { title: 'Add Video Class', sub: 'Upload video lesson', url: '/add-class', icon: 'fa-solid fa-video', group: 'Quick Actions', badge: 'Action' },
+        { title: 'Teachers', sub: 'Faculty & instructor directory', url: '/teachers', icon: 'fa-solid fa-chalkboard-user', group: 'Navigation', badge: 'Page' },
+        { title: 'Learning Spaces', sub: 'Virtual study spaces', url: '/learning-spaces', icon: 'fa-solid fa-shapes', group: 'Navigation', badge: 'Page' },
+        { title: 'Announcements', sub: 'Broadcast notifications', url: '/announcements', icon: 'fa-solid fa-bullhorn', group: 'Navigation', badge: 'Page' },
+        { title: 'Network / People', sub: 'Student directory & connections', url: '/network', icon: 'fa-solid fa-users-rays', group: 'Navigation', badge: 'Page' },
+        { title: 'Leaderboard', sub: 'Gamification rankings', url: '/admin/leaderboard', icon: 'fa-solid fa-trophy', group: 'Gamification', badge: 'Page' },
+        { title: 'Settings', sub: 'Platform & admin preferences', url: '/settings', icon: 'fa-solid fa-gear', group: 'Navigation', badge: 'Page' },
+        { title: 'Audit Logs', sub: 'System security & action logs', url: '/audit-logs', icon: 'fa-solid fa-clock-rotate-left', group: 'Navigation', badge: 'Page' }
+      ];
+
+      let selectedIndex = 0;
+      let currentItems = [];
+      let searchTimeout = null;
+
+      function renderItems(items, query = '') {
+        currentItems = items;
+        if (items.length === 0) {
+          body.innerHTML = '<div class="cmd-empty"><i class="fa-regular fa-folder-open mb-2" style="font-size:24px;display:block;"></i>No matching actions or results found for "' + String(query).replace(/"/g, '&quot;') + '"</div>';
+          return;
+        }
+
+        const groups = {};
+        items.forEach((item, index) => {
+          const g = item.group || 'Results';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push({ ...item, originalIndex: index });
+        });
+
+        let html = '';
+        let itemIndex = 0;
+        for (const [groupName, groupItems] of Object.entries(groups)) {
+          html += '<div class="cmd-group-title">' + groupName + '</div>';
+          groupItems.forEach(item => {
+            const isSel = itemIndex === selectedIndex;
+            html += `
+              <div class="cmd-item ${isSel ? 'selected' : ''}" data-index="${itemIndex}" data-url="${item.url}">
+                <div class="cmd-item-icon"><i class="${item.icon || 'fa-solid fa-arrow-right'}"></i></div>
+                <div class="cmd-item-content">
+                  <span class="cmd-item-title">${item.title}</span>
+                  ${item.sub ? `<span class="cmd-item-sub">${item.sub}</span>` : ''}
+                </div>
+                ${item.badge ? `<span class="cmd-item-badge">${item.badge}</span>` : ''}
+              </div>
+            `;
+            itemIndex++;
+          });
+        }
+
+        body.innerHTML = html;
+
+        // Ensure selected item is visible
+        const selEl = body.querySelector('.cmd-item.selected');
+        if (selEl) {
+          selEl.scrollIntoView({ block: 'nearest' });
+        }
+
+        // Attach click handlers
+        body.querySelectorAll('.cmd-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const url = el.getAttribute('data-url');
+            if (url) window.location.href = url;
+          });
+          el.addEventListener('mouseenter', () => {
+            body.querySelectorAll('.cmd-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedIndex = parseInt(el.getAttribute('data-index') || '0', 10);
+          });
+        });
+      }
+
+      function openPalette() {
+        overlay.style.display = 'flex';
+        input.value = '';
+        selectedIndex = 0;
+        renderItems(staticItems);
+        setTimeout(() => input.focus(), 50);
+      }
+
+      function closePalette() {
+        overlay.style.display = 'none';
+        input.blur();
+      }
+
+      window.openCommandPalette = openPalette;
+      window.closeCommandPalette = closePalette;
+
+      // Global keyboard shortcut: Cmd+K / Ctrl+K
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          if (overlay.style.display === 'none') {
+            openPalette();
+          } else {
+            closePalette();
+          }
+        } else if (e.key === 'Escape' && overlay.style.display !== 'none') {
+          closePalette();
+        } else if (overlay.style.display !== 'none') {
+          const items = body.querySelectorAll('.cmd-item');
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (items.length > 0) {
+              selectedIndex = (selectedIndex + 1) % items.length;
+              items.forEach((item, idx) => item.classList.toggle('selected', idx === selectedIndex));
+              items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+            }
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (items.length > 0) {
+              selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+              items.forEach((item, idx) => item.classList.toggle('selected', idx === selectedIndex));
+              items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+            }
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const selEl = items[selectedIndex];
+            if (selEl) {
+              const url = selEl.getAttribute('data-url');
+              if (url) window.location.href = url;
+            }
+          }
+        }
+      });
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closePalette();
+      });
+
+      // Filter as you type
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        selectedIndex = 0;
+        clearTimeout(searchTimeout);
+
+        if (!q) {
+          renderItems(staticItems);
+          return;
+        }
+
+        // Static matching
+        const matched = staticItems.filter(item =>
+          item.title.toLowerCase().includes(q) || (item.sub && item.sub.toLowerCase().includes(q))
+        );
+
+        renderItems(matched, q);
+
+        // Dynamic backend search for students/courses
+        if (q.length >= 2) {
+          searchTimeout = setTimeout(async () => {
+            try {
+              const res = await fetch('/api/search?q=' + encodeURIComponent(q));
+              if (!res.ok) return;
+              const data = await res.json();
+              if (data.success && Array.isArray(data.results) && data.results.length > 0) {
+                const apiItems = data.results.map(r => ({
+                  title: r.title,
+                  sub: r.subtitle,
+                  url: r.url,
+                  icon: r.icon,
+                  group: r.badge || 'Search Results',
+                  badge: r.type
+                }));
+                // Combine without duplicate URLs
+                const combined = [...matched, ...apiItems];
+                renderItems(combined, q);
+              }
+            } catch (err) {
+              // Ignore network abort
+            }
+          }, 200);
+        }
+      });
     })();
   </script>
 

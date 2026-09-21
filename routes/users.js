@@ -9,6 +9,7 @@ var mailHelpers = require('../Helpers/mail-helper');
 const emailService = require('../Helpers/email-service');
 var auditHelper = require('../Helpers/audit-helper');
 const dashboardHelper = require('../Helpers/dashboard-helper');
+const notificationHelper = require('../Helpers/notification-helper');
 const settingsHelper = require('../Helpers/settings-helper');
 const classHelper = require('../Helpers/class-helper');
 const adminHelpers = require('../Helpers/admin-helper');
@@ -240,7 +241,12 @@ router.get('/', async function (req, res, next) {
 });
 router.get('/students', verifyLogin, function (req, res, next) {
   studentHelpers.getStudents().then((students) => {
-    res.render('admin/students', { admins: true, currentPage: 'students', students });
+    res.render('admin/students', {
+      admins: true,
+      currentPage: 'students',
+      students,
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Students' }]
+    });
   }).catch((err) => {
     logger.info('Get Students Error:', err.message);
     res.redirect('/');
@@ -269,6 +275,7 @@ const renderUsernamesDashboard = async (req, res) => {
     res.render('admin/usernames', {
       admins: true,
       currentPage: 'usernames',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Usernames' }],
       health,
       users: queryResult.users,
       pagination: {
@@ -457,6 +464,7 @@ router.get('/registered-users', verifyLogin, async function (req, res) {
     res.render('admin/registered-users', {
       admins: true,
       currentPage: 'registered-users',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Registered Users' }],
       users,
       courses
     });
@@ -579,7 +587,9 @@ router.get('/add-students', verifyLogin, async function (req, res) {
 
   res.render('admin/add-students', {
     admins: true,
-    courses
+    courses,
+    currentPage: 'students',
+    breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Students', url: '/students' }, { label: 'Add Student' }]
   });
 
 });
@@ -593,7 +603,9 @@ router.get('/add-students/:courseId', verifyLogin, validateObjectIds(['courseId'
   res.render('admin/add-students', {
     admins: true,
     courses,
-    selectedCourseId: req.params.courseId
+    selectedCourseId: req.params.courseId,
+    currentPage: 'students',
+    breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Students', url: '/students' }, { label: 'Add Student' }]
   });
 
 });
@@ -734,7 +746,9 @@ router.get('/edit-student/:id', verifyLogin, validateObjectIds(['id']), async (r
       admins: true,
       student,
       courses,
-      usernameHistory
+      usernameHistory,
+      currentPage: 'students',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Students', url: '/students' }, { label: 'Edit Student' }]
     });
   } catch (err) {
     logger.info('GET Edit Student Error:', err.message);
@@ -1802,7 +1816,8 @@ router.get(
         {
           admins: true,
           courses,
-          currentPage: 'courses'
+          currentPage: 'courses',
+          breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Courses' }]
         }
       );
 
@@ -1826,7 +1841,11 @@ router.get(
   (req, res) => {
     res.render(
       'admin/add-courses',
-      { admins: true }
+      {
+        admins: true,
+        currentPage: 'courses',
+        breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Courses', url: '/courses' }, { label: 'Add Course' }]
+      }
     );
   }
 );
@@ -2005,6 +2024,7 @@ router.get('/audit-logs', verifyLogin, verifySuperuser, async (req, res) => {
     res.render('admin/audit-logs', {
       admins: true,
       currentPage: 'audit-logs',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Audit Logs' }],
       logs,
       filters
     });
@@ -2040,7 +2060,8 @@ router.get('/:id/students', verifyLogin, validateObjectIds(['id']), async (req, 
       admins: true,
       students: data.students,
       courseName: data.courseName,
-      courseId
+      courseId,
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Courses', url: '/courses' }, { label: 'Course Students' }]
     });
 
   } catch (err) {
@@ -2057,7 +2078,8 @@ router.get('/:id/chapters', verifyLogin, validateObjectIds(['id']), async (req, 
       admins: true,
       courseName: data.courseName,
       chapters: data.chapters,
-      courseId: req.params.id
+      courseId: req.params.id,
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Courses', url: '/courses' }, { label: 'Course Chapters' }]
     });
 
   } catch (err) {
@@ -2074,6 +2096,7 @@ router.get('/settings', verifyLogin, verifySuperuser, async (req, res) => {
     res.render('admin/settings', {
       admins: true,
       currentPage: 'settings',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Settings' }],
       adminUser: req.session.admin,
       settings,
       emailHealth
@@ -2647,6 +2670,7 @@ router.get('/teachers', verifyLogin, async (req, res) => {
     res.render('admin/teachers', {
       admins: true,
       currentPage: 'teachers',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Teachers' }],
       teachers
     });
   } catch (err) {
@@ -3448,6 +3472,7 @@ router.get('/announcements', verifyLogin, async (req, res) => {
     res.render('admin/announcements', {
       admins: true,
       currentPage: 'announcements',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Announcements' }],
       announcements: result.announcements,
       total: result.total,
       page: result.page,
@@ -3664,6 +3689,7 @@ router.get('/network', verifyLogin, async (req, res) => {
     res.render('admin/network', {
       admins: true,
       currentPage: 'network',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Network' }],
       stats,
       records: result.records,
       total: result.total,
@@ -3768,6 +3794,7 @@ router.get('/learning-spaces', verifyLogin, async (req, res) => {
     res.render('admin/learning-spaces', {
       admins: true,
       currentPage: 'learning-spaces',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Learning Spaces' }],
       spaces: result.spaces,
       total: result.total,
       page: result.page,
@@ -4026,5 +4053,123 @@ router.post('/learning-spaces/:id/teachers/:teacherId/remove', verifyLogin, vali
   }
 });
 
+// ==========================================
+// REAL-TIME NOTIFICATIONS & GLOBAL SEARCH API
+// ==========================================
+
+router.get('/api/notifications', verifyLogin, async (req, res) => {
+  try {
+    const lastSeen = req.session.adminNotificationsLastSeen || null;
+    const [notifications, unreadCount] = await Promise.all([
+      notificationHelper.getRecentNotifications(15),
+      notificationHelper.getUnreadCount(lastSeen)
+    ]);
+    res.json({ success: true, notifications, unreadCount });
+  } catch (err) {
+    logger.error('Notifications API Error:', err.message);
+    res.status(500).json({ success: false, message: err.message, notifications: [], unreadCount: 0 });
+  }
+});
+
+router.post('/api/notifications/mark-read', verifyLogin, async (req, res) => {
+  try {
+    req.session.adminNotificationsLastSeen = new Date();
+    res.json({ success: true, message: 'Notifications marked as read', unreadCount: 0 });
+  } catch (err) {
+    logger.error('Mark Read Error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/search', verifyLogin, async (req, res) => {
+  try {
+    const query = String(req.query.q || '').trim();
+    if (!query || query.length < 1) {
+      return res.json({ success: true, results: [] });
+    }
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+    const dbConn = db.get();
+
+    const [students, courses, teachers, spaces] = await Promise.all([
+      dbConn.collection(collection.STUDENTS_COLLECTION).find(
+        { $or: [{ Name: regex }, { Email: regex }, { username: regex }] },
+        { projection: { Name: 1, Email: 1, username: 1, course: 1 } }
+      ).limit(5).toArray().catch(() => []),
+
+      dbConn.collection(collection.COURSE_COLLECTION).find(
+        { courseName: regex },
+        { projection: { courseName: 1, chapters: 1 } }
+      ).limit(5).toArray().catch(() => []),
+
+      dbConn.collection(collection.TEACHER_COLLECTION).find(
+        { $or: [{ name: regex }, { email: regex }] },
+        { projection: { name: 1, email: 1 } }
+      ).limit(4).toArray().catch(() => []),
+
+      dbConn.collection(collection.LEARNING_SPACES_COLLECTION).find(
+        { name: regex },
+        { projection: { name: 1, spaceType: 1 } }
+      ).limit(4).toArray().catch(() => [])
+    ]);
+
+    const results = [];
+
+    // Add courses
+    courses.forEach(c => {
+      results.push({
+        type: 'Course',
+        title: c.courseName,
+        subtitle: `${c.chapters?.length || 0} chapters`,
+        url: `/courses`,
+        icon: 'fa-solid fa-book-open',
+        badge: 'Course'
+      });
+    });
+
+    // Add students
+    students.forEach(s => {
+      results.push({
+        type: 'Student',
+        title: s.Name || s.username || 'Student',
+        subtitle: s.Email || (s.course?.[0]?.courseName || 'Registered Student'),
+        url: `/edit-student/${s._id}`,
+        icon: 'fa-solid fa-user-graduate',
+        badge: 'Student'
+      });
+    });
+
+    // Add teachers
+    teachers.forEach(t => {
+      results.push({
+        type: 'Teacher',
+        title: t.name || 'Teacher',
+        subtitle: t.email || 'Faculty Member',
+        url: `/teachers/${t._id}/edit`,
+        icon: 'fa-solid fa-chalkboard-user',
+        badge: 'Teacher'
+      });
+    });
+
+    // Add spaces
+    spaces.forEach(sp => {
+      results.push({
+        type: 'Space',
+        title: sp.name || 'Learning Space',
+        subtitle: sp.spaceType || 'Collaborative Room',
+        url: `/learning-spaces/${sp._id}`,
+        icon: 'fa-solid fa-shapes',
+        badge: 'Space'
+      });
+    });
+
+    res.json({ success: true, results });
+  } catch (err) {
+    logger.error('Global Search API Error:', err.message);
+    res.status(500).json({ success: false, message: err.message, results: [] });
+  }
+});
+
 module.exports = router;
+
 
