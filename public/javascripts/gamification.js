@@ -22,6 +22,24 @@
     const modalEl = document.getElementById('awardPointsModal');
     if (!modalEl) return;
 
+    // Reposition to body to avoid stacking context / backdrop clipping
+    if (modalEl.parentNode !== document.body) {
+      document.body.appendChild(modalEl);
+    }
+
+    // Support passing HTMLElement directly (e.g. from onclick="openAwardPointsModal(this)")
+    if (options instanceof HTMLElement) {
+      const el = options;
+      options = {
+        studentId: el.getAttribute('data-student-id') || null,
+        studentName: el.getAttribute('data-student-name') || 'Student',
+        studentUsername: el.getAttribute('data-student-username') || '',
+        currentBalance: Number(el.getAttribute('data-current-balance')) || 0,
+        mode: el.getAttribute('data-mode') || 'award',
+        scope: el.getAttribute('data-scope') || 'global',
+      };
+    }
+
     currentStudentId = options.studentId || null;
     currentStudentBalance = Number(options.currentBalance) || 0;
     currentMode = options.mode || 'award';
@@ -37,15 +55,22 @@
     const reasonInput = document.getElementById('awardReasonInput');
     const submitBtn = document.getElementById('submitAwardBtn');
     const courseSelect = document.getElementById('courseSelectInput');
-    const courseGroup = document.getElementById('courseSelectGroup');
+    const resultsContainer = document.getElementById('studentSearchResults');
+
+    if (resultsContainer) {
+      resultsContainer.style.display = 'none';
+      resultsContainer.innerHTML = '';
+    }
 
     if (modalTitle) {
-      modalTitle.textContent = currentMode === 'award' ? 'Award XP / Points' : 'Adjust / Deduct XP';
+      modalTitle.innerHTML = currentMode === 'award'
+        ? '<i class="fa-solid fa-plus-circle text-success me-2"></i>Award XP / Points'
+        : '<i class="fa-solid fa-minus-circle text-danger me-2"></i>Adjust / Deduct XP';
     }
 
     if (submitBtn) {
       submitBtn.textContent = currentMode === 'award' ? 'Award XP' : 'Deduct XP';
-      submitBtn.className = currentMode === 'award' ? 'btn btn-success px-4' : 'btn btn-danger px-4';
+      submitBtn.className = currentMode === 'award' ? 'btn btn-success px-4 fw-bold' : 'btn btn-danger px-4 fw-bold';
       submitBtn.disabled = false;
     }
 
@@ -57,14 +82,16 @@
 
     // If student pre-selected
     if (currentStudentId) {
-      if (studentSearchInput) studentSearchInput.parentElement.style.display = 'none';
+      if (studentSearchInput && studentSearchInput.parentElement) {
+        studentSearchInput.parentElement.style.display = 'none';
+      }
       if (selectedStudentCard) selectedStudentCard.style.display = 'flex';
       if (selectedStudentName) selectedStudentName.textContent = options.studentName || 'Student';
       if (selectedStudentUsername) selectedStudentUsername.textContent = options.studentUsername || '';
 
       await loadStudentCourses(currentStudentId);
     } else {
-      if (studentSearchInput) {
+      if (studentSearchInput && studentSearchInput.parentElement) {
         studentSearchInput.parentElement.style.display = 'block';
         studentSearchInput.value = '';
       }
@@ -77,14 +104,52 @@
 
     updateBalancePreview();
 
-    // Show modal via Bootstrap
-    if (window.bootstrap && window.bootstrap.Modal) {
+    // Show modal via Bootstrap / jQuery with full fallbacks
+    if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+      window.jQuery(modalEl).modal('show');
+    } else if (window.bootstrap && window.bootstrap.Modal && typeof window.bootstrap.Modal.getOrCreateInstance === 'function') {
       const bsModal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
       bsModal.show();
     } else {
-      // Fallback
       modalEl.classList.add('show');
       modalEl.style.display = 'block';
+      document.body.classList.add('modal-open');
+    }
+  };
+
+  // Close Award Points Modal safely
+  window.closeAwardPointsModal = function () {
+    const modalEl = document.getElementById('awardPointsModal');
+    if (!modalEl) return;
+
+    if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+      window.jQuery(modalEl).modal('hide');
+    } else if (window.bootstrap && window.bootstrap.Modal && typeof window.bootstrap.Modal.getInstance === 'function') {
+      const inst = window.bootstrap.Modal.getInstance(modalEl);
+      if (inst) inst.hide();
+    }
+
+    modalEl.classList.remove('show');
+    modalEl.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(b => b.remove());
+  };
+
+  // Quick Points chip selector
+  window.setAwardPointsValue = function (pts) {
+    const pointsInput = document.getElementById('awardPointsInput');
+    if (pointsInput) {
+      pointsInput.value = pts;
+      window.updateBalancePreview();
+    }
+  };
+
+  // Quick Reason chip selector
+  window.setAwardReasonValue = function (reason) {
+    const reasonInput = document.getElementById('awardReasonInput');
+    if (reasonInput) {
+      reasonInput.value = reason;
     }
   };
 
@@ -143,6 +208,7 @@
     const currentBalanceEl = document.getElementById('previewCurrentBalance');
     const changeAmountEl = document.getElementById('previewChangeAmount');
     const afterBalanceEl = document.getElementById('previewAfterBalance');
+    const balanceWarning = document.getElementById('previewBalanceWarning');
 
     const points = Math.max(0, parseInt(pointsInput?.value, 10) || 0);
 
@@ -151,12 +217,20 @@
     let afterBalance = currentStudentBalance;
     if (currentMode === 'award') {
       afterBalance = currentStudentBalance + points;
-      if (changeAmountEl) changeAmountEl.textContent = '+' + points.toLocaleString() + ' XP';
-      if (changeAmountEl) changeAmountEl.style.color = '#10b981';
+      if (changeAmountEl) {
+        changeAmountEl.textContent = '+' + points.toLocaleString() + ' XP';
+        changeAmountEl.style.color = '#10b981';
+      }
+      if (balanceWarning) balanceWarning.style.display = 'none';
     } else {
       afterBalance = Math.max(0, currentStudentBalance - points);
-      if (changeAmountEl) changeAmountEl.textContent = '-' + points.toLocaleString() + ' XP';
-      if (changeAmountEl) changeAmountEl.style.color = '#ef4444';
+      if (changeAmountEl) {
+        changeAmountEl.textContent = '-' + points.toLocaleString() + ' XP';
+        changeAmountEl.style.color = '#ef4444';
+      }
+      if (balanceWarning) {
+        balanceWarning.style.display = (points > currentStudentBalance) ? 'block' : 'none';
+      }
     }
 
     if (afterBalanceEl) {
@@ -187,26 +261,28 @@
         const data = await res.json();
 
         if (data.success && Array.isArray(data.students) && data.students.length) {
-          resultsContainer.innerHTML = data.students
-            .map(
-              (s) => `
-              <div class="search-result-item d-flex align-items-center justify-content-between p-2 border-bottom cursor-pointer"
-                   onclick="selectStudentForModal('${s._id}', '${s.name.replace(/'/g, "\\'")}', '${s.username || ''}', ${s.points || 0})"
-                   style="cursor:pointer; transition: background 0.15s ease;">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="avatar-sm rounded bg-dark text-white d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:12px;font-weight:bold;">
-                    ${s.initials || 'ST'}
-                  </div>
-                  <div>
-                    <strong class="d-block" style="font-size:13px;">${s.name}</strong>
-                    <small class="text-muted">${s.username ? '@' + s.username : s.email}</small>
-                  </div>
+          resultsContainer.innerHTML = '';
+          data.students.forEach((s) => {
+            const item = document.createElement('div');
+            item.className = 'search-result-item d-flex align-items-center justify-content-between p-2 border-bottom';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-sm rounded bg-dark text-white d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:12px;font-weight:bold;">
+                  ${s.initials || 'ST'}
                 </div>
-                <span class="badge bg-secondary font-monospace">${s.points || 0} XP</span>
+                <div>
+                  <strong class="d-block" style="font-size:13px;">${s.name}</strong>
+                  <small class="text-muted">${s.username ? '@' + s.username : s.email}</small>
+                </div>
               </div>
-            `
-            )
-            .join('');
+              <span class="badge bg-secondary font-monospace">${(s.points || 0).toLocaleString()} XP</span>
+            `;
+            item.addEventListener('click', () => {
+              window.selectStudentForModal(s._id, s.name, s.username || '', s.points || 0);
+            });
+            resultsContainer.appendChild(item);
+          });
           resultsContainer.style.display = 'block';
         } else {
           resultsContainer.innerHTML = '<div class="p-3 text-muted text-center" style="font-size:13px;">No students found matching query</div>';
@@ -230,7 +306,9 @@
     const studentSearchInput = document.getElementById('studentSearchInput');
 
     if (resultsContainer) resultsContainer.style.display = 'none';
-    if (studentSearchInput) studentSearchInput.parentElement.style.display = 'none';
+    if (studentSearchInput && studentSearchInput.parentElement) {
+      studentSearchInput.parentElement.style.display = 'none';
+    }
     if (selectedStudentCard) selectedStudentCard.style.display = 'flex';
     if (selectedStudentName) selectedStudentName.textContent = name;
     if (selectedStudentUsername) selectedStudentUsername.textContent = username ? '@' + username : '';
@@ -251,8 +329,9 @@
 
     if (selectedStudentCard) selectedStudentCard.style.display = 'none';
     if (studentSearchInput) {
-      studentSearchInput.parentElement.style.display = 'block';
+      if (studentSearchInput.parentElement) studentSearchInput.parentElement.style.display = 'block';
       studentSearchInput.value = '';
+      studentSearchInput.focus();
     }
     if (courseSelect) courseSelect.innerHTML = '<option value="">Select student first...</option>';
 
@@ -281,16 +360,16 @@
 
     if (!points || points <= 0) {
       if (window.Swal) {
-        Swal.fire({ icon: 'warning', title: 'Invalid Points', text: 'Points must be a positive whole number.' });
+        Swal.fire({ icon: 'warning', title: 'Invalid Points', text: 'Points must be a positive whole number greater than 0.' });
       } else {
-        alert('Points must be a positive whole number.');
+        alert('Points must be a positive whole number greater than 0.');
       }
       return;
     }
 
     if (!reason) {
       if (window.Swal) {
-        Swal.fire({ icon: 'warning', title: 'Reason Required', text: 'Please provide a reason for this point modification.' });
+        Swal.fire({ icon: 'warning', title: 'Reason Required', text: 'Please provide a justification for this point transaction.' });
       } else {
         alert('Please provide a reason.');
       }
@@ -311,7 +390,7 @@
         Swal.fire({
           icon: 'error',
           title: 'Insufficient Balance',
-          text: `Cannot deduct ${points} XP. Student only has ${currentStudentBalance} XP.`,
+          text: `Cannot deduct ${points.toLocaleString()} XP. Student only has ${currentStudentBalance.toLocaleString()} XP.`,
         });
       } else {
         alert(`Cannot deduct more than current balance (${currentStudentBalance} XP).`);
@@ -370,14 +449,7 @@
       const data = await res.json();
 
       if (data.success) {
-        // Close modal
-        const modalEl = document.getElementById('awardPointsModal');
-        if (window.bootstrap && window.bootstrap.Modal) {
-          const bsModal = window.bootstrap.Modal.getInstance(modalEl);
-          if (bsModal) bsModal.hide();
-        } else if (modalEl) {
-          modalEl.style.display = 'none';
-        }
+        window.closeAwardPointsModal();
 
         if (window.Swal) {
           if (data.levelUp) {
@@ -390,7 +462,7 @@
                   <p class="text-muted mb-0">${points.toLocaleString()} XP ${currentMode === 'award' ? 'awarded' : 'adjusted'} successfully.</p>
                 </div>
               `,
-              timer: 4000,
+              timer: 3500,
               showConfirmButton: true,
             }).then(() => {
               window.location.reload();
@@ -400,7 +472,7 @@
               icon: 'success',
               title: 'Points Updated',
               text: `${points.toLocaleString()} XP ${currentMode === 'award' ? 'awarded' : 'adjusted'} successfully.`,
-              timer: 2000,
+              timer: 1800,
               showConfirmButton: false,
             }).then(() => {
               window.location.reload();
@@ -435,15 +507,33 @@
     }
   };
 
-  // Debounced Filter / Search URL update
+  // Filter / Search URL update with pagination preservation fix
   window.updateLeaderboardFilter = function (paramName, paramValue) {
     const url = new URL(window.location.href);
+
     if (paramValue !== undefined && paramValue !== null && String(paramValue).trim() !== '') {
       url.searchParams.set(paramName, String(paramValue).trim());
     } else {
       url.searchParams.delete(paramName);
     }
-    url.searchParams.set('page', '1'); // Reset to page 1 on filter change
+
+    // CRITICAL BUG FIX: Only reset to page 1 if changing a filter OTHER than page!
+    if (paramName !== 'page') {
+      url.searchParams.set('page', '1');
+    }
+
+    window.location.href = url.toString();
+  };
+
+  // Reset all filters
+  window.resetLeaderboardFilters = function () {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.delete('level');
+    url.searchParams.delete('rank');
+    url.searchParams.delete('status');
+    url.searchParams.delete('sort');
+    url.searchParams.set('page', '1');
     window.location.href = url.toString();
   };
 
@@ -455,4 +545,40 @@
       window.updateLeaderboardFilter('search', input.value);
     }, 450);
   };
+
+  // Search input enter key handler
+  window.onSearchInputKeydown = function (e, input) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      clearTimeout(debounceUrlTimeout);
+      window.updateLeaderboardFilter('search', input.value);
+    }
+  };
+
+  // Clear search input directly
+  window.clearSearchInput = function () {
+    window.updateLeaderboardFilter('search', '');
+  };
+
+  // Global event delegation for data-gamification-action buttons
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-gamification-action]');
+    if (!btn) return;
+
+    const action = btn.getAttribute('data-gamification-action');
+    if (action === 'award' || action === 'adjust') {
+      e.preventDefault();
+      window.openAwardPointsModal(btn);
+    } else if (action === 'give-points') {
+      e.preventDefault();
+      window.openAwardPointsModal({ mode: 'award' });
+    } else if (action === 'deduct-points') {
+      e.preventDefault();
+      window.openAwardPointsModal({ mode: 'adjust' });
+    } else if (action === 'close-modal') {
+      e.preventDefault();
+      window.closeAwardPointsModal();
+    }
+  });
+
 })();

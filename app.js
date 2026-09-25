@@ -176,6 +176,10 @@ app.engine(
         return Number(value || 0) + 1;
       },
 
+      add: function (a, b) {
+        return Number(a || 0) + Number(b || 0);
+      },
+
       dec: function (value) {
         return Math.max(1, Number(value || 1) - 1);
       },

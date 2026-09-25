@@ -803,6 +803,21 @@
               return new window.bootstrap.Modal(element);
             }
           };
+        } else {
+          // In Bootstrap 4, Modal constructor exists but lacks Bootstrap 5 static methods
+          if (!window.bootstrap.Modal.getInstance) {
+            window.bootstrap.Modal.getInstance = function (element) {
+              var el = typeof element === 'string' ? document.querySelector(element) : element;
+              return {
+                el: el,
+                show: function () { if (window.jQuery && el) window.jQuery(el).modal('show'); },
+                hide: function () { if (window.jQuery && el) window.jQuery(el).modal('hide'); }
+              };
+            };
+          }
+          if (!window.bootstrap.Modal.getOrCreateInstance) {
+            window.bootstrap.Modal.getOrCreateInstance = window.bootstrap.Modal.getInstance;
+          }
         }
 
         if (window.jQuery) {

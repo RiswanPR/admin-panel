@@ -1,99 +1,132 @@
 <!-- AWARD / ADJUST POINTS MODAL -->
-<div class="modal fade gamification-modal" id="awardPointsModal" tabindex="-1" aria-labelledby="awardModalTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+<div class="modal fade gamification-modal" id="awardPointsModal" tabindex="-1" role="dialog" aria-labelledby="awardModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden; background: var(--surface);">
 
       <!-- MODAL HEADER -->
-      <div class="modal-header d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-2">
-          <div class="kpi-icon icon-gold" style="width:36px;height:36px;font-size:16px;border-radius:10px;">
+      <div class="modal-header d-flex align-items-center justify-content-between px-4 py-3" style="border-bottom: 1px solid var(--border); background: var(--surface-2);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="kpi-icon icon-gold shadow-sm" style="width:40px;height:40px;font-size:18px;border-radius:12px;">
             <i class="fa-solid fa-coins"></i>
           </div>
-          <h5 class="modal-title fw-bold m-0" id="awardModalTitle">Award XP / Points</h5>
+          <div>
+            <h5 class="modal-title fw-bold m-0" id="awardModalTitle" style="color:var(--text); font-size:18px;">
+              Award XP / Points
+            </h5>
+            <small class="text-muted d-block" style="font-size:12px;">Manage student experience points & levels</small>
+          </div>
         </div>
-        <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center"
+                data-dismiss="modal" data-bs-dismiss="modal" data-gamification-action="close-modal"
+                style="width:32px; height:32px; padding:0; font-size:16px;" aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <!-- MODAL BODY -->
-      <div class="modal-body">
+      <div class="modal-body px-4 py-4">
 
         <!-- STUDENT SELECTOR -->
         <div class="mb-3">
-          <label class="form-label fw-semibold" style="font-size:13px;">Student</label>
+          <label class="form-label fw-bold" style="font-size:13px; color:var(--text);">Select Student</label>
 
           <!-- Search Input for unselected state -->
           <div class="position-relative">
-            <input type="text" id="studentSearchInput" class="form-control"
-                   placeholder="Type student name, @username or email..."
-                   onkeyup="searchStudentsInModal(this.value)" autocomplete="off">
+            <div class="input-group">
+              <span class="input-group-text bg-body border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+              <input type="text" id="studentSearchInput" class="form-control border-start-0 ps-0"
+                     placeholder="Type student name, @username or email to search..."
+                     onkeyup="searchStudentsInModal(this.value)" autocomplete="off" style="font-size:13px;">
+            </div>
             <div id="studentSearchResults" class="search-results-dropdown shadow-lg bg-body rounded-3 mt-1 p-1 position-absolute w-100"
-                 style="display:none; z-index:1050; max-height:220px; overflow-y:auto; border:1px solid var(--border);">
+                 style="display:none; z-index:1060; max-height:220px; overflow-y:auto; border:1px solid var(--border);">
             </div>
           </div>
 
           <!-- Selected Student Card -->
-          <div id="selectedStudentCard" class="align-items-center justify-content-between p-2 rounded-3 border mt-1"
+          <div id="selectedStudentCard" class="align-items-center justify-content-between p-3 rounded-3 border mt-1"
                style="display:none; background:var(--surface-2); border-color:var(--border);">
-            <div class="d-flex align-items-center gap-2">
-              <div class="avatar-sm rounded bg-dark text-white d-flex align-items-center justify-content-center"
-                   style="width:36px;height:36px;font-size:13px;font-weight:bold;">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-sm rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm"
+                   style="width:42px;height:42px;font-size:14px;font-weight:bold;">
                 <i class="fa-solid fa-user-graduate"></i>
               </div>
               <div>
-                <strong id="selectedStudentName" class="d-block" style="font-size:14px;">Student Name</strong>
-                <small id="selectedStudentUsername" class="text-muted font-monospace" style="font-size:11px;">@username</small>
+                <strong id="selectedStudentName" class="d-block text-dark fw-bold" style="font-size:15px;">Student Name</strong>
+                <small id="selectedStudentUsername" class="text-muted font-monospace" style="font-size:12px;">@username</small>
               </div>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelectedStudent()" title="Change student">
-              <i class="fa-solid fa-xmark"></i>
+            <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 fw-semibold" onclick="clearSelectedStudent()" title="Change student" style="font-size:12px;">
+              <i class="fa-solid fa-arrows-rotate me-1"></i> Change Student
             </button>
           </div>
         </div>
 
         <!-- SCOPE TOGGLE (GLOBAL vs COURSE) -->
         <div class="mb-3">
-          <label class="form-label fw-semibold" style="font-size:13px;">Point Scope</label>
+          <label class="form-label fw-bold" style="font-size:13px; color:var(--text);">Point Scope</label>
           <div class="scope-toggle-group">
             <button type="button" id="scopeGlobalBtn" class="scope-btn active" onclick="setPointScope('global')">
-              <i class="fa-solid fa-earth-americas me-1"></i> Global XP
+              <i class="fa-solid fa-earth-americas me-1"></i> Global XP (Main Leaderboard)
             </button>
             <button type="button" id="scopeCourseBtn" class="scope-btn" onclick="setPointScope('course')">
-              <i class="fa-solid fa-book-open me-1"></i> Course XP
+              <i class="fa-solid fa-book-open me-1"></i> Course-Specific XP
             </button>
           </div>
         </div>
 
         <!-- COURSE SELECTOR (Visible when Scope = Course) -->
         <div class="mb-3" id="courseSelectGroup" style="display:none;">
-          <label class="form-label fw-semibold" style="font-size:13px;">Select Course</label>
+          <label class="form-label fw-bold" style="font-size:13px; color:var(--text);">Select Enrolled Course</label>
           <select id="courseSelectInput" class="form-select" style="font-size:13px;">
             <option value="">Select student first...</option>
           </select>
-          <small class="text-muted" style="font-size:11px;">Only courses the student is currently enrolled in are eligible.</small>
+          <small class="text-muted mt-1 d-block" style="font-size:11px;">Points will be associated with the selected enrolled course.</small>
         </div>
 
-        <!-- POINTS INPUT -->
+        <!-- POINTS INPUT & QUICK CHIPS -->
         <div class="mb-3">
-          <label class="form-label fw-semibold" style="font-size:13px;">Points (XP)</label>
+          <label class="form-label fw-bold" style="font-size:13px; color:var(--text);">Points (XP Amount)</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fa-solid fa-star text-warning"></i></span>
-            <input type="number" id="awardPointsInput" class="form-control" placeholder="e.g. 100"
-                   min="1" step="1" oninput="updateBalancePreview()">
+            <span class="input-group-text bg-body text-warning"><i class="fa-solid fa-star"></i></span>
+            <input type="number" id="awardPointsInput" class="form-control fw-bold" placeholder="Enter XP amount (e.g. 100)"
+                   min="1" step="1" oninput="updateBalancePreview()" style="font-size:15px;">
+            <span class="input-group-text bg-body text-muted fw-bold">XP</span>
+          </div>
+
+          <!-- Quick Increment Chips -->
+          <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+            <span class="text-muted small fw-semibold me-1" style="font-size:11px;">Quick XP:</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(50)">+50</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(100)">+100</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(250)">+250</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(500)">+500</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(1000)">+1,000</button>
           </div>
         </div>
 
-        <!-- REASON INPUT -->
+        <!-- REASON INPUT & SUGGESTIONS -->
         <div class="mb-3">
-          <label class="form-label fw-semibold" style="font-size:13px;">Reason / Justification</label>
+          <label class="form-label fw-bold" style="font-size:13px; color:var(--text);">Reason / Justification</label>
           <textarea id="awardReasonInput" class="form-control" rows="2"
-                    placeholder="e.g. Outstanding assignment submission, capstone bonus..." style="font-size:13px;"></textarea>
-          <small class="text-muted" style="font-size:11px;">Audit logging requires a valid reason for all manual actions.</small>
+                    placeholder="Provide a clear justification for this adjustment (audit trail requirement)..."
+                    style="font-size:13px;"></textarea>
+
+          <!-- Quick Reason Chips -->
+          <div class="d-flex align-items-center flex-wrap gap-1 mt-2">
+            <span class="text-muted small fw-semibold me-1" style="font-size:11px;">Suggestions:</span>
+            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Outstanding class participation')">Class Participation</button>
+            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Top assignment score')">Assignment Excellence</button>
+            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Quiz high performer bonus')">Quiz Bonus</button>
+            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Extra project completion')">Extra Project</button>
+            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Manual administrative balance adjustment')">Balance Adjustment</button>
+          </div>
         </div>
 
         <!-- LIVE BALANCE PREVIEW -->
-        <div class="balance-preview-box">
+        <div class="balance-preview-box shadow-sm">
           <div class="preview-col">
-            <small>Current</small>
+            <small>Current Balance</small>
             <span id="previewCurrentBalance">0 XP</span>
           </div>
           <div class="preview-col">
@@ -101,17 +134,25 @@
             <span id="previewChangeAmount">+0 XP</span>
           </div>
           <div class="preview-col after-award">
-            <small>After Action</small>
+            <small>New XP Balance</small>
             <span id="previewAfterBalance">0 XP</span>
           </div>
+        </div>
+
+        <!-- Warning if deduction exceeds balance -->
+        <div id="previewBalanceWarning" class="alert alert-danger py-2 px-3 mt-2 mb-0 d-flex align-items-center gap-2" style="display:none; font-size:12px;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span><strong>Insufficient Balance:</strong> You cannot deduct more XP than the student's current total.</span>
         </div>
 
       </div>
 
       <!-- MODAL FOOTER -->
-      <div class="modal-footer d-flex align-items-center justify-content-between">
-        <button type="button" class="btn btn-outline-secondary px-3" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" id="submitAwardBtn" class="btn btn-success px-4" onclick="submitPointTransaction()">
+      <div class="modal-footer d-flex align-items-center justify-content-between px-4 py-3" style="border-top: 1px solid var(--border); background: var(--surface-2);">
+        <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-dismiss="modal" data-bs-dismiss="modal" data-gamification-action="close-modal">
+          Cancel
+        </button>
+        <button type="button" id="submitAwardBtn" class="btn btn-success px-4 fw-bold" onclick="submitPointTransaction()">
           Award XP
         </button>
       </div>

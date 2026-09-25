@@ -2,47 +2,74 @@
 
 <div class="container-fluid mt-3 mb-5">
 
-  <!-- HEADER -->
+  <!-- HERO HEADER -->
   <div class="gamification-hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
       <div>
         <div class="hero-tag">
-          <i class="fa-solid fa-users-gear"></i> Point Management
+          <i class="fa-solid fa-users-gear"></i> Point Management & Balances
         </div>
         <h1>Students & Points</h1>
         <p>
-          Manage XP balances, levels, and point rewards across all enrolled students.
+          Manage student experience points (XP), monitor level progressions, and award or adjust credits across the academy.
         </p>
       </div>
 
-      <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-success px-4 py-2" style="font-size:13px; font-weight:700;" onclick="openAwardPointsModal({ mode: 'award' })">
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <a href="/admin/leaderboard" class="btn btn-outline-secondary px-3 py-2 fw-semibold" style="font-size:13px;" title="View Global Leaderboard">
+          <i class="fa-solid fa-trophy me-1 text-warning"></i> Leaderboard
+        </a>
+        <a href="/admin/points/history" class="btn btn-outline-secondary px-3 py-2 fw-semibold" style="font-size:13px;" title="View Point Transaction Audit Ledger">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i> Point History
+        </a>
+        <button type="button" class="btn btn-outline-danger px-3 py-2 fw-semibold" style="font-size:13px;"
+                data-gamification-action="deduct-points" title="Deduct or adjust points">
+          <i class="fa-solid fa-minus me-1"></i> Deduct Points
+        </button>
+        <button type="button" class="btn btn-success px-4 py-2 fw-bold shadow-sm" style="font-size:13px;"
+                data-gamification-action="give-points" title="Award bonus points to a student">
           <i class="fa-solid fa-plus me-1"></i> Give Points
         </button>
       </div>
     </div>
   </div>
 
-  <!-- TOOLBAR -->
+  <!-- KPI SUMMARY METRIC CARDS -->
+  {{#if kpis}}
+  {{> gamification/kpi-cards kpis=kpis isCourseLeaderboard=false}}
+  {{/if}}
+
+  <!-- TOOLBAR: SEARCH, FILTERS & SORT -->
   <div class="gamification-toolbar">
+    <!-- Left: Filters & Search -->
     <div class="filter-group">
-      <div class="search-field">
+      <!-- Search Input with Clear Button -->
+      <div class="search-field" style="min-width: 250px;">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search student name, @handle..." value="{{filters.search}}"
-               oninput="onSearchInputChange(this)">
+        <input type="text" id="studentSearchField" placeholder="Search student name, @handle, email..."
+               value="{{filters.search}}"
+               oninput="onSearchInputChange(this)"
+               onkeydown="onSearchInputKeydown(event, this)">
+        {{#if filters.search}}
+        <button type="button" class="search-clear-btn" onclick="clearSearchInput()" title="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        {{/if}}
       </div>
 
+      <!-- Level Filter -->
       <select class="filter-select" onchange="updateLeaderboardFilter('level', this.value)">
         <option value="">All Levels</option>
-        <option value="1" {{selected filters.level '1'}}>Level 1</option>
-        <option value="2" {{selected filters.level '2'}}>Level 2</option>
-        <option value="3" {{selected filters.level '3'}}>Level 3</option>
-        <option value="4" {{selected filters.level '4'}}>Level 4</option>
-        <option value="5" {{selected filters.level '5'}}>Level 5</option>
-        <option value="6" {{selected filters.level '6'}}>Level 6</option>
-        <option value="7" {{selected filters.level '7'}}>Level 7</option>
+        <option value="1" {{selected filters.level '1'}}>Level 1 (0+ XP)</option>
+        <option value="2" {{selected filters.level '2'}}>Level 2 (100+ XP)</option>
+        <option value="3" {{selected filters.level '3'}}>Level 3 (250+ XP)</option>
+        <option value="4" {{selected filters.level '4'}}>Level 4 (500+ XP)</option>
+        <option value="5" {{selected filters.level '5'}}>Level 5 (1,000+ XP)</option>
+        <option value="6" {{selected filters.level '6'}}>Level 6 (2,000+ XP)</option>
+        <option value="7" {{selected filters.level '7'}}>Level 7 (4,000+ XP)</option>
       </select>
 
+      <!-- Rank Filter -->
       <select class="filter-select" onchange="updateLeaderboardFilter('rank', this.value)">
         <option value="">All Ranks</option>
         <option value="Grand Master" {{selected filters.rank 'Grand Master'}}>Grand Master</option>
@@ -52,141 +79,383 @@
         <option value="Learner" {{selected filters.rank 'Learner'}}>Learner</option>
         <option value="Beginner" {{selected filters.rank 'Beginner'}}>Beginner</option>
       </select>
+
+      <!-- Status Filter -->
+      <select class="filter-select" onchange="updateLeaderboardFilter('status', this.value)">
+        <option value="">All Statuses</option>
+        <option value="active" {{selected filters.status 'active'}}>Active</option>
+        <option value="inactive" {{selected filters.status 'inactive'}}>Inactive / Blocked</option>
+      </select>
+
+      {{#if (or filters.search filters.level filters.rank filters.status)}}
+      <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 fw-semibold"
+              onclick="resetLeaderboardFilters()" title="Reset all filters" style="font-size:12px; border-radius:10px;">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i> Reset Filters
+      </button>
+      {{/if}}
     </div>
 
-    <div class="d-flex align-items-center gap-2">
-      <span style="font-size:12px; color:var(--muted); font-weight:600;">Show:</span>
-      <select class="filter-select" onchange="updateLeaderboardFilter('limit', this.value)">
-        <option value="25" {{selected pagination.limit '25'}}>25</option>
-        <option value="50" {{selected pagination.limit '50'}}>50</option>
-        <option value="100" {{selected pagination.limit '100'}}>100</option>
-      </select>
+    <!-- Right: Sort & Per Page -->
+    <div class="filter-group">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size:12px; color:var(--muted); font-weight:600;">Sort By:</span>
+        <select class="filter-select" onchange="updateLeaderboardFilter('sort', this.value)">
+          <option value="points" {{selected filters.sort 'points'}}>Points (High &rarr; Low)</option>
+          <option value="level" {{selected filters.sort 'level'}}>Level (High &rarr; Low)</option>
+          <option value="classes" {{selected filters.sort 'classes'}}>Completed Classes</option>
+          <option value="recent" {{selected filters.sort 'recent'}}>Recent Activity</option>
+        </select>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size:12px; color:var(--muted); font-weight:600;">Show:</span>
+        <select class="filter-select" onchange="updateLeaderboardFilter('limit', this.value)">
+          <option value="25" {{selected pagination.limit '25'}}>25</option>
+          <option value="50" {{selected pagination.limit '50'}}>50</option>
+          <option value="100" {{selected pagination.limit '100'}}>100</option>
+        </select>
+      </div>
     </div>
   </div>
 
-  <!-- STUDENTS TABLE -->
-  <div class="leaderboard-table-card">
-    {{#if students.length}}
-    <table class="leaderboard-table">
-      <thead>
-        <tr>
-          <th>Student</th>
-          <th>Level</th>
-          <th>Rank Title</th>
-          <th>Current XP</th>
-          <th>Completed Classes</th>
-          <th>Courses</th>
-          <th>Streak</th>
-          <th style="text-align: right;">Quick Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{#each students}}
-        <tr class="leaderboard-row">
-          <td data-label="Student">
-            <div class="student-cell">
+  <!-- VIEW SWITCHER & RESULT COUNT BAR -->
+  <div class="admin-view-header-bar d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div class="admin-result-count small text-muted">
+      Showing <span class="fw-bold text-dark">{{students.length}}</span> of <span class="fw-bold text-dark">{{pagination.total}}</span> students
+      {{#if filters.search}}
+      matching &ldquo;<span class="text-primary fw-semibold">{{filters.search}}</span>&rdquo;
+      {{/if}}
+    </div>
+
+    <!-- View Mode Switcher -->
+    <div class="admin-view-toggle" role="group" aria-label="View representation switch" data-section="students-points">
+      <button type="button" 
+              class="view-toggle-btn {{#ifEquals viewMode 'table'}}{{else}}active{{/ifEquals}}" 
+              data-view="card" 
+              title="Card View (Default)" 
+              aria-label="Cards View" 
+              aria-pressed="{{#ifEquals viewMode 'table'}}false{{else}}true{{/ifEquals}}">
+        <i class="fa-solid fa-table-cells-large"></i>
+        <span class="view-toggle-label">Cards</span>
+      </button>
+      <button type="button" 
+              class="view-toggle-btn {{#ifEquals viewMode 'table'}}active{{/ifEquals}}" 
+              data-view="table" 
+              title="Table View" 
+              aria-label="Table View" 
+              aria-pressed="{{#ifEquals viewMode 'table'}}true{{else}}false{{/ifEquals}}">
+        <i class="fa-solid fa-table-list"></i>
+        <span class="view-toggle-label">Table</span>
+      </button>
+    </div>
+  </div>
+
+  {{#if students.length}}
+
+  <!-- ========================================== -->
+  <!-- 1. CARDS VIEW (DEFAULT)                   -->
+  <!-- ========================================== -->
+  <div id="students-pointsCardView" class="admin-cards-container" data-section="students-points">
+    <div class="student-points-card-grid">
+      {{#each students}}
+      <div class="student-point-card shadow-sm">
+        
+        <!-- Card Top: Identity & Status -->
+        <div>
+          <div class="student-card-top">
+            <div class="student-card-identity">
               {{#if this.imageUrl}}
-              <img src="{{this.imageUrl}}" alt="{{this.displayName}}" class="student-table-avatar"
+              <img src="{{this.imageUrl}}" alt="{{this.displayName}}" class="student-card-avatar"
                    onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
               {{else}}
-              <div class="student-table-initials">{{this.initials}}</div>
+              <div class="student-card-initials">{{this.initials}}</div>
               {{/if}}
-              <div class="student-meta-info">
-                <a href="/admin/leaderboard/student/{{this._id}}" class="student-cell-name">
+              <div class="student-card-name-wrap">
+                <a href="/admin/leaderboard/student/{{this._id}}" class="student-card-name" title="{{this.displayName}}">
                   {{this.displayName}}
                 </a>
-                <span class="student-cell-username">{{this.username}}</span>
+                <span class="student-card-username">{{#if this.username}}{{this.username}}{{else}}@student{{/if}}</span>
               </div>
             </div>
-          </td>
 
-          <td data-label="Level">
-            <span class="level-badge">
-              <i class="fa-solid fa-bolt"></i> Lvl {{this.level}}
+            <span class="level-badge shadow-sm">
+              <i class="fa-solid fa-bolt text-warning"></i> Lvl {{this.level}}
             </span>
-          </td>
+          </div>
 
-          <td data-label="Rank Title">
+          <!-- Rank Badge & Status Row -->
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <span class="rank-title-badge {{this.rankMeta.badgeClass}}">
               <i class="fa-solid {{this.rankMeta.icon}}"></i> {{this.rankTitle}}
             </span>
-          </td>
 
-          <td data-label="Current XP">
-            <div class="points-cell">
-              {{this.points}}<span>XP</span>
-            </div>
-          </td>
-
-          <td data-label="Classes">
-            <span class="fw-semibold">{{this.completedClasses}}</span>
-          </td>
-
-          <td data-label="Courses">
-            <span class="fw-semibold">{{this.completedCourses}}</span> / {{this.enrolledCoursesCount}}
-          </td>
-
-          <td data-label="Streak">
-            {{#if this.streak}}
-            <span class="streak-pill">
-              <i class="fa-solid fa-fire"></i> {{this.streak}}d
+            {{#if this.isActive}}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size:11px;">
+              <i class="fa-solid fa-circle-check me-1"></i> Active
             </span>
             {{else}}
-            <span class="text-muted">—</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size:11px;">
+              <i class="fa-solid fa-circle-xmark me-1"></i> Inactive
+            </span>
             {{/if}}
-          </td>
+          </div>
 
-          <td data-label="Quick Actions" style="text-align: right;">
-            <div class="d-flex align-items-center justify-content-end gap-2">
-              <button type="button" class="btn btn-sm btn-outline-success px-2 py-1" style="font-size:12px;"
-                      onclick="openAwardPointsModal({ studentId: '{{this._id}}', studentName: '{{this.displayName}}', studentUsername: '{{this.username}}', currentBalance: {{this.points}}, mode: 'award' })">
-                <i class="fa-solid fa-plus me-1"></i> Award
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size:12px;"
-                      onclick="openAwardPointsModal({ studentId: '{{this._id}}', studentName: '{{this.displayName}}', studentUsername: '{{this.username}}', currentBalance: {{this.points}}, mode: 'adjust' })">
-                <i class="fa-solid fa-minus me-1"></i> Deduct
-              </button>
-              <a href="/admin/leaderboard/student/{{this._id}}" class="btn btn-sm btn-outline-secondary px-2 py-1" style="font-size:12px;" title="View Profile">
-                <i class="fa-solid fa-arrow-right"></i>
-              </a>
+          <!-- XP & Level Progress Box -->
+          <div class="student-card-xp-section">
+            <div class="student-card-xp-header">
+              <span class="text-muted small fw-semibold" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Current Balance</span>
+              <div class="student-card-xp-num">
+                {{this.points}}<span>XP</span>
+              </div>
             </div>
-          </td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
 
-    <!-- PAGINATION -->
-    <div class="gamification-pagination">
-      <small class="text-muted" style="font-size:13px;">
-        Showing {{students.length}} of {{pagination.total}} students &bull; Page {{pagination.page}} of {{pagination.totalPages}}
-      </small>
+            <div class="xp-mini-progress">
+              <div class="xp-mini-progress-fill" style="width: {{this.levelProgress.percentage}}%;"></div>
+            </div>
 
-      <div class="pagination-controls">
-        <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
-                onclick="updateLeaderboardFilter('page', {{pagination.prevPage}})">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
+            <div class="xp-mini-progress-sub">
+              <span>Next: Lvl {{add this.level 1}}</span>
+              <span>{{this.levelProgress.currentInLevel}} / {{this.levelProgress.neededInLevel}} XP ({{this.levelProgress.percentage}}%)</span>
+            </div>
+          </div>
 
-        <span style="font-size:13px; font-weight:700; padding: 0 10px;">
-          {{pagination.page}}
-        </span>
+          <!-- Stats Grid -->
+          <div class="student-card-stats-row">
+            <div class="student-stat-pill">
+              <small>Classes</small>
+              <strong>{{this.completedClasses}}</strong>
+            </div>
+            <div class="student-stat-pill">
+              <small>Courses</small>
+              <strong>{{this.completedCourses}} / {{this.enrolledCoursesCount}}</strong>
+            </div>
+            <div class="student-stat-pill">
+              <small>Streak</small>
+              <strong>
+                {{#if this.streak}}
+                <span class="text-warning"><i class="fa-solid fa-fire me-1"></i>{{this.streak}}d</span>
+                {{else}}
+                <span class="text-muted">—</span>
+                {{/if}}
+              </strong>
+            </div>
+          </div>
+        </div>
 
-        <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
-                onclick="updateLeaderboardFilter('page', {{pagination.nextPage}})">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
+        <!-- Card Action Buttons Footer -->
+        <div class="student-card-actions">
+          <button type="button" class="btn btn-outline-success"
+                  data-gamification-action="award"
+                  data-student-id="{{this._id}}"
+                  data-student-name="{{this.displayName}}"
+                  data-student-username="{{this.username}}"
+                  data-current-balance="{{#if this.points}}{{this.points}}{{else}}0{{/if}}"
+                  data-mode="award"
+                  title="Award XP points to {{this.displayName}}">
+            <i class="fa-solid fa-plus me-1"></i> Award
+          </button>
+
+          <button type="button" class="btn btn-outline-danger"
+                  data-gamification-action="adjust"
+                  data-student-id="{{this._id}}"
+                  data-student-name="{{this.displayName}}"
+                  data-student-username="{{this.username}}"
+                  data-current-balance="{{#if this.points}}{{this.points}}{{else}}0{{/if}}"
+                  data-mode="adjust"
+                  title="Deduct or adjust XP from {{this.displayName}}">
+            <i class="fa-solid fa-minus me-1"></i> Deduct
+          </button>
+
+          <a href="/admin/leaderboard/student/{{this._id}}" class="btn btn-outline-secondary" title="View Full Gamification Profile">
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
       </div>
+      {{/each}}
     </div>
-
-    {{else}}
-    <div class="text-center py-5">
-      <i class="fa-solid fa-user-graduate text-muted mb-3" style="font-size:48px; opacity:0.3;"></i>
-      <h5 class="fw-bold text-muted mb-2">No students found</h5>
-      <p class="text-muted" style="font-size:14px;">Try changing your search or filter criteria.</p>
-    </div>
-    {{/if}}
   </div>
+
+  <!-- ========================================== -->
+  <!-- 2. TABLE VIEW                              -->
+  <!-- ========================================== -->
+  <div id="students-pointsTableView" class="admin-table-container d-none" data-section="students-points">
+    <div class="leaderboard-table-card">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">Rank</th>
+            <th>Student</th>
+            <th>Level</th>
+            <th>Rank Title</th>
+            <th>Current XP</th>
+            <th>Level Progress</th>
+            <th>Classes</th>
+            <th>Courses</th>
+            <th>Streak</th>
+            <th style="text-align: right;">Quick Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each students}}
+          <tr class="leaderboard-row">
+            <td data-label="Rank" class="rank-badge-cell">
+              <span class="rank-pill rank-other-pill">
+                {{this.rank}}
+              </span>
+            </td>
+
+            <td data-label="Student">
+              <div class="student-cell">
+                {{#if this.imageUrl}}
+                <img src="{{this.imageUrl}}" alt="{{this.displayName}}" class="student-table-avatar"
+                     onerror="this.onerror=null;this.src='/img/placeholders/profile.svg';">
+                {{else}}
+                <div class="student-table-initials">{{this.initials}}</div>
+                {{/if}}
+                <div class="student-meta-info">
+                  <a href="/admin/leaderboard/student/{{this._id}}" class="student-cell-name">
+                    {{this.displayName}}
+                  </a>
+                  <span class="student-cell-username">{{#if this.username}}{{this.username}}{{else}}@student{{/if}}</span>
+                </div>
+              </div>
+            </td>
+
+            <td data-label="Level">
+              <span class="level-badge">
+                <i class="fa-solid fa-bolt text-warning"></i> Lvl {{this.level}}
+              </span>
+            </td>
+
+            <td data-label="Rank Title">
+              <span class="rank-title-badge {{this.rankMeta.badgeClass}}">
+                <i class="fa-solid {{this.rankMeta.icon}}"></i> {{this.rankTitle}}
+              </span>
+            </td>
+
+            <td data-label="Current XP">
+              <div class="points-cell">
+                {{this.points}}<span>XP</span>
+              </div>
+            </td>
+
+            <td data-label="Progress" style="min-width: 140px;">
+              <div class="xp-mini-progress">
+                <div class="xp-mini-progress-fill" style="width: {{this.levelProgress.percentage}}%;"></div>
+              </div>
+              <small class="text-muted" style="font-size:11px;">{{this.levelProgress.percentage}}% to Lvl {{add this.level 1}}</small>
+            </td>
+
+            <td data-label="Classes">
+              <span class="fw-semibold">{{this.completedClasses}}</span>
+            </td>
+
+            <td data-label="Courses">
+              <span class="fw-semibold">{{this.completedCourses}}</span> / {{this.enrolledCoursesCount}}
+            </td>
+
+            <td data-label="Streak">
+              {{#if this.streak}}
+              <span class="streak-pill">
+                <i class="fa-solid fa-fire"></i> {{this.streak}}d
+              </span>
+              {{else}}
+              <span class="text-muted">—</span>
+              {{/if}}
+            </td>
+
+            <td data-label="Quick Actions" style="text-align: right;">
+              <div class="d-flex align-items-center justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-success px-2 py-1" style="font-size:12px; font-weight:600;"
+                        data-gamification-action="award"
+                        data-student-id="{{this._id}}"
+                        data-student-name="{{this.displayName}}"
+                        data-student-username="{{this.username}}"
+                        data-current-balance="{{#if this.points}}{{this.points}}{{else}}0{{/if}}"
+                        data-mode="award"
+                        title="Award XP">
+                  <i class="fa-solid fa-plus me-1"></i> Award
+                </button>
+
+                <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size:12px; font-weight:600;"
+                        data-gamification-action="adjust"
+                        data-student-id="{{this._id}}"
+                        data-student-name="{{this.displayName}}"
+                        data-student-username="{{this.username}}"
+                        data-current-balance="{{#if this.points}}{{this.points}}{{else}}0{{/if}}"
+                        data-mode="adjust"
+                        title="Deduct XP">
+                  <i class="fa-solid fa-minus me-1"></i> Deduct
+                </button>
+
+                <a href="/admin/leaderboard/student/{{this._id}}" class="btn btn-sm btn-outline-secondary px-2 py-1" style="font-size:12px;" title="View Profile">
+                  <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINATION CONTROLS -->
+  <div class="gamification-pagination mt-4 rounded-4 shadow-sm">
+    <small class="text-muted" style="font-size:13px;">
+      Showing <strong class="text-dark">{{students.length}}</strong> of <strong class="text-dark">{{pagination.total}}</strong> students &bull; Page <strong class="text-dark">{{pagination.page}}</strong> of <strong class="text-dark">{{pagination.totalPages}}</strong>
+    </small>
+
+    <div class="pagination-controls">
+      <!-- First Page -->
+      <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
+              onclick="updateLeaderboardFilter('page', 1)" title="First Page">
+        <i class="fa-solid fa-angles-left"></i>
+      </button>
+
+      <!-- Previous Page -->
+      <button class="page-btn" {{#unless pagination.hasPrev}}disabled{{/unless}}
+              onclick="updateLeaderboardFilter('page', {{pagination.prevPage}})" title="Previous Page">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <!-- Current Page Badge -->
+      <span class="badge bg-body text-dark border px-3 py-2 font-monospace" style="font-size:13px; font-weight:700;">
+        {{pagination.page}} / {{pagination.totalPages}}
+      </span>
+
+      <!-- Next Page -->
+      <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
+              onclick="updateLeaderboardFilter('page', {{pagination.nextPage}})" title="Next Page">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      <!-- Last Page -->
+      <button class="page-btn" {{#unless pagination.hasNext}}disabled{{/unless}}
+              onclick="updateLeaderboardFilter('page', {{pagination.totalPages}})" title="Last Page">
+        <i class="fa-solid fa-angles-right"></i>
+      </button>
+    </div>
+  </div>
+
+  {{else}}
+  <!-- EMPTY STATE -->
+  <div class="leaderboard-table-card text-center py-5 px-3">
+    <div class="p-4 mx-auto" style="max-width: 480px;">
+      <div class="kpi-icon icon-mint mx-auto mb-3" style="width:64px;height:64px;font-size:28px;border-radius:20px;">
+        <i class="fa-solid fa-user-graduate"></i>
+      </div>
+      <h4 class="fw-bold mb-2" style="color:var(--text);">No students found</h4>
+      <p class="text-muted mb-4" style="font-size:14px; line-height:1.5;">
+        No student accounts matched your current search and filter criteria. Try clearing or relaxing your filters.
+      </p>
+      <button type="button" class="btn btn-primary px-4 py-2 fw-semibold" onclick="resetLeaderboardFilters()">
+        <i class="fa-solid fa-rotate-left me-2"></i> Reset All Filters
+      </button>
+    </div>
+  </div>
+  {{/if}}
 
 </div>
 

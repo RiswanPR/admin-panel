@@ -3182,14 +3182,15 @@ router.get('/admin/leaderboard/student/:studentId', verifyLogin, validateObjectI
 // 5. Students & Points Management View
 router.get('/admin/leaderboard/students', verifyLogin, async (req, res) => {
   try {
-    const { page, limit, search, level, rank } = req.query;
+    const { page, limit, search, level, rank, sort, status, view } = req.query;
     const data = await gamificationHelper.getGlobalLeaderboard({
       page,
       limit,
       search,
       level,
       rank,
-      sort: 'points'
+      status,
+      sort: sort || 'points'
     });
 
     res.render('admin/gamification/students-points', {
@@ -3197,7 +3198,9 @@ router.get('/admin/leaderboard/students', verifyLogin, async (req, res) => {
       currentPage: 'students-points',
       students: data.students,
       pagination: data.pagination,
-      filters: { search, level, rank }
+      kpis: data.kpis,
+      viewMode: view || 'card',
+      filters: { search, level, rank, sort: sort || 'points', status, view }
     });
   } catch (err) {
     logger.error('Students & Points error:', err.message);
