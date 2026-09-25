@@ -14,7 +14,7 @@ const getFromStr = () => {
     return `${name} <${email.replace(/^"(.*)"$/, '$1').trim()}>`;
 };
 
-const LMS_URL = process.env.LMS_LOGIN_URL || 'https://beta.zeitnahacademy.com/login';
+const LMS_URL = process.env.LMS_LOGIN_URL || 'https://zeitnahacademy.com/login';
 const LOGO_HTML = `
 <div style="text-align: center; margin-bottom: 30px;">
     <div style="
