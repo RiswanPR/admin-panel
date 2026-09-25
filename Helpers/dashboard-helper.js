@@ -70,7 +70,11 @@ module.exports = {
                 recentStudents,
                 totalTeachers,
                 totalLearningSpaces,
-                rawAuditLogs
+                rawAuditLogs,
+                pendingBusinessesCount,
+                activeJobsCount,
+                openModerationCount,
+                totalMatchesCount
             ] = await Promise.all([
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments().catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ status: true }).catch(() => 0),
@@ -91,7 +95,11 @@ module.exports = {
                     .find({})
                     .sort({ createdAt: -1 })
                     .limit(8)
-                    .toArray().catch(() => [])
+                    .toArray().catch(() => []),
+                dbConn.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending'] } }).catch(() => 0),
+                dbConn.collection(collection.OPPORTUNITIES_COLLECTION).countDocuments({ status: { $in: ['PUBLISHED', 'published'] } }).catch(() => 0),
+                dbConn.collection(collection.MODERATION_REPORTS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending', 'open'] } }).catch(() => 0),
+                dbConn.collection(collection.JOB_TALENT_MATCHES_COLLECTION).countDocuments({}).catch(() => 0)
             ]);
 
             const totalRevenue = revenueResult[0]?.total || 0;
@@ -232,7 +240,13 @@ module.exports = {
                 },
                 enrollmentChart,
                 revenueChart,
-                recentActivity
+                recentActivity,
+                governance: {
+                    pendingBusinesses: pendingBusinessesCount,
+                    activeJobs: activeJobsCount,
+                    openModeration: openModerationCount,
+                    totalMatches: totalMatchesCount
+                }
             };
 
         } catch (err) {

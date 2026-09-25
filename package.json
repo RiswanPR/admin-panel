@@ -6,6 +6,7 @@
     "start": "node ./bin/www",
     "dev": "nodemon bin/www",
     "test": "node test/username.test.js",
+    "test:governance": "node test/admin-governance.test.js",
     "test:gamification": "node test/gamification.test.js",
     "gamification:migrate": "node scripts/gamification-migrate.js",
     "usernames:health": "node scripts/usernames-health.js",

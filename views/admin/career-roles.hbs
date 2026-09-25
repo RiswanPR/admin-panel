@@ -1,0 +1,116 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Roles</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-id-card-clip me-2"></i> Infrastructure Role Taxonomy
+            </h2>
+            <small class="text-muted">Canonical infrastructure engineering role definitions, discipline hierarchy, and competency requirements.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/skills" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-diagram-project me-1"></i> Skill Graph
+            </a>
+            <a href="/admin/career-intelligence/pathways" class="btn btn-outline-success px-3">
+                <i class="fa-solid fa-route me-1"></i> Career Pathways
+            </a>
+            <a href="/admin/career-intelligence/market" class="btn btn-outline-info px-3">
+                <i class="fa-solid fa-chart-pie me-1"></i> Market Intelligence
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/career-intelligence/roles" style="border-radius: 16px;">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-5 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search roles by title, skill, or keyword...">
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-3 col-6">
+                <select class="form-select" name="discipline" onchange="this.form.submit()">
+                    <option value="all">All Disciplines</option>
+                    {{#each disciplines}}
+                    <option value="{{this}}" {{#ifEquals ../filters.discipline this}}selected{{/ifEquals}}>{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="tier" onchange="this.form.submit()">
+                    <option value="all">All Experience Tiers</option>
+                    <option value="ENTRY_LEVEL" {{#ifEquals filters.tier 'ENTRY_LEVEL'}}selected{{/ifEquals}}>Entry Level</option>
+                    <option value="MID_LEVEL" {{#ifEquals filters.tier 'MID_LEVEL'}}selected{{/ifEquals}}>Mid Level</option>
+                    <option value="SENIOR_LEVEL" {{#ifEquals filters.tier 'SENIOR_LEVEL'}}selected{{/ifEquals}}>Senior Level</option>
+                    <option value="EXECUTIVE" {{#ifEquals filters.tier 'EXECUTIVE'}}selected{{/ifEquals}}>Executive</option>
+                </select>
+            </div>
+            <div class="col-lg-1 text-end">
+                <a href="/admin/career-intelligence/roles" class="btn btn-outline-secondary w-100"><i class="fa-solid fa-rotate"></i></a>
+            </div>
+        </div>
+    </form>
+
+    <!-- ROLES LISTING -->
+    <div class="row g-4">
+        {{#each roles}}
+        <div class="col-lg-6">
+            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h4 class="fw-bold m-0" style="color:var(--text);">{{title}}</h4>
+                        <span class="text-primary small fw-semibold">{{discipline}} &bull; {{experienceRange}}</span>
+                    </div>
+                    <span class="badge bg-light text-dark border">{{tier}}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong class="small text-muted d-block mb-1">Target Sectors:</strong>
+                    <div class="d-flex flex-wrap gap-1">
+                        {{#each sectors}}
+                        <span class="badge bg-success-subtle text-success small">{{this}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong class="small text-muted d-block mb-1">Required Competencies:</strong>
+                    <div class="d-flex flex-wrap gap-1">
+                        {{#each requiredSkills}}
+                        <span class="badge bg-light text-primary border small">{{this}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong class="small text-muted d-block mb-1">Required Software:</strong>
+                    <div class="d-flex flex-wrap gap-1">
+                        {{#each requiredSoftware}}
+                        <span class="badge bg-info bg-opacity-10 text-info border small">{{this}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+
+                {{#if pathway}}
+                <div class="p-2 rounded bg-light border mt-auto small">
+                    <span class="text-muted d-block" style="font-size: 11px;">Ladder Predecessors &rarr; Successors:</span>
+                    <span class="text-secondary">{{#each pathway.predecessors}}{{this}}, {{/each}}</span>
+                    <strong class="text-dark">&rarr; {{title}} &rarr;</strong>
+                    <span class="text-primary">{{#each pathway.successors}}{{this}} {{/each}}</span>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+</div>

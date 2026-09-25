@@ -1,0 +1,68 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Pathways</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-route me-2"></i> Career Pathways &amp; Progression Ladders
+            </h2>
+            <small class="text-muted">Structured domain career ladders connecting infrastructure roles across experience tiers.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/roles" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-id-card-clip me-1"></i> Roles
+            </a>
+            <a href="/admin/career-intelligence/market" class="btn btn-outline-info px-3">
+                <i class="fa-solid fa-chart-pie me-1"></i> Market Intelligence
+            </a>
+        </div>
+    </div>
+
+    <!-- DISCLAIMER NOTICE (REQ 20) -->
+    <div class="alert alert-light border p-3 mb-4" style="border-radius: 14px;">
+        <i class="fa-solid fa-circle-info text-primary me-2"></i>
+        <strong>Methodological Note:</strong> Career progression pathways depict empirical infrastructure industry trajectories and historical mobility patterns observed across engineering EPC firms. They are not guaranteed individual career outcomes.
+    </div>
+
+    <!-- PATHWAYS LISTING -->
+    <div class="row g-4">
+        {{#each pathways}}
+        <div class="col-lg-6">
+            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-1" style="color:var(--text);"><i class="fa-solid fa-layer-group text-primary me-2"></i> {{trackName}}</h5>
+                <p class="small text-muted mb-4">{{description}}</p>
+
+                <!-- LADDER STEPS -->
+                <div class="d-flex flex-column gap-3">
+                    {{#each steps}}
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #12314c, #1d4e89); font-size: 13px;">
+                            {{tier}}
+                        </div>
+                        <div class="flex-grow-1 p-3 rounded border bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-dark">{{title}}</strong>
+                                <span class="badge bg-white text-primary border small">{{experience}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{#unless @last}}
+                    <div class="text-center text-muted" style="margin-top: -8px; margin-bottom: -8px;">
+                        <i class="fa-solid fa-arrow-down text-primary opacity-50"></i>
+                    </div>
+                    {{/unless}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+</div>

@@ -161,6 +161,118 @@
 
         </div>
 
+        <!-- ZEITNAH NETWORK GOVERNANCE & ECOSYSTEM CONTROL HUB -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="panel-card p-4 border-0 shadow-sm" style="border-radius: 20px; background: linear-gradient(135deg, rgba(18, 49, 76, 0.04), rgba(29, 78, 137, 0.03));">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge px-3 py-2" style="background: rgba(18, 49, 76, 0.9); color: #fff; border-radius: 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-network-wired me-1"></i> Ecosystem Governance
+                            </span>
+                            <h5 class="fw-bold m-0" style="color:var(--text);">Network &amp; Operations Control</h5>
+                        </div>
+                        <a href="/admin/analytics" class="btn btn-sm btn-outline-primary px-3">
+                            <i class="fa-solid fa-chart-column me-1"></i> Multi-Domain Analytics
+                        </a>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Network Users & Profiles -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/network/users" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-users-rays text-primary fs-5"></i>
+                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                    </div>
+                                    <span class="text-muted small d-block">Network Users</span>
+                                    <strong class="text-dark fs-6">Directory &amp; Roles</strong>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Businesses Review -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/businesses" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-building-shield text-warning fs-5"></i>
+                                        {{#if dashboard.governance.pendingBusinesses}}
+                                        <span class="badge bg-danger rounded-pill" style="font-size: 10px;">{{dashboard.governance.pendingBusinesses}} Pending</span>
+                                        {{else}}
+                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                        {{/if}}
+                                    </div>
+                                    <span class="text-muted small d-block">Businesses</span>
+                                    <strong class="text-dark fs-6">Review &amp; Verify</strong>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Jobs Governance -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/jobs" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-briefcase text-success fs-5"></i>
+                                        <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{dashboard.governance.activeJobs}} Active</span>
+                                    </div>
+                                    <span class="text-muted small d-block">Job Governance</span>
+                                    <strong class="text-dark fs-6">Postings &amp; Flags</strong>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- AI Matching Engine -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/ai/matching" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-brain text-info fs-5"></i>
+                                        <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">Live</span>
+                                    </div>
+                                    <span class="text-muted small d-block">AI Matching</span>
+                                    <strong class="text-dark fs-6">Health &amp; Telemetry</strong>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Career Intelligence -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/career-intelligence/roles" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-route text-primary fs-5"></i>
+                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                    </div>
+                                    <span class="text-muted small d-block">Career Intel</span>
+                                    <strong class="text-dark fs-6">Taxonomy &amp; Market</strong>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Moderation Queue -->
+                        <div class="col-xl-2 col-md-4 col-6">
+                            <a href="/admin/moderation" class="text-decoration-none">
+                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <i class="fa-solid fa-shield-halved text-danger fs-5"></i>
+                                        {{#if dashboard.governance.openModeration}}
+                                        <span class="badge bg-danger rounded-pill" style="font-size: 10px;">{{dashboard.governance.openModeration}} Open</span>
+                                        {{else}}
+                                        <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">Clean</span>
+                                        {{/if}}
+                                    </div>
+                                    <span class="text-muted small d-block">Moderation</span>
+                                    <strong class="text-dark fs-6">Incident Reports</strong>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ANALYTICS CHARTS SECTION -->
         <div class="row mb-4">

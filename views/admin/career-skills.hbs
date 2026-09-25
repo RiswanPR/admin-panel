@@ -1,0 +1,173 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Skill Graph</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-diagram-project me-2"></i> Skill Graph &amp; Canonical Aliases
+            </h2>
+            <small class="text-muted">Standardize skills, software synonyms, and taxonomy aliases to prevent fragmented duplicate entities.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/roles" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-id-card-clip me-1"></i> Role Taxonomy
+            </a>
+            <a href="/admin/career-intelligence/pathways" class="btn btn-outline-success px-3">
+                <i class="fa-solid fa-route me-1"></i> Career Pathways
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/career-intelligence/skills" style="border-radius: 16px;">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-6 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search skills, software, or aliases (e.g. P6, Revit)...">
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <select class="form-select" name="category" onchange="this.form.submit()">
+                    <option value="all" {{#ifEquals filters.category 'all'}}selected{{/ifEquals}}>All Categories</option>
+                    <option value="Software" {{#ifEquals filters.category 'Software'}}selected{{/ifEquals}}>Engineering Software</option>
+                    <option value="Technical Skill" {{#ifEquals filters.category 'Technical Skill'}}selected{{/ifEquals}}>Technical Skills</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-2 text-end">
+                <a href="/admin/career-intelligence/skills" class="btn btn-outline-secondary w-100"><i class="fa-solid fa-rotate"></i> Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- SKILL GRAPH TABLE -->
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr style="font-size: 12px; text-transform: uppercase;">
+                        <th class="ps-4">Canonical Skill / Tool</th>
+                        <th>Category</th>
+                        <th>Canonical Aliases (Synonyms)</th>
+                        <th>Associated Roles</th>
+                        <th>Domain Sector</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each skills}}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold" style="color:var(--text);">
+                                <i class="fa-solid {{#ifEquals category 'Software'}}fa-laptop-code text-info{{else}}fa-gears text-warning{{/ifEquals}} me-2"></i>
+                                {{name}}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{category}}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each aliases}}
+                                <span class="badge bg-light text-primary border small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1" style="max-width: 260px;">
+                                {{#each relatedRoles}}
+                                <span class="badge bg-light text-secondary border small" style="font-size: 10px;">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </td>
+                        <td class="small text-muted">{{sector}}</td>
+                        <td class="pe-4 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="openAliasModal('{{name}}', '{{#each aliases}}{{this}},{{/each}}')">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Edit Aliases
+                            </button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- EDIT ALIAS MODAL -->
+<div class="modal fade" id="aliasModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-tags text-primary me-2"></i> Manage Canonical Aliases</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="aliasForm" onsubmit="submitAlias(event)">
+                <div class="modal-body py-3">
+                    <p class="small text-muted">Configuring canonical synonyms for <strong id="modalSkillName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="modalSkillInput" name="skillName">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Aliases (Comma-separated)</label>
+                        <textarea class="form-control" id="modalAliasesInput" name="aliases" rows="3" placeholder="P6, Primavera, Oracle P6..." required></textarea>
+                        <span class="text-muted" style="font-size: 11px;">Incoming profile search or CV terms matching these aliases will resolve automatically to this canonical entity.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Aliases</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let aliasModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.bootstrap) {
+        aliasModal = new bootstrap.Modal(document.getElementById('aliasModal'));
+    }
+});
+
+function openAliasModal(skillName, aliasesCsv) {
+    document.getElementById('modalSkillName').innerText = skillName;
+    document.getElementById('modalSkillInput').value = skillName;
+    // Clean up trailing comma
+    const cleaned = aliasesCsv.replace(/,+$/, '').split(',').map(s => s.trim()).filter(Boolean).join(', ');
+    document.getElementById('modalAliasesInput').value = cleaned;
+    aliasModal.show();
+}
+
+async function submitAlias(e) {
+    e.preventDefault();
+    const skillName = document.getElementById('modalSkillInput').value;
+    const aliases = document.getElementById('modalAliasesInput').value;
+
+    try {
+        const res = await fetch('/admin/career-intelligence/skills/alias', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ skillName, aliases })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Aliases Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+</script>

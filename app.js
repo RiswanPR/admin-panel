@@ -14,6 +14,7 @@ const compression = require('compression');
 
 var usersRouter = require('./routes/users');
 var teacherRouter = require('./routes/teacher');
+var adminGovernanceRouter = require('./routes/admin-governance');
 var db = require('./config/connection');
 
 // CRON
@@ -275,12 +276,24 @@ app.engine(
           return 'badge-priority-normal';
         }
         if (type === 'status') {
-          if (value === 'published' || value === 'active') return 'badge-status-active';
-          if (value === 'scheduled') return 'badge-status-scheduled';
-          if (value === 'archived' || value === 'blocked') return 'badge-status-archived';
+          if (['published', 'active', 'approved', 'verified', 'resolved', 'highly_compatible'].includes(value)) return 'badge-status-active';
+          if (['pending', 'under_review', 'reviewed', 'potentially_compatible', 'draft'].includes(value)) return 'badge-status-scheduled';
+          if (['archived', 'blocked', 'rejected', 'suspended', 'closed'].includes(value)) return 'badge-status-archived';
           return 'badge-status-draft';
         }
         return '';
+      },
+      mathRound: function(val) {
+        return Math.round(Number(val) || 0);
+      },
+      upper: function(str) {
+        return String(str || '').toUpperCase();
+      },
+      lower: function(str) {
+        return String(str || '').toLowerCase();
+      },
+      or: function(...args) {
+        return args.slice(0, -1).some(Boolean);
       }
     }
   })
@@ -458,6 +471,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/admin', adminGovernanceRouter);
+app.use('/', adminGovernanceRouter);
 app.use('/', usersRouter);
 app.use('/teacher', teacherRouter);
 

@@ -1,0 +1,346 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/jobs">Jobs</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{job.title}}</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-briefcase me-2"></i> Job Details &amp; Moderation
+            </h2>
+            <small class="text-muted">Inspect posting specifications, infrastructure requirements, application trends, and moderation signals.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/jobs" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Jobs
+            </a>
+            <a href="/admin/ai/job-matches?jobId={{job._id}}" class="btn btn-primary px-3">
+                <i class="fa-solid fa-brain me-1"></i> View AI Matches ({{matchesCount}})
+            </a>
+            {{#ifEquals job.statusNormalized 'PUBLISHED'}}
+            <button class="btn btn-warning px-3" onclick="openUnpublishModal('{{job._id}}', '{{job.title}}')">
+                <i class="fa-solid fa-pause me-1"></i> Unpublish
+            </button>
+            <button class="btn btn-danger px-3" onclick="openCloseModal('{{job._id}}', '{{job.title}}')">
+                <i class="fa-solid fa-lock me-1"></i> Close
+            </button>
+            {{/ifEquals}}
+            {{#ifEquals job.statusNormalized 'CLOSED'}}
+            <button class="btn btn-success px-3" onclick="restoreJob('{{job._id}}', '{{job.title}}')">
+                <i class="fa-solid fa-rotate-left me-1"></i> Restore
+            </button>
+            {{/ifEquals}}
+        </div>
+    </div>
+
+    <!-- MODERATION SIGNALS ALERT -->
+    {{#if moderationSignals.isFlagged}}
+    <div class="alert alert-danger border-0 p-3 mb-4 shadow-sm" style="border-radius: 16px;">
+        <h6 class="fw-bold mb-1"><i class="fa-solid fa-flag text-danger me-2"></i> Administrative Flag Notice</h6>
+        <p class="small mb-0">This posting has been flagged for administrative review: <strong>{{#if job.flaggedReason}}{{job.flaggedReason}}{{else}}Review requested{{/if}}</strong></p>
+    </div>
+    {{/if}}
+
+    <div class="row g-4">
+
+        <!-- LEFT COLUMN: JOB SPECIFICATION -->
+        <div class="col-lg-8">
+
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <span class="badge bg-light text-secondary border mb-2">{{job.discipline}} &bull; {{job.infrastructureSector}}</span>
+                        <h3 class="fw-bold m-0" style="color:var(--text);">{{job.title}}</h3>
+                        <div class="text-muted small mt-1">
+                            Published by <strong>{{business.name}}</strong> &bull; {{formatDate job.publishedAt}}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge {{#ifEquals job.statusNormalized 'PUBLISHED'}}bg-success{{else}}bg-secondary{{/ifEquals}} fs-6 px-3 py-2">
+                            {{job.statusNormalized}}
+                        </span>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
+                <!-- MODERATION CHECKLIST -->
+                <div class="p-3 rounded mb-4 border" style="background: rgba(18, 49, 76, 0.03);">
+                    <h6 class="fw-bold mb-2 small text-uppercase" style="letter-spacing: 0.5px;">Moderation Quality Audit</h6>
+                    <div class="row g-2 small">
+                        <div class="col-md-6">
+                            <i class="fa-solid {{#if moderationSignals.missingDescription}}fa-circle-xmark text-danger{{else}}fa-circle-check text-success{{/if}} me-2"></i>
+                            Comprehensive Job Description
+                        </div>
+                        <div class="col-md-6">
+                            <i class="fa-solid {{#if moderationSignals.noSkillsListed}}fa-circle-xmark text-danger{{else}}fa-circle-check text-success{{/if}} me-2"></i>
+                            Structured Skills Specified
+                        </div>
+                        <div class="col-md-6">
+                            <i class="fa-solid {{#if moderationSignals.noSoftwareListed}}fa-circle-xmark text-danger{{else}}fa-circle-check text-success{{/if}} me-2"></i>
+                            Software Tools Designated
+                        </div>
+                        <div class="col-md-6">
+                            <i class="fa-solid {{#if moderationSignals.isBusinessUnverified}}fa-circle-xmark text-warning{{else}}fa-circle-check text-success{{/if}} me-2"></i>
+                            Verified Organization Status
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-2">Description</h6>
+                <p class="text-muted small mb-4" style="line-height: 1.6;">{{job.description}}</p>
+
+                {{#if job.requirements}}
+                <h6 class="fw-bold mb-2">Requirements &amp; Scope</h6>
+                <p class="text-muted small mb-4" style="line-height: 1.6;">{{job.requirements}}</p>
+                {{/if}}
+
+                <h6 class="fw-bold mb-2">Mandatory &amp; Preferred Skills</h6>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {{#each job.requiredSkills}}
+                    <span class="badge bg-primary bg-opacity-10 text-primary border px-3 py-2"><i class="fa-solid fa-check me-1"></i> {{this}}</span>
+                    {{/each}}
+                    {{#each job.preferredSkills}}
+                    <span class="badge bg-light text-muted border px-3 py-2">{{this}}</span>
+                    {{/each}}
+                </div>
+
+                <h6 class="fw-bold mb-2">Required Software</h6>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {{#each job.requiredSoftware}}
+                    <span class="badge bg-info bg-opacity-10 text-info border px-3 py-2"><i class="fa-solid fa-laptop-code me-1"></i> {{this}}</span>
+                    {{/each}}
+                </div>
+
+                <div class="row g-3 small">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted d-block">Work Mode</span>
+                            <span class="fw-semibold">{{job.workMode}}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted d-block">Experience Level</span>
+                            <span class="fw-semibold">{{job.experienceLevel}} ({{job.minYearsExperience}}–{{job.maxYearsExperience}} yrs)</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted d-block">Location</span>
+                            <span class="fw-semibold">{{#if job.location}}{{job.location}}{{else}}On-site{{/if}}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: PRIVACY-PRESERVING APPLICATION METRICS & BUSINESS -->
+        <div class="col-lg-4">
+
+            <!-- APPLICATION METRICS (PRIVACY PRESERVED: AGGREGATE ONLY) -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-chart-pie me-2 text-primary"></i> Application Funnel</h5>
+                    <span class="badge bg-light text-muted border" style="font-size: 10px;">Aggregated</span>
+                </div>
+                <div class="text-center p-3 bg-light rounded border mb-3">
+                    <h2 class="fw-bold m-0 text-primary">{{applicationStats.total}}</h2>
+                    <span class="text-muted small">Total Applications Received</span>
+                </div>
+                <div class="d-flex flex-column gap-2 small">
+                    <div class="d-flex justify-content-between p-2 rounded bg-light">
+                        <span>Withdrawals:</span>
+                        <strong class="text-muted">{{applicationStats.withdrawals}}</strong>
+                    </div>
+                    <div class="text-muted mt-2" style="font-size: 11px;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Candidate PII is protected. Individual CV credentials and private contact numbers are restricted to authorized recruiters.
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUSINESS CONTEXT -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-building me-2 text-primary"></i> Employer Organization</h5>
+                <h6 class="fw-bold m-0">{{business.name}}</h6>
+                <div class="text-muted small mb-2">@{{business.slug}} &bull; {{business.industry}}</div>
+                <div class="mb-3">
+                    <span class="badge {{#ifEquals business.status 'APPROVED'}}bg-success{{else}}bg-warning text-dark{{/ifEquals}}">
+                        {{business.status}} Organization
+                    </span>
+                </div>
+                <a href="/admin/businesses/{{business._id}}" class="btn btn-sm btn-outline-secondary w-100">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Organization Profile
+                </a>
+            </div>
+
+            <!-- AI MATCH QUICK ACCESS -->
+            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-brain me-2 text-primary"></i> Talent Match Engine</h5>
+                <p class="small text-muted mb-3">Zeitnah AI has evaluated qualified infrastructure candidates against this job's mandatory requirements.</p>
+                <a href="/admin/ai/job-matches?jobId={{job._id}}" class="btn btn-outline-primary w-100">
+                    <i class="fa-solid fa-users-viewfinder me-1"></i> Inspect {{matchesCount}} Match Records
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- UNPUBLISH MODAL -->
+<div class="modal fade" id="unpublishJobModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-pause me-2"></i> Unpublish Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="unpublishJobForm" onsubmit="submitUnpublish(event)">
+                <div class="modal-body py-3">
+                    <p class="small text-muted">Unpublishing <strong id="unpublishJobTitle" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="unpublishJobId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Reason for Unpublishing</label>
+                        <textarea class="form-control" id="unpublishReason" rows="3" placeholder="Provide reason..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning text-dark">Confirm Unpublish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CLOSE MODAL -->
+<div class="modal fade" id="closeJobModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-lock me-2"></i> Close Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="closeJobForm" onsubmit="submitClose(event)">
+                <div class="modal-body py-3">
+                    <p class="small text-muted">Mark <strong id="closeJobTitle" class="text-dark"></strong> as closed.</p>
+                    <input type="hidden" id="closeJobId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Reason (Optional)</label>
+                        <input type="text" class="form-control" id="closeReason" placeholder="Position filled, project completed...">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Confirm Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let unpublishModal, closeModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.bootstrap) {
+        unpublishModal = new bootstrap.Modal(document.getElementById('unpublishJobModal'));
+        closeModal = new bootstrap.Modal(document.getElementById('closeJobModal'));
+    }
+});
+
+function openUnpublishModal(id, title) {
+    document.getElementById('unpublishJobId').value = id;
+    document.getElementById('unpublishJobTitle').innerText = title;
+    unpublishModal.show();
+}
+
+async function submitUnpublish(e) {
+    e.preventDefault();
+    const id = document.getElementById('unpublishJobId').value;
+    const reason = document.getElementById('unpublishReason').value;
+
+    try {
+        const res = await fetch(`/admin/jobs/${id}/unpublish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Unpublished', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+
+function openCloseModal(id, title) {
+    document.getElementById('closeJobId').value = id;
+    document.getElementById('closeJobTitle').innerText = title;
+    closeModal.show();
+}
+
+async function submitClose(e) {
+    e.preventDefault();
+    const id = document.getElementById('closeJobId').value;
+    const reason = document.getElementById('closeReason').value;
+
+    try {
+        const res = await fetch(`/admin/jobs/${id}/close`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Closed', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+
+async function restoreJob(id, title) {
+    const confirmRes = await Swal.fire({
+        title: 'Restore Job?',
+        text: `Restore ${title} to active publication?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        confirmButtonText: 'Yes, Restore'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/admin/jobs/${id}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Restored', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+</script>

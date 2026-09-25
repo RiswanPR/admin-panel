@@ -1,0 +1,173 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/network/users">Network</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Taxonomy</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-sitemap me-2"></i> Infrastructure Taxonomy Administration
+            </h2>
+            <small class="text-muted">Canonical infrastructure engineering taxonomy shared with Zeitnah User Panel and matching engines.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/skills" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-diagram-project me-1"></i> Skill Graph &amp; Aliases
+            </a>
+            <a href="/admin/network/users" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-users me-1"></i> User Directory
+            </a>
+        </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <ul class="nav nav-pills mb-4 gap-2" id="taxonomyTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active px-4 py-2" id="disciplines-tab" data-bs-toggle="pill" data-bs-target="#disciplines" type="button" role="tab">
+                <i class="fa-solid fa-compass-drafting me-1"></i> Disciplines ({{disciplines.length}})
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link px-4 py-2" id="sectors-tab" data-bs-toggle="pill" data-bs-target="#sectors" type="button" role="tab">
+                <i class="fa-solid fa-mountain-city me-1"></i> Infrastructure Sectors ({{sectors.length}})
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link px-4 py-2" id="roles-tab" data-bs-toggle="pill" data-bs-target="#roles" type="button" role="tab">
+                <i class="fa-solid fa-id-card-clip me-1"></i> Roles ({{roles.length}})
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link px-4 py-2" id="skills-tab" data-bs-toggle="pill" data-bs-target="#skills" type="button" role="tab">
+                <i class="fa-solid fa-screwdriver-wrench me-1"></i> Skills &amp; Software ({{skills.length}})
+            </button>
+        </li>
+    </ul>
+
+    <!-- TAB CONTENTS -->
+    <div class="tab-content" id="taxonomyContent">
+
+        <!-- DISCIPLINES TAB -->
+        <div class="tab-pane fade show active" id="disciplines" role="tabpanel">
+            <div class="row g-4">
+                {{#each disciplines}}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card h-100 p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(18, 49, 76, 0.08); width: 48px; height: 48px;">
+                                <i class="fa-solid fa-layer-group text-primary fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold m-0" style="color:var(--text);">{{this}}</h6>
+                        </div>
+                        <p class="small text-muted mb-0">Canonical engineering engineering discipline recognized across profiles, jobs, and recommendation systems.</p>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- SECTORS TAB -->
+        <div class="tab-pane fade" id="sectors" role="tabpanel">
+            <div class="row g-4">
+                {{#each sectors}}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card h-100 p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(25, 135, 84, 0.1); width: 48px; height: 48px;">
+                                <i class="fa-solid fa-building-columns text-success fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold m-0" style="color:var(--text);">{{this}}</h6>
+                        </div>
+                        <p class="small text-muted mb-0">Core infrastructure domain sector used for organization industry taxonomy and job categorization.</p>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- ROLES TAB -->
+        <div class="tab-pane fade" id="roles" role="tabpanel">
+            <div class="row g-4">
+                {{#each roles}}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold m-0" style="color:var(--text);">{{title}}</h5>
+                            <span class="badge bg-light text-dark border">{{tier}}</span>
+                        </div>
+                        <div class="small text-primary mb-2">{{discipline}} &bull; {{experienceRange}}</div>
+                        <div class="mb-3">
+                            <strong class="small d-block text-muted mb-1">Required Skills:</strong>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each requiredSkills}}
+                                <span class="badge bg-light text-secondary border small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+                        <div>
+                            <strong class="small d-block text-muted mb-1">Required Software:</strong>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each requiredSoftware}}
+                                <span class="badge bg-info bg-opacity-10 text-primary border small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- SKILLS & SOFTWARE TAB -->
+        <div class="tab-pane fade" id="skills" role="tabpanel">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr style="font-size: 12px; text-transform: uppercase;">
+                                <th class="ps-4">Skill / Software</th>
+                                <th>Category</th>
+                                <th>Domain Sector</th>
+                                <th>Recognized Aliases</th>
+                                <th>Related Roles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each skills}}
+                            <tr>
+                                <td class="ps-4 fw-bold" style="color:var(--text);">
+                                    <i class="fa-solid {{#ifEquals category 'Software'}}fa-laptop-code text-info{{else}}fa-gears text-warning{{/ifEquals}} me-2"></i>
+                                    {{name}}
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{category}}</span></td>
+                                <td class="small text-muted">{{sector}}</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {{#each aliases}}
+                                        <span class="badge bg-light text-muted border small">{{this}}</span>
+                                        {{/each}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {{#each relatedRoles}}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border small">{{this}}</span>
+                                        {{/each}}
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,199 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/ai/matching">AI Matching</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Configuration</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-sliders me-2"></i> Matching Weight Configuration
+            </h2>
+            <small class="text-muted">Version-controlled matching dimensions governing talent recommendation compatibility calculation.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/ai/matching" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Matching Health
+            </a>
+        </div>
+    </div>
+
+    <!-- CONFIGURATION STATUS BANNER -->
+    <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 16px; background: rgba(18, 49, 76, 0.04);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2 bg-white shadow-sm">
+                    <i class="fa-solid fa-code-branch text-primary fs-5"></i>
+                </div>
+                <div>
+                    <span class="text-muted small d-block">Current Active Policy</span>
+                    <strong class="text-dark fs-6">{{config.version}}</strong>
+                </div>
+            </div>
+            <div class="text-end small text-muted">
+                <div>Last Modified: <strong>{{formatDateTime config.lastUpdated}}</strong></div>
+                <div>Updated By: <strong>{{config.updatedBy}}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- CONFIG FORM -->
+        <div class="col-lg-8">
+            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-scale-balanced me-2 text-primary"></i> Scoring Dimension Weights</h5>
+                <p class="text-muted small mb-4">
+                    Weights represent the relative importance of each dimension when computing multi-factor candidate compatibility scores (0–100%).
+                </p>
+
+                <form id="weightsForm" onsubmit="submitWeights(event)">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Role Similarity Weight (%)</label>
+                            <input type="number" class="form-control" name="roleWeight" value="{{config.weights.roleWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">Target infrastructure role &amp; title hierarchy match</span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Technical Skills Weight (%)</label>
+                            <input type="number" class="form-control" name="skillWeight" value="{{config.weights.skillWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">Mandatory &amp; preferred civil engineering skills match</span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Infrastructure Sector Weight (%)</label>
+                            <input type="number" class="form-control" name="sectorWeight" value="{{config.weights.sectorWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">Domain alignment (e.g. Highways, Metros, Bridges)</span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Engineering Software Weight (%)</label>
+                            <input type="number" class="form-control" name="softwareWeight" value="{{config.weights.softwareWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">AutoCAD, Primavera P6, Revit, Civil 3D proficiency</span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Years of Experience Weight (%)</label>
+                            <input type="number" class="form-control" name="experienceWeight" value="{{config.weights.experienceWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">Years of proven field &amp; office infrastructure experience</span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Infrastructure Projects Weight (%)</label>
+                            <input type="number" class="form-control" name="projectWeight" value="{{config.weights.projectWeight}}" min="0" max="100" required>
+                            <span class="text-muted" style="font-size: 11px;">Documented project case studies and portfolio works</span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Geographic Location (%)</label>
+                            <input type="number" class="form-control" name="locationWeight" value="{{config.weights.locationWeight}}" min="0" max="100" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Certifications Weight (%)</label>
+                            <input type="number" class="form-control" name="certificationWeight" value="{{config.weights.certificationWeight}}" min="0" max="100" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Career Preference (%)</label>
+                            <input type="number" class="form-control" name="careerPreferenceWeight" value="{{config.weights.careerPreferenceWeight}}" min="0" max="100" required>
+                        </div>
+
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reset Defaults
+                        </button>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Versioned Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: GOVERNANCE NOTES -->
+        <div class="col-lg-4">
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-shield-halved text-success me-2"></i> Safety &amp; Validation Policy</h6>
+                <ul class="small text-muted ps-3 mb-0" style="line-height: 1.8;">
+                    <li>Every configuration change increments the active policy version number.</li>
+                    <li>All mutations are recorded with a full audit before/after snapshot.</li>
+                    <li>Weights are validated server-side to prevent non-numeric or out-of-bounds parameters.</li>
+                    <li>Previous versions remain archived in MongoDB settings history.</li>
+                </ul>
+            </div>
+
+            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <h6 class="fw-bold mb-2"><i class="fa-solid fa-microchip text-primary me-2"></i> Engine Compatibility</h6>
+                <p class="small text-muted mb-0">Changes take effect immediately on next recommendation request and match generation cycle. No server restart required.</p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const DEFAULT_WEIGHTS = {
+    roleWeight: 20,
+    skillWeight: 25,
+    sectorWeight: 15,
+    softwareWeight: 15,
+    experienceWeight: 10,
+    projectWeight: 5,
+    locationWeight: 5,
+    certificationWeight: 3,
+    careerPreferenceWeight: 2
+};
+
+function resetToDefaults() {
+    for (const [key, val] of Object.entries(DEFAULT_WEIGHTS)) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) input.value = val;
+    }
+}
+
+async function submitWeights(e) {
+    e.preventDefault();
+    const form = document.getElementById('weightsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    const confirmRes = await Swal.fire({
+        title: 'Update Matching Weights?',
+        text: 'This will publish a new configuration version and recalculate talent matching rankings.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        confirmButtonText: 'Yes, Publish Version'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch('/admin/ai/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Weights Published', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Configuration Error', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+</script>

@@ -77,6 +77,25 @@ const ensureIndexes = async (db) => {
     [collection.LEARNING_SPACE_MEMBERS_COLLECTION, { spaceId: 1, status: 1 }],
     [collection.COMMUNITY_FOLLOWERS_COLLECTION, { userId: 1, followerId: 1 }, { unique: true }],
     [collection.COMMUNITY_FOLLOWERS_COLLECTION, { followerId: 1 }],
+    // Zeitnah Network Ecosystem Indexes
+    [collection.ORGANIZATIONS_COLLECTION, { status: 1, createdAt: -1 }],
+    [collection.ORGANIZATIONS_COLLECTION, { slug: 1 }, { unique: true, sparse: true }],
+    [collection.ORGANIZATIONS_COLLECTION, { createdBy: 1 }],
+    [collection.ORGANIZATION_MEMBERSHIPS_COLLECTION, { organizationId: 1, userId: 1 }, { unique: true, sparse: true }],
+    [collection.OPPORTUNITIES_COLLECTION, { status: 1, createdAt: -1 }],
+    [collection.OPPORTUNITIES_COLLECTION, { organizationId: 1, status: 1 }],
+    [collection.OPPORTUNITIES_COLLECTION, { discipline: 1, infrastructureSector: 1 }],
+    [collection.JOB_APPLICATIONS_COLLECTION, { jobId: 1, status: 1, createdAt: -1 }],
+    [collection.JOB_APPLICATIONS_COLLECTION, { candidateId: 1 }],
+    [collection.JOB_TALENT_MATCHES_COLLECTION, { jobId: 1, score: -1 }],
+    [collection.JOB_TALENT_MATCHES_COLLECTION, { candidateUserId: 1 }],
+    [collection.USER_JOB_RECOMMENDATIONS_COLLECTION, { userId: 1, compatibilityScore: -1 }],
+    [collection.USER_JOB_RECOMMENDATIONS_COLLECTION, { jobId: 1 }],
+    [collection.SKILLS_COLLECTION, { slug: 1 }, { unique: true, sparse: true }],
+    [collection.SKILLS_COLLECTION, { category: 1 }],
+    [collection.INFRASTRUCTURE_MARKET_SNAPSHOTS_COLLECTION, { snapshotDate: -1 }],
+    [collection.MODERATION_REPORTS_COLLECTION, { status: 1, targetType: 1, createdAt: -1 }],
+    [collection.MODERATION_REPORTS_COLLECTION, { reporterId: 1 }],
   ];
 
   await Promise.allSettled(

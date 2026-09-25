@@ -1,0 +1,114 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/ai/matching">AI Matching</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Talent → Job Recommendations</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Talent → Job Recommendations Telemetry
+            </h2>
+            <small class="text-muted">Diagnose recommendations surfaced to infrastructure candidates, compatibility algorithms, and surfaced opportunity reasons.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/ai/matching" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Matching Dashboard
+            </a>
+            <a href="/admin/ai/job-matches" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-user-check me-1"></i> Job → Talent Matches
+            </a>
+        </div>
+    </div>
+
+    <!-- RECOMMENDATIONS TABLE -->
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr style="font-size: 12px; text-transform: uppercase;">
+                        <th class="ps-4">Recommended Job</th>
+                        <th>Sector &amp; Discipline</th>
+                        <th>Location</th>
+                        <th>Score</th>
+                        <th>Recommendation Basis &amp; Reasons</th>
+                        <th>Identified Gaps</th>
+                        <th>Engine</th>
+                        <th class="pe-4 text-end">Generated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#if records.length}}
+                    {{#each records}}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold text-primary">{{jobTitle}}</div>
+                            <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{category}}</span>
+                        </td>
+                        <td>
+                            <div class="small fw-semibold">{{jobSector}}</div>
+                            <div class="text-muted" style="font-size: 11px;">{{jobDiscipline}}</div>
+                        </td>
+                        <td class="small text-muted">{{jobLocation}}</td>
+                        <td>
+                            <h4 class="fw-bold m-0 text-success">{{score}}%</h4>
+                        </td>
+                        <td>
+                            {{#if matchReasons.length}}
+                            <div class="small text-dark mb-1">
+                                <i class="fa-solid fa-check text-success me-1"></i> {{matchReasons.[0]}}
+                            </div>
+                            {{/if}}
+                            {{#if recommendationTypes.length}}
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each recommendationTypes}}
+                                <span class="badge bg-light text-muted border small" style="font-size: 10px;">{{this}}</span>
+                                {{/each}}
+                            </div>
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{#if gapReasons.length}}
+                            <div class="small text-muted">
+                                <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> {{gapReasons.[0]}}
+                            </div>
+                            {{else}}
+                            <span class="text-success small"><i class="fa-solid fa-circle-check me-1"></i> No major gaps</span>
+                            {{/if}}
+                        </td>
+                        <td class="small text-muted">{{modelVersion}}</td>
+                        <td class="pe-4 text-end small text-muted">{{formatDate calculatedAt}}</td>
+                    </tr>
+                    {{/each}}
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-wand-magic fa-3x mb-3 text-secondary opacity-50"></i>
+                            <p class="m-0">No candidate recommendation telemetry records found.</p>
+                        </td>
+                    </tr>
+                    {{/if}}
+                </tbody>
+            </table>
+        </div>
+
+        {{#if (gt totalPages 1)}}
+        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
+            <span class="small text-muted">Page {{page}} of {{totalPages}} ({{total}} recommendations)</span>
+            <div class="d-flex gap-2">
+                {{#if (gt page 1)}}
+                <a href="/admin/ai/talent-recommendations?page={{dec page}}" class="btn btn-sm btn-outline-secondary">Previous</a>
+                {{/if}}
+                {{#if (lt page totalPages)}}
+                <a href="/admin/ai/talent-recommendations?page={{inc page}}" class="btn btn-sm btn-outline-secondary">Next</a>
+                {{/if}}
+            </div>
+        </div>
+        {{/if}}
+    </div>
+
+</div>

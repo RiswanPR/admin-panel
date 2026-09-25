@@ -1,0 +1,108 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Career Assistant Telemetry</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-comments me-2"></i> Career Assistant Operational Telemetry
+            </h2>
+            <small class="text-muted">Operational health, latency, topic clusters, and safety fallback telemetry for Zeitnah AI Career Assistant.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/market" class="btn btn-outline-info px-3">
+                <i class="fa-solid fa-chart-pie me-1"></i> Market Intelligence
+            </a>
+            <a href="/admin/ai/matching" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-brain me-1"></i> AI Matching Health
+            </a>
+        </div>
+    </div>
+
+    <!-- PRIVACY GUARD NOTICE (REQ 22) -->
+    <div class="alert alert-info border-0 p-3 mb-4 shadow-sm" style="border-radius: 16px;">
+        <i class="fa-solid fa-user-shield me-2 text-primary"></i>
+        <strong>Privacy-Controlled Telemetry:</strong> In compliance with Zeitnah user privacy principles, private candidate conversation transcripts and chat histories are not exposed. Telemetry reflects system-level performance, latency, and topic cluster frequencies.
+    </div>
+
+    <!-- METRICS ROW -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Conversations</small>
+                    <h2>{{telemetry.totalConversations}}</h2>
+                </div>
+                <i class="fa-solid fa-comments stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-blue">
+                <div>
+                    <small>Guidance Inquiries</small>
+                    <h2>{{telemetry.totalRequests}}</h2>
+                </div>
+                <i class="fa-solid fa-message stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Successful Responses</small>
+                    <h2>{{telemetry.successfulAdviceCount}}</h2>
+                </div>
+                <i class="fa-solid fa-check-double stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Average Latency</small>
+                    <h2>{{telemetry.averageLatencyMs}}ms</h2>
+                </div>
+                <i class="fa-solid fa-stopwatch stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP CONSULTED CAREER DOMAINS -->
+    <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-simple text-primary me-2"></i> Top Inquired Career Trajectories &amp; Pivots</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle small mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Advisory Subject Area</th>
+                        <th>Consultation Frequency</th>
+                        <th class="text-end pe-4">Domain Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each telemetry.topConsultedTopics}}
+                    <tr>
+                        <td class="ps-4 fw-bold" style="color:var(--text);">
+                            <i class="fa-solid fa-compass me-2 text-primary"></i> {{topic}}
+                        </td>
+                        <td>
+                            <strong class="text-primary">{{inquiries}}</strong> student / professional inquiries
+                        </td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-light text-dark border">Infrastructure Career Roadmap</span>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
