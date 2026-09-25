@@ -75,38 +75,39 @@
         </div>
     </div>
 
-    <!-- TABS -->
+    <!-- TABS (PRESERVES VIEW STATE) -->
     <ul class="nav nav-tabs mb-4 border-bottom" style="font-size: 14px; font-weight: 600;">
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=all">
+            <a class="nav-link {{#ifEquals tab 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=all&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 All ({{stats.total}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'published'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=published">
+            <a class="nav-link {{#ifEquals tab 'published'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=published&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Published ({{stats.published}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'draft'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=draft">
+            <a class="nav-link {{#ifEquals tab 'draft'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=draft&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Draft ({{stats.draft}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'closed'}}active text-secondary{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=closed">
+            <a class="nav-link {{#ifEquals tab 'closed'}}active text-secondary{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=closed&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Closed ({{stats.closed}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'flagged'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=flagged">
+            <a class="nav-link {{#ifEquals tab 'flagged'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/jobs?tab=flagged&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Flagged ({{stats.flagged}})
             </a>
         </li>
     </ul>
 
     <!-- FILTER TOOLBAR -->
-    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/jobs" id="jobFilterForm" style="border-radius: 16px;">
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/jobs" id="jobFilterForm" style="border-radius: 16px;">
         <input type="hidden" name="tab" value="{{tab}}">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
         <div class="row g-2 align-items-center">
             <div class="col-lg-4 col-md-6">
                 <div class="input-group">
@@ -136,125 +137,233 @@
         </div>
     </form>
 
-    <!-- JOBS TABLE -->
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr style="font-size: 12px; text-transform: uppercase;">
-                        <th class="ps-4">Job Title</th>
-                        <th>Business</th>
-                        <th>Discipline</th>
-                        <th>Sector</th>
-                        <th>Experience</th>
-                        <th>Location / Mode</th>
-                        <th>Status</th>
-                        <th>Published</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#if records.length}}
-                    {{#each records}}
-                    <tr>
-                        <td class="ps-4">
-                            <a href="/admin/jobs/{{_id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
-                                {{title}}
-                            </a>
-                            <div class="text-muted" style="font-size: 11px;">
-                                {{#if minYearsExperience}}{{minYearsExperience}}–{{maxYearsExperience}} yrs{{else}}Entry level{{/if}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small fw-semibold">{{businessName}}</div>
-                            <span class="badge {{#ifEquals businessStatus 'APPROVED'}}bg-success-subtle text-success{{else}}bg-warning-subtle text-warning{{/ifEquals}}" style="font-size: 10px;">
-                                {{businessStatus}}
-                            </span>
-                        </td>
-                        <td class="small text-muted">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</td>
-                        <td class="small text-muted">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}—{{/if}}</td>
-                        <td class="small text-muted">{{experienceLevel}}</td>
-                        <td class="small text-muted">
-                            {{#if location}}{{location}}{{else}}Remote{{/if}} ({{workMode}})
-                        </td>
-                        <td>
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="jobs" total=total itemLabel="jobs" viewMode=viewMode}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="jobsCardView" data-section="jobs">
+        <div class="row g-3">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card">
+                    <div class="admin-card-header">
+                        <span class="badge {{#ifEquals businessStatus 'APPROVED'}}bg-success-subtle text-success{{else}}bg-warning-subtle text-warning{{/ifEquals}} border" style="font-size: 11px;">
+                            {{businessName}}
+                        </span>
+                        <div>
                             {{#ifEquals statusNormalized 'PUBLISHED'}}
-                            <span class="badge bg-success">Published</span>
+                            <span class="admin-badge admin-badge-published">Published</span>
                             {{else}}
                             {{#ifEquals statusNormalized 'DRAFT'}}
-                            <span class="badge bg-warning text-dark">Draft</span>
+                            <span class="admin-badge admin-badge-draft">Draft</span>
                             {{else}}
                             {{#ifEquals statusNormalized 'CLOSED'}}
-                            <span class="badge bg-secondary">Closed</span>
+                            <span class="admin-badge admin-badge-closed">Closed</span>
                             {{else}}
-                            <span class="badge bg-dark">{{statusNormalized}}</span>
+                            <span class="admin-badge admin-badge-neutral">{{statusNormalized}}</span>
                             {{/ifEquals}}
                             {{/ifEquals}}
                             {{/ifEquals}}
-
                             {{#if isFlagged}}
-                            <span class="badge bg-danger ms-1" title="Flagged"><i class="fa-solid fa-flag"></i></span>
+                            <span class="admin-badge admin-badge-flagged ms-1" title="Flagged"><i class="fa-solid fa-flag"></i></span>
                             {{/if}}
-                        </td>
-                        <td class="small text-muted">{{formatDate publishedAt}}</td>
-                        <td class="text-end pe-4">
-                            <div class="btn-group btn-group-sm">
-                                <a href="/admin/jobs/{{_id}}" class="btn btn-outline-secondary" title="View Job Detail">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                <a href="/admin/ai/job-matches?jobId={{_id}}" class="btn btn-outline-info" title="Inspect AI Matches">
-                                    <i class="fa-solid fa-brain"></i>
-                                </a>
-                                {{#ifEquals statusNormalized 'PUBLISHED'}}
-                                <button type="button" class="btn btn-outline-warning" onclick="openUnpublishModal('{{_id}}', '{{title}}')" title="Unpublish">
-                                    <i class="fa-solid fa-pause"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" onclick="openCloseModal('{{_id}}', '{{title}}')" title="Close">
-                                    <i class="fa-solid fa-lock"></i>
-                                </button>
-                                {{/ifEquals}}
-                                {{#ifEquals statusNormalized 'CLOSED'}}
-                                <button type="button" class="btn btn-outline-success" onclick="restoreJob('{{_id}}', '{{title}}')" title="Restore">
-                                    <i class="fa-solid fa-rotate-left"></i>
-                                </button>
-                                {{/ifEquals}}
-                                <button type="button" class="btn btn-outline-danger" onclick="openFlagModal('{{_id}}', '{{title}}')" title="Flag for Review">
-                                    <i class="fa-solid fa-flag"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {{/each}}
-                    {{else}}
-                    <tr>
-                        <td colspan="9" class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-briefcase fa-3x mb-3 text-secondary opacity-50"></i>
-                            <p class="m-0">No job postings found matching current filters.</p>
-                        </td>
-                    </tr>
-                    {{/if}}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </div>
 
-        {{#if (gt totalPages 1)}}
-        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
-            <span class="small text-muted">Page {{page}} of {{totalPages}} ({{total}} total jobs)</span>
-            <div class="d-flex gap-2">
-                {{#if (gt page 1)}}
-                <a href="/admin/jobs?tab={{tab}}&page={{dec page}}&search={{filters.search}}&discipline={{filters.discipline}}&sector={{filters.sector}}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-chevron-left me-1"></i> Previous
-                </a>
-                {{/if}}
-                {{#if (lt page totalPages)}}
-                <a href="/admin/jobs?tab={{tab}}&page={{inc page}}&search={{filters.search}}&discipline={{filters.discipline}}&sector={{filters.sector}}" class="btn btn-sm btn-outline-secondary">
-                    Next <i class="fa-solid fa-chevron-right ms-1"></i>
-                </a>
-                {{/if}}
+                    <div class="admin-card-body">
+                        <h4 class="admin-card-title">
+                            <a href="/admin/jobs/{{_id}}" class="text-decoration-none" style="color:var(--text);">{{title}}</a>
+                        </h4>
+                        <div class="admin-card-subtitle text-truncate">
+                            <i class="fa-solid fa-layer-group me-1"></i> {{#if discipline}}{{discipline}}{{else}}General{{/if}} • {{#if infrastructureSector}}{{infrastructureSector}}{{else}}Infrastructure{{/if}}
+                        </div>
+
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-briefcase"></i>
+                                <span>{{#if minYearsExperience}}{{minYearsExperience}}–{{maxYearsExperience}} yrs{{else}}Experience: {{experienceLevel}}{{/if}}</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span class="text-truncate">{{#if location}}{{location}}{{else}}Remote{{/if}} ({{workMode}})</span>
+                            </div>
+                            {{#if applicantsCount}}
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-users"></i>
+                                <span>{{applicantsCount}} Applications</span>
+                            </div>
+                            {{/if}}
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Published {{formatDate publishedAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card-footer">
+                        <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary" title="View Job Detail">
+                            <i class="fa-solid fa-eye me-1"></i> View
+                        </a>
+                        <a href="/admin/ai/job-matches?jobId={{_id}}" class="btn btn-sm btn-outline-info" title="Inspect AI Matches">
+                            <i class="fa-solid fa-brain me-1"></i> Matches
+                        </a>
+                        {{#ifEquals statusNormalized 'PUBLISHED'}}
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="openUnpublishModal('{{_id}}', '{{title}}')" title="Unpublish">
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="openCloseModal('{{_id}}', '{{title}}')" title="Close">
+                            <i class="fa-solid fa-lock"></i>
+                        </button>
+                        {{/ifEquals}}
+                        {{#ifEquals statusNormalized 'CLOSED'}}
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="restoreJob('{{_id}}', '{{title}}', this)" title="Restore">
+                            <i class="fa-solid fa-rotate-left"></i> Restore
+                        </button>
+                        {{/ifEquals}}
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="openFlagModal('{{_id}}', '{{title}}')" title="Flag for Review">
+                            <i class="fa-solid fa-flag"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div class="admin-empty-state-title">No Job Postings Found</div>
+                    <p class="admin-empty-state-desc">There are currently no job opportunities matching the selected filters or status.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="jobsTableView" data-section="jobs">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-4">Job Title</th>
+                            <th>Business</th>
+                            <th>Discipline</th>
+                            <th>Sector</th>
+                            <th>Experience</th>
+                            <th>Location / Mode</th>
+                            <th>Status</th>
+                            <th>Published</th>
+                            <th class="text-end pe-4" style="min-width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-4">
+                                <a href="/admin/jobs/{{_id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
+                                    {{title}}
+                                </a>
+                                <div class="text-muted" style="font-size: 11px;">
+                                    {{#if minYearsExperience}}{{minYearsExperience}}–{{maxYearsExperience}} yrs{{else}}Entry level{{/if}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">{{businessName}}</div>
+                                <span class="badge {{#ifEquals businessStatus 'APPROVED'}}bg-success-subtle text-success{{else}}bg-warning-subtle text-warning{{/ifEquals}}" style="font-size: 10px;">
+                                    {{businessStatus}}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</td>
+                            <td class="small text-muted">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}—{{/if}}</td>
+                            <td class="small text-muted">{{experienceLevel}}</td>
+                            <td class="small text-muted">
+                                {{#if location}}{{location}}{{else}}Remote{{/if}} ({{workMode}})
+                            </td>
+                            <td>
+                                {{#ifEquals statusNormalized 'PUBLISHED'}}
+                                <span class="admin-badge admin-badge-published">Published</span>
+                                {{else}}
+                                {{#ifEquals statusNormalized 'DRAFT'}}
+                                <span class="admin-badge admin-badge-draft">Draft</span>
+                                {{else}}
+                                {{#ifEquals statusNormalized 'CLOSED'}}
+                                <span class="admin-badge admin-badge-closed">Closed</span>
+                                {{else}}
+                                <span class="admin-badge admin-badge-neutral">{{statusNormalized}}</span>
+                                {{/ifEquals}}
+                                {{/ifEquals}}
+                                {{/ifEquals}}
+
+                                {{#if isFlagged}}
+                                <span class="admin-badge admin-badge-flagged ms-1" title="Flagged"><i class="fa-solid fa-flag"></i></span>
+                                {{/if}}
+                            </td>
+                            <td class="small text-muted">{{formatDate publishedAt}}</td>
+                            <td class="text-end pe-4">
+                                <div class="table-actions">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary" title="View Job Detail">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    <a href="/admin/ai/job-matches?jobId={{_id}}" class="btn btn-sm btn-outline-info" title="Inspect AI Matches">
+                                        <i class="fa-solid fa-brain"></i>
+                                    </a>
+                                    {{#ifEquals statusNormalized 'PUBLISHED'}}
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="openUnpublishModal('{{_id}}', '{{title}}')" title="Unpublish">
+                                        <i class="fa-solid fa-pause"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openCloseModal('{{_id}}', '{{title}}')" title="Close">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </button>
+                                    {{/ifEquals}}
+                                    {{#ifEquals statusNormalized 'CLOSED'}}
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="restoreJob('{{_id}}', '{{title}}', this)" title="Restore">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                    {{/ifEquals}}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openFlagModal('{{_id}}', '{{title}}')" title="Flag for Review">
+                                        <i class="fa-solid fa-flag"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-briefcase fa-3x mb-3 text-secondary opacity-50"></i>
+                                <p class="m-0">No job postings found matching current filters.</p>
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {{/if}}
     </div>
+
+    <!-- PAGINATION (PRESERVES VIEW STATE) -->
+    {{#if (gt totalPages 1)}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-1 mt-3">
+        <span class="small text-muted">Page {{page}} of {{totalPages}} ({{total}} total jobs)</span>
+        <div class="d-flex gap-2">
+            {{#if (gt page 1)}}
+            <a href="/admin/jobs?tab={{tab}}&page={{dec page}}&search={{filters.search}}&discipline={{filters.discipline}}&sector={{filters.sector}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-chevron-left me-1"></i> Previous
+            </a>
+            {{/if}}
+            {{#if (lt page totalPages)}}
+            <a href="/admin/jobs?tab={{tab}}&page={{inc page}}&search={{filters.search}}&discipline={{filters.discipline}}&sector={{filters.sector}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+            </a>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
 
 </div>
 
@@ -358,6 +467,8 @@ async function submitUnpublish(e) {
     e.preventDefault();
     const id = document.getElementById('unpublishJobId').value;
     const reason = document.getElementById('unpublishReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const resetBtn = window.zeitnahSetSubmitting ? window.zeitnahSetSubmitting(submitBtn, 'Unpublishing...') : () => {};
 
     try {
         const res = await fetch(`/admin/jobs/${id}/unpublish`, {
@@ -370,9 +481,11 @@ async function submitUnpublish(e) {
             Swal.fire({ icon: 'success', title: 'Unpublished', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
@@ -388,6 +501,8 @@ async function submitClose(e) {
     e.preventDefault();
     const id = document.getElementById('closeJobId').value;
     const reason = document.getElementById('closeReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const resetBtn = window.zeitnahSetSubmitting ? window.zeitnahSetSubmitting(submitBtn, 'Closing...') : () => {};
 
     try {
         const res = await fetch(`/admin/jobs/${id}/close`, {
@@ -400,14 +515,16 @@ async function submitClose(e) {
             Swal.fire({ icon: 'success', title: 'Job Closed', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
 
-async function restoreJob(id, title) {
+async function restoreJob(id, title, btn) {
     const confirmRes = await Swal.fire({
         title: 'Restore Job?',
         text: `Restore ${title} to active publication?`,
@@ -417,6 +534,8 @@ async function restoreJob(id, title) {
         confirmButtonText: 'Yes, Restore'
     });
     if (!confirmRes.isConfirmed) return;
+
+    const resetBtn = (window.zeitnahSetSubmitting && btn) ? window.zeitnahSetSubmitting(btn, 'Restoring...') : () => {};
 
     try {
         const res = await fetch(`/admin/jobs/${id}/restore`, {
@@ -428,9 +547,11 @@ async function restoreJob(id, title) {
             Swal.fire({ icon: 'success', title: 'Job Restored', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
@@ -446,6 +567,8 @@ async function submitFlag(e) {
     e.preventDefault();
     const id = document.getElementById('flagJobId').value;
     const reason = document.getElementById('flagReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const resetBtn = window.zeitnahSetSubmitting ? window.zeitnahSetSubmitting(submitBtn, 'Flagging...') : () => {};
 
     try {
         const res = await fetch(`/admin/jobs/${id}/flag`, {
@@ -458,9 +581,11 @@ async function submitFlag(e) {
             Swal.fire({ icon: 'success', title: 'Job Flagged', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }

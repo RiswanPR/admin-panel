@@ -26,7 +26,8 @@
     </div>
 
     <!-- FILTER TOOLBAR -->
-    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/ai/job-matches" style="border-radius: 16px;">
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/ai/job-matches" style="border-radius: 16px;">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
         <div class="row g-2 align-items-center">
             <div class="col-lg-6 col-md-6">
                 <label class="form-label fw-bold small text-muted mb-1">Filter by Job Posting</label>
@@ -52,108 +53,198 @@
         </div>
     </form>
 
-    <!-- MATCH RESULTS TABLE -->
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr style="font-size: 12px; text-transform: uppercase;">
-                        <th class="ps-4">Candidate Profile</th>
-                        <th>Target Job</th>
-                        <th>Compatibility Score</th>
-                        <th>Hard Req Check</th>
-                        <th>Matched Skills / Software</th>
-                        <th>Key Match Reasons &amp; Gaps</th>
-                        <th>Engine</th>
-                        <th class="pe-4 text-end">Evaluated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#if records.length}}
-                    {{#each records}}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="fw-bold" style="color:var(--text);">{{candidateName}}</div>
-                            <div class="text-muted small">@{{candidateUsername}} &bull; {{candidateRole}}</div>
-                            <div class="text-muted" style="font-size: 11px;">{{candidateHeadline}}</div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold small text-primary">{{jobTitle}}</div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <h4 class="fw-bold m-0 {{#if (gt score 80)}text-success{{else}}{{#if (gt score 65)}text-primary{{else}}text-warning{{/if}}{{/if}}">
-                                    {{score}}%
-                                </h4>
-                                <span class="badge bg-light text-dark border small" style="font-size: 10px;">
-                                    {{category}}
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            {{#if passesHardRequirements}}
-                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Passed</span>
-                            {{else}}
-                            <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i> Failed</span>
-                            {{/if}}
-                        </td>
-                        <td>
-                            <div class="d-flex flex-wrap gap-1 mb-1" style="max-width: 200px;">
-                                {{#each matchedSkills}}
-                                <span class="badge bg-light text-primary border small" style="font-size: 10px;">{{this}}</span>
-                                {{/each}}
-                            </div>
-                            <div class="d-flex flex-wrap gap-1" style="max-width: 200px;">
-                                {{#each matchedSoftware}}
-                                <span class="badge bg-info bg-opacity-10 text-info border small" style="font-size: 10px;">{{this}}</span>
-                                {{/each}}
-                            </div>
-                        </td>
-                        <td>
-                            {{#if matchReasons.length}}
-                            <div class="small text-success mb-1">
-                                <i class="fa-solid fa-circle-check me-1"></i> {{matchReasons.[0]}}
-                            </div>
-                            {{/if}}
-                            {{#if gapReasons.length}}
-                            <div class="small text-muted">
-                                <i class="fa-solid fa-circle-info me-1"></i> {{gapReasons.[0]}}
-                            </div>
-                            {{/if}}
-                        </td>
-                        <td class="small text-muted">{{matchingEngineVersion}}</td>
-                        <td class="pe-4 text-end small text-muted">{{formatDate calculatedAt}}</td>
-                    </tr>
-                    {{/each}}
-                    {{else}}
-                    <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-microchip fa-3x mb-3 text-secondary opacity-50"></i>
-                            <p class="m-0">No match records located for current filter query.</p>
-                        </td>
-                    </tr>
-                    {{/if}}
-                </tbody>
-            </table>
-        </div>
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="ai-matches" total=total itemLabel="evaluations" viewMode=viewMode}}
 
-        {{#if (gt totalPages 1)}}
-        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
-            <span class="small text-muted">Showing page {{page}} of {{totalPages}} ({{total}} total match evaluations)</span>
-            <div class="d-flex gap-2">
-                {{#if (gt page 1)}}
-                <a href="/admin/ai/job-matches?jobId={{jobId}}&category={{filters.category}}&page={{dec page}}" class="btn btn-sm btn-outline-secondary">
-                    Previous
-                </a>
-                {{/if}}
-                {{#if (lt page totalPages)}}
-                <a href="/admin/ai/job-matches?jobId={{jobId}}&category={{filters.category}}&page={{inc page}}" class="btn btn-sm btn-outline-secondary">
-                    Next
-                </a>
-                {{/if}}
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="ai-matchesCardView" data-section="ai-matches">
+        <div class="row g-3">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card">
+                    <div class="admin-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge {{#if (gt score 80)}}bg-success{{else}}{{#if (gt score 65)}}bg-primary{{else}}bg-warning text-dark{{/if}}{{/if}} fw-bold">
+                                {{score}}% Compatibility
+                            </span>
+                            <span class="admin-badge admin-badge-neutral small" style="font-size: 10px;">{{category}}</span>
+                        </div>
+                        <div>
+                            {{#if passesHardRequirements}}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle small"><i class="fa-solid fa-check me-1"></i> Passed</span>
+                            {{else}}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small"><i class="fa-solid fa-xmark me-1"></i> Hard Req Failed</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <div class="d-flex align-items-start gap-2 mb-2">
+                            <div class="avatar-circle rounded-circle bg-light border text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="admin-card-title text-truncate mb-0">{{candidateName}}</h4>
+                                <div class="admin-card-subtitle text-truncate">@{{candidateUsername}} • {{candidateRole}}</div>
+                            </div>
+                        </div>
+
+                        <div class="p-2 rounded mb-3 bg-light border" style="font-size: 12px;">
+                            <div class="text-muted small fw-bold text-uppercase" style="font-size: 10px;">Target Job Posting</div>
+                            <div class="fw-semibold text-primary text-truncate">{{jobTitle}}</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="small fw-bold text-muted mb-1" style="font-size: 11px;">Matched Dimensions</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each matchedSkills}}
+                                <span class="badge bg-light text-primary border small" style="font-size: 10px;"><i class="fa-solid fa-check text-success me-1"></i>{{this}}</span>
+                                {{/each}}
+                                {{#each matchedSoftware}}
+                                <span class="badge bg-info-subtle text-info border small" style="font-size: 10px;"><i class="fa-solid fa-check text-success me-1"></i>{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        {{#if gapReasons.length}}
+                        <div class="mt-2 p-2 rounded bg-warning-subtle border border-warning-subtle" style="font-size: 11px;">
+                            <div class="fw-bold text-warning-emphasis mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Compatibility Gaps</div>
+                            <div class="text-secondary text-truncate">{{gapReasons.[0]}}</div>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="admin-card-footer">
+                        <a href="/admin/network/users?search={{candidateUsername}}" class="btn btn-sm btn-outline-secondary" title="View Candidate Profile">
+                            <i class="fa-solid fa-user me-1"></i> Profile
+                        </a>
+                        <span class="small text-muted align-self-center ms-auto" style="font-size: 11px;">
+                            Engine: {{matchingEngineVersion}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div class="admin-empty-state-title">No Match Records Found</div>
+                    <p class="admin-empty-state-desc">There are no diagnostic match records matching the selected job or compatibility tier.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="ai-matchesTableView" data-section="ai-matches">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-4">Candidate Profile</th>
+                            <th>Target Job</th>
+                            <th>Compatibility Score</th>
+                            <th>Hard Req Check</th>
+                            <th>Matched Skills / Software</th>
+                            <th>Key Match Reasons &amp; Gaps</th>
+                            <th>Engine</th>
+                            <th class="pe-4 text-end">Evaluated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold" style="color:var(--text);">{{candidateName}}</div>
+                                <div class="text-muted small">@{{candidateUsername}} &bull; {{candidateRole}}</div>
+                                <div class="text-muted" style="font-size: 11px;">{{candidateHeadline}}</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold small text-primary">{{jobTitle}}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <h4 class="fw-bold m-0 {{#if (gt score 80)}}text-success{{else}}{{#if (gt score 65)}}text-primary{{else}}text-warning{{/if}}{{/if}}">
+                                        {{score}}%
+                                    </h4>
+                                    <span class="badge bg-light text-dark border small" style="font-size: 10px;">
+                                        {{category}}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                {{#if passesHardRequirements}}
+                                <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Passed</span>
+                                {{else}}
+                                <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i> Failed</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1 mb-1" style="max-width: 200px;">
+                                    {{#each matchedSkills}}
+                                    <span class="badge bg-light text-primary border small" style="font-size: 10px;">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                                <div class="d-flex flex-wrap gap-1" style="max-width: 200px;">
+                                    {{#each matchedSoftware}}
+                                    <span class="badge bg-info bg-opacity-10 text-info border small" style="font-size: 10px;">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </td>
+                            <td>
+                                {{#if matchReasons.length}}
+                                <div class="small text-success mb-1">
+                                    <i class="fa-solid fa-circle-check me-1"></i> {{matchReasons.[0]}}
+                                </div>
+                                {{/if}}
+                                {{#if gapReasons.length}}
+                                <div class="small text-muted">
+                                    <i class="fa-solid fa-circle-info me-1"></i> {{gapReasons.[0]}}
+                                </div>
+                                {{/if}}
+                            </td>
+                            <td class="small text-muted">{{matchingEngineVersion}}</td>
+                            <td class="pe-4 text-end small text-muted">{{formatDate calculatedAt}}</td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-microchip fa-3x mb-3 text-secondary opacity-50"></i>
+                                <p class="m-0">No match records located for current filter query.</p>
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {{/if}}
     </div>
+
+    <!-- PAGINATION (PRESERVES VIEW STATE) -->
+    {{#if (gt totalPages 1)}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-1 mt-3">
+        <span class="small text-muted">Showing page {{page}} of {{totalPages}} ({{total}} total match evaluations)</span>
+        <div class="d-flex gap-2">
+            {{#if (gt page 1)}}
+            <a href="/admin/ai/job-matches?jobId={{jobId}}&category={{filters.category}}&page={{dec page}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-chevron-left me-1"></i> Previous
+            </a>
+            {{/if}}
+            {{#if (lt page totalPages)}}
+            <a href="/admin/ai/job-matches?jobId={{jobId}}&category={{filters.category}}&page={{inc page}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+            </a>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
 
 </div>

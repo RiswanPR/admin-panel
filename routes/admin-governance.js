@@ -9,6 +9,7 @@ const moderationHelper = require('../Helpers/moderation-helper');
 const analyticsHelper = require('../Helpers/analytics-helper');
 const networkHelper = require('../Helpers/network-helper');
 const permissionsHelper = require('../Helpers/permissions-helper');
+const { requireCapability } = permissionsHelper;
 
 // Auth middleware
 const verifyLogin = (req, res, next) => {
@@ -37,11 +38,12 @@ const validateObjectIds = (paramNames) => {
   };
 };
 
-// Inject locals for admin navigation
+// Inject locals for admin navigation & view state
 router.use((req, res, next) => {
   res.locals.admins = true;
   res.locals.sessionAdmin = req.session?.admin || null;
   res.locals.isSuperuser = req.session?.admin?.role === 'superuser';
+  res.locals.viewMode = req.query?.view === 'table' ? 'table' : 'card';
   next();
 });
 
@@ -78,7 +80,8 @@ const handleUserDirectory = async (req, res) => {
       totalPages: result.totalPages,
       filters,
       disciplines: careerAdminHelper.INFRASTRUCTURE_DISCIPLINES,
-      sectors: careerAdminHelper.INFRASTRUCTURE_SECTORS
+      sectors: careerAdminHelper.INFRASTRUCTURE_SECTORS,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('User Directory Error:', err.message);
@@ -113,7 +116,7 @@ router.get('/network/users/:id', verifyLogin, validateObjectIds(['id']), async (
 });
 
 // Profile Role Management (Special Educator Protection)
-router.post('/network/users/:id/role', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/network/users/:id/role', verifyLogin, requireCapability('assign_educator'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { role } = req.body;
     if (!role) {
@@ -142,7 +145,7 @@ router.post('/network/users/:id/role', verifyLogin, validateObjectIds(['id']), a
 });
 
 // Profile Verification
-router.post('/network/users/:id/verification', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/network/users/:id/verification', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { status, notes } = req.body;
     const result = await governanceHelper.updateUserVerification(
@@ -178,7 +181,8 @@ router.get('/network/taxonomy', verifyLogin, async (req, res) => {
       disciplines: careerAdminHelper.INFRASTRUCTURE_DISCIPLINES,
       sectors: careerAdminHelper.INFRASTRUCTURE_SECTORS,
       roles,
-      skills
+      skills,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Taxonomy View Error:', err.message);
@@ -207,7 +211,8 @@ router.get('/businesses', verifyLogin, async (req, res) => {
       currentPage: 'businesses',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Businesses' }],
       ...data,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Businesses List Error:', err.message);
@@ -239,7 +244,7 @@ router.get('/businesses/:id', verifyLogin, validateObjectIds(['id']), async (req
 });
 
 // Approve Business
-router.post('/businesses/:id/approve', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/businesses/:id/approve', verifyLogin, requireCapability('approve_businesses'), validateObjectIds(['id']), async (req, res) => {
   try {
     await governanceHelper.approveBusiness(req.params.id, req.session.admin, req);
 
@@ -257,7 +262,7 @@ router.post('/businesses/:id/approve', verifyLogin, validateObjectIds(['id']), a
 });
 
 // Reject Business
-router.post('/businesses/:id/reject', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/businesses/:id/reject', verifyLogin, requireCapability('review_businesses'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { reason } = req.body;
     await governanceHelper.rejectBusiness(req.params.id, reason, req.session.admin, req);
@@ -276,7 +281,7 @@ router.post('/businesses/:id/reject', verifyLogin, validateObjectIds(['id']), as
 });
 
 // Suspend Business
-router.post('/businesses/:id/suspend', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/businesses/:id/suspend', verifyLogin, requireCapability('suspend_businesses'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { reason } = req.body;
     await governanceHelper.suspendBusiness(req.params.id, reason, req.session.admin, req);
@@ -314,7 +319,8 @@ router.get('/jobs', verifyLogin, async (req, res) => {
       ...data,
       filters,
       disciplines: careerAdminHelper.INFRASTRUCTURE_DISCIPLINES,
-      sectors: careerAdminHelper.INFRASTRUCTURE_SECTORS
+      sectors: careerAdminHelper.INFRASTRUCTURE_SECTORS,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Jobs List Error:', err.message);
@@ -346,7 +352,7 @@ router.get('/jobs/:id', verifyLogin, validateObjectIds(['id']), async (req, res)
 });
 
 // Job Actions: Unpublish, Close, Restore, Flag
-router.post('/jobs/:id/unpublish', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/jobs/:id/unpublish', verifyLogin, requireCapability('manage_jobs'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { reason } = req.body;
     await governanceHelper.unpublishJob(req.params.id, reason, req.session.admin, req);
@@ -361,7 +367,7 @@ router.post('/jobs/:id/unpublish', verifyLogin, validateObjectIds(['id']), async
   }
 });
 
-router.post('/jobs/:id/close', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/jobs/:id/close', verifyLogin, requireCapability('manage_jobs'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { reason } = req.body;
     await governanceHelper.closeJob(req.params.id, reason, req.session.admin, req);
@@ -376,7 +382,7 @@ router.post('/jobs/:id/close', verifyLogin, validateObjectIds(['id']), async (re
   }
 });
 
-router.post('/jobs/:id/restore', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/jobs/:id/restore', verifyLogin, requireCapability('manage_jobs'), validateObjectIds(['id']), async (req, res) => {
   try {
     await governanceHelper.restoreJob(req.params.id, req.session.admin, req);
 
@@ -390,7 +396,7 @@ router.post('/jobs/:id/restore', verifyLogin, validateObjectIds(['id']), async (
   }
 });
 
-router.post('/jobs/:id/flag', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/jobs/:id/flag', verifyLogin, requireCapability('moderate_content'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { reason } = req.body;
     await governanceHelper.flagJob(req.params.id, reason, req.session.admin, req);
@@ -461,7 +467,8 @@ router.get('/ai/job-matches', verifyLogin, async (req, res) => {
       jobId,
       jobsList,
       ...matchesData,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Job Talent Matches Error:', err.message);
@@ -485,7 +492,8 @@ router.get('/ai/talent-recommendations', verifyLogin, async (req, res) => {
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'AI Matching', url: '/admin/ai/matching' }, { label: 'Talent → Job Recommendations' }],
       userId,
       ...recsData,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Talent Recommendations Error:', err.message);
@@ -511,7 +519,7 @@ router.get('/ai/config', verifyLogin, async (req, res) => {
   }
 });
 
-router.post('/ai/config', verifyLogin, async (req, res) => {
+router.post('/ai/config', verifyLogin, requireCapability('manage_ai_config'), async (req, res) => {
   try {
     const result = await aiAdminHelper.updateMatchingConfig(req.body, req.session.admin, req);
 
@@ -553,7 +561,8 @@ router.get('/career-intelligence/roles', verifyLogin, async (req, res) => {
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Career Intelligence' }, { label: 'Role Taxonomy' }],
       roles,
       disciplines: careerAdminHelper.INFRASTRUCTURE_DISCIPLINES,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Career Roles Error:', err.message);
@@ -575,7 +584,8 @@ router.get('/career-intelligence/skills', verifyLogin, async (req, res) => {
       currentPage: 'career-skills',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Career Intelligence' }, { label: 'Skill Graph' }],
       skills,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Career Skills Error:', err.message);
@@ -584,7 +594,7 @@ router.get('/career-intelligence/skills', verifyLogin, async (req, res) => {
 });
 
 // Update Canonical Skill Alias
-router.post('/career-intelligence/skills/alias', verifyLogin, async (req, res) => {
+router.post('/career-intelligence/skills/alias', verifyLogin, requireCapability('manage_taxonomy'), async (req, res) => {
   try {
     const { skillName, aliases } = req.body;
     if (!skillName) throw new Error('Skill name is required.');
@@ -612,7 +622,8 @@ router.get('/career-intelligence/pathways', verifyLogin, async (req, res) => {
     res.render('admin/career-pathways', {
       currentPage: 'career-pathways',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Career Intelligence' }, { label: 'Pathways' }],
-      pathways
+      pathways,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Career Pathways Error:', err.message);
@@ -628,7 +639,8 @@ router.get('/career-intelligence/market', verifyLogin, async (req, res) => {
     res.render('admin/career-market', {
       currentPage: 'career-market',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Career Intelligence' }, { label: 'Market Data' }],
-      market
+      market,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Market Intelligence Error:', err.message);
@@ -673,7 +685,8 @@ router.get('/moderation', verifyLogin, async (req, res) => {
       currentPage: 'moderation',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Moderation Center' }],
       ...data,
-      filters
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Moderation Center Error:', err.message);
@@ -681,7 +694,7 @@ router.get('/moderation', verifyLogin, async (req, res) => {
   }
 });
 
-router.post('/moderation/reports/:id/resolve', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/moderation/reports/:id/resolve', verifyLogin, requireCapability('moderate_content'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { status, moderatorNotes, actionTaken } = req.body;
     await moderationHelper.updateReportStatus(
@@ -712,7 +725,8 @@ router.get('/analytics', verifyLogin, async (req, res) => {
     res.render('admin/analytics', {
       currentPage: 'analytics',
       breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Platform Analytics' }],
-      analytics
+      analytics,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.error('Analytics Dashboard Error:', err.message);

@@ -75,27 +75,27 @@
     <!-- TABS -->
     <ul class="nav nav-tabs mb-4 border-bottom" style="font-size: 14px; font-weight: 600;">
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=all">
+            <a class="nav-link {{#ifEquals tab 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=all&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 All ({{stats.total}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'pending'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=pending">
+            <a class="nav-link {{#ifEquals tab 'pending'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=pending&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Pending Review ({{stats.pending}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'approved'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=approved">
+            <a class="nav-link {{#ifEquals tab 'approved'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=approved&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Approved ({{stats.approved}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'rejected'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=rejected">
+            <a class="nav-link {{#ifEquals tab 'rejected'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=rejected&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Rejected ({{stats.rejected}})
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{#ifEquals tab 'suspended'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=suspended">
+            <a class="nav-link {{#ifEquals tab 'suspended'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=suspended&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
                 Suspended ({{stats.suspended}})
             </a>
         </li>
@@ -104,6 +104,7 @@
     <!-- FILTER TOOLBAR -->
     <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/businesses" id="businessFilterForm" style="border-radius: 16px;">
         <input type="hidden" name="tab" value="{{tab}}">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="admin-view-input">
         <div class="row g-2 align-items-center">
             <div class="col-lg-6 col-md-8">
                 <div class="input-group">
@@ -120,124 +121,230 @@
         </div>
     </form>
 
-    <!-- BUSINESSES TABLE -->
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr style="font-size: 12px; text-transform: uppercase;">
-                        <th class="ps-4">Business</th>
-                        <th>Owner</th>
-                        <th>Role</th>
-                        <th>Industry</th>
-                        <th>Specialization</th>
-                        <th>Location</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#if records.length}}
-                    {{#each records}}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="rounded p-2 d-flex align-items-center justify-content-center border" style="width: 44px; height: 44px; background: #fff;">
-                                    <i class="fa-solid fa-building text-primary"></i>
-                                </div>
-                                <div>
-                                    <a href="/admin/businesses/{{_id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
-                                        {{name}}
-                                    </a>
-                                    <div class="text-muted small">@{{slug}}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small fw-semibold">{{ownerName}}</div>
-                            <div class="text-muted" style="font-size: 11px;">{{ownerEmail}}</div>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">{{ownerRole}}</span>
-                        </td>
-                        <td class="small text-muted">{{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</td>
-                        <td>
-                            {{#if infrastructureSpecializations.length}}
-                            <span class="badge bg-light text-secondary border">{{infrastructureSpecializations.[0]}}</span>
-                            {{else}}
-                            <span class="text-muted small">—</span>
-                            {{/if}}
-                        </td>
-                        <td class="small text-muted">{{#if location}}{{location}}{{else}}—{{/if}}</td>
-                        <td class="small text-muted">{{formatDate createdAt}}</td>
-                        <td>
-                            {{#ifEquals statusNormalized 'APPROVED'}}
-                            <span class="badge bg-success"><i class="fa-solid fa-check-circle me-1"></i> Approved</span>
-                            {{else}}
-                            {{#ifEquals statusNormalized 'PENDING'}}
-                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Pending</span>
-                            {{else}}
-                            {{#ifEquals statusNormalized 'REJECTED'}}
-                            <span class="badge bg-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Rejected</span>
-                            {{else}}
-                            <span class="badge bg-dark"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
-                            {{/ifEquals}}
-                            {{/ifEquals}}
-                            {{/ifEquals}}
-                        </td>
-                        <td class="text-end pe-4">
-                            <div class="btn-group btn-group-sm">
-                                <a href="/admin/businesses/{{_id}}" class="btn btn-outline-secondary" title="Review Detail">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                {{#ifEquals statusNormalized 'PENDING'}}
-                                <button type="button" class="btn btn-outline-success" onclick="approveBusiness('{{_id}}', '{{name}}')" title="Approve">
-                                    <i class="fa-solid fa-check"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" onclick="openRejectModal('{{_id}}', '{{name}}')" title="Reject">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                                {{/ifEquals}}
-                                {{#ifEquals statusNormalized 'APPROVED'}}
-                                <button type="button" class="btn btn-outline-warning" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend">
-                                    <i class="fa-solid fa-pause"></i>
-                                </button>
-                                {{/ifEquals}}
-                            </div>
-                        </td>
-                    </tr>
-                    {{/each}}
-                    {{else}}
-                    <tr>
-                        <td colspan="9" class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-building-circle-check fa-3x mb-3 text-secondary opacity-50"></i>
-                            <p class="m-0">No business entities found in this status view.</p>
-                        </td>
-                    </tr>
-                    {{/if}}
-                </tbody>
-            </table>
-        </div>
+    <!-- REUSABLE VIEW TOGGLE -->
+    {{> admin/view-toggle section="businesses" itemLabel="businesses"}}
 
-        {{#if (gt totalPages 1)}}
-        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
-            <span class="small text-muted">Page {{page}} of {{totalPages}} ({{total}} total businesses)</span>
-            <div class="d-flex gap-2">
-                {{#if (gt page 1)}}
-                <a href="/admin/businesses?tab={{tab}}&page={{dec page}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-chevron-left me-1"></i> Previous
-                </a>
-                {{/if}}
-                {{#if (lt page totalPages)}}
-                <a href="/admin/businesses?tab={{tab}}&page={{inc page}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
-                    Next <i class="fa-solid fa-chevron-right ms-1"></i>
-                </a>
-                {{/if}}
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="businessesCardView" data-section="businesses">
+        <div class="row g-4 mb-4">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6">
+                <div class="admin-governance-card">
+                    <div class="admin-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            {{#ifEquals statusNormalized 'APPROVED'}}
+                            <span class="admin-badge admin-badge-success"><i class="fa-solid fa-circle-check"></i> Approved</span>
+                            {{else ifEquals statusNormalized 'PENDING'}}
+                            <span class="admin-badge admin-badge-warning"><i class="fa-solid fa-clock"></i> Pending Review</span>
+                            {{else ifEquals statusNormalized 'REJECTED'}}
+                            <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+                            {{else}}
+                            <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-ban"></i> Suspended</span>
+                            {{/ifEquals}}
+                        </div>
+                        <span class="badge bg-light text-muted border small">{{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</span>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="rounded-3 p-2 d-flex align-items-center justify-content-center border shadow-xs" style="width: 48px; height: 48px; background: var(--surface);">
+                                <i class="fa-solid fa-building text-primary fs-5"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="admin-card-title text-truncate">
+                                    <a href="/admin/businesses/{{_id}}" class="text-decoration-none" style="color:var(--text);">{{name}}</a>
+                                </h4>
+                                <div class="admin-card-subtitle text-truncate">@{{slug}}</div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <span class="text-truncate">Owner: <strong>{{ownerName}}</strong> ({{ownerRole}})</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-envelope"></i>
+                                <span class="text-truncate">{{ownerEmail}}</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span class="text-truncate">{{#if location}}{{location}}{{else}}Location not specified{{/if}}</span>
+                            </div>
+                            {{#if infrastructureSpecializations.length}}
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {{#each infrastructureSpecializations}}
+                                    <span class="badge bg-light text-secondary border small" style="font-size: 10px;">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                            {{/if}}
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Submitted {{formatDate createdAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card-footer">
+                        <a href="/admin/businesses/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Review Detail">
+                            <i class="fa-solid fa-eye me-1"></i> Review
+                        </a>
+                        {{#ifEquals statusNormalized 'PENDING'}}
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="approveBusiness('{{_id}}', '{{name}}', this)" title="Approve Business">
+                            <i class="fa-solid fa-check me-1"></i> Approve
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="openRejectModal('{{_id}}', '{{name}}')" title="Reject Application">
+                            <i class="fa-solid fa-xmark me-1"></i> Reject
+                        </button>
+                        {{/ifEquals}}
+                        {{#ifEquals statusNormalized 'APPROVED'}}
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend Entity">
+                            <i class="fa-solid fa-pause me-1"></i> Suspend
+                        </button>
+                        {{/ifEquals}}
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon">
+                        <i class="fa-solid fa-building-circle-check"></i>
+                    </div>
+                    <div class="admin-empty-state-title">No Businesses In This Queue</div>
+                    <p class="admin-empty-state-desc">There are currently no infrastructure business entities matching the selected criteria.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="businessesTableView" data-section="businesses">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-4">Business</th>
+                            <th>Owner</th>
+                            <th>Role</th>
+                            <th>Industry</th>
+                            <th>Specialization</th>
+                            <th>Location</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4" style="min-width: 140px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded p-2 d-flex align-items-center justify-content-center border shadow-xs" style="width: 44px; height: 44px; background: var(--surface);">
+                                        <i class="fa-solid fa-building text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <a href="/admin/businesses/{{_id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
+                                            {{name}}
+                                        </a>
+                                        <div class="text-muted small">@{{slug}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">{{ownerName}}</div>
+                                <div class="text-muted" style="font-size: 11px;">{{ownerEmail}}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ownerRole}}</span>
+                            </td>
+                            <td class="small text-muted">{{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</td>
+                            <td>
+                                {{#if infrastructureSpecializations.length}}
+                                <span class="badge bg-light text-secondary border">{{infrastructureSpecializations.[0]}}</span>
+                                {{else}}
+                                <span class="text-muted small">—</span>
+                                {{/if}}
+                            </td>
+                            <td class="small text-muted">{{#if location}}{{location}}{{else}}—{{/if}}</td>
+                            <td class="small text-muted">{{formatDate createdAt}}</td>
+                            <td>
+                                {{#ifEquals statusNormalized 'APPROVED'}}
+                                <span class="admin-badge admin-badge-success"><i class="fa-solid fa-check-circle me-1"></i> Approved</span>
+                                {{else}}
+                                {{#ifEquals statusNormalized 'PENDING'}}
+                                <span class="admin-badge admin-badge-warning"><i class="fa-solid fa-clock me-1"></i> Pending</span>
+                                {{else}}
+                                {{#ifEquals statusNormalized 'REJECTED'}}
+                                <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Rejected</span>
+                                {{else}}
+                                <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
+                                {{/ifEquals}}
+                                {{/ifEquals}}
+                                {{/ifEquals}}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="table-actions">
+                                    <a href="/admin/businesses/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Review Detail">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {{#ifEquals statusNormalized 'PENDING'}}
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="approveBusiness('{{_id}}', '{{name}}', this)" title="Approve">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openRejectModal('{{_id}}', '{{name}}')" title="Reject">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                    {{/ifEquals}}
+                                    {{#ifEquals statusNormalized 'APPROVED'}}
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend">
+                                        <i class="fa-solid fa-pause"></i>
+                                    </button>
+                                    {{/ifEquals}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-building-circle-check fa-3x mb-3 text-secondary opacity-50"></i>
+                                <p class="m-0">No business entities found in this status view.</p>
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {{/if}}
     </div>
+
+    <!-- PAGINATION (PRESERVES VIEW STATE) -->
+    {{#if (gt totalPages 1)}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-1 mt-3">
+        <span class="small text-muted">Page {{page}} of {{totalPages}} ({{total}} total businesses)</span>
+        <div class="d-flex gap-2">
+            {{#if (gt page 1)}}
+            <a href="/admin/businesses?tab={{tab}}&page={{dec page}}&search={{filters.search}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-chevron-left me-1"></i> Previous
+            </a>
+            {{/if}}
+            {{#if (lt page totalPages)}}
+            <a href="/admin/businesses?tab={{tab}}&page={{inc page}}&search={{filters.search}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+            </a>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
 
 </div>
 
@@ -303,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-async function approveBusiness(id, name) {
+async function approveBusiness(id, name, btn) {
     const confirmRes = await Swal.fire({
         title: 'Approve Business?',
         text: `Approve and verify ${name} on Zeitnah Network?`,
@@ -313,6 +420,8 @@ async function approveBusiness(id, name) {
         confirmButtonText: 'Yes, Approve'
     });
     if (!confirmRes.isConfirmed) return;
+
+    const resetBtn = (window.zeitnahSetSubmitting && btn) ? window.zeitnahSetSubmitting(btn, 'Approving...') : () => {};
 
     try {
         const res = await fetch(`/admin/businesses/${id}/approve`, {
@@ -324,9 +433,11 @@ async function approveBusiness(id, name) {
             Swal.fire({ icon: 'success', title: 'Approved', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch (e) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     }
 }
@@ -342,6 +453,8 @@ async function submitRejectBusiness(e) {
     e.preventDefault();
     const id = document.getElementById('rejectBusinessId').value;
     const reason = document.getElementById('rejectReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const resetBtn = window.zeitnahSetSubmitting ? window.zeitnahSetSubmitting(submitBtn, 'Rejecting...') : () => {};
 
     try {
         const res = await fetch(`/admin/businesses/${id}/reject`, {
@@ -354,9 +467,11 @@ async function submitRejectBusiness(e) {
             Swal.fire({ icon: 'success', title: 'Rejected', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
@@ -372,6 +487,8 @@ async function submitSuspendBusiness(e) {
     e.preventDefault();
     const id = document.getElementById('suspendBusinessId').value;
     const reason = document.getElementById('suspendReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const resetBtn = window.zeitnahSetSubmitting ? window.zeitnahSetSubmitting(submitBtn, 'Suspending...') : () => {};
 
     try {
         const res = await fetch(`/admin/businesses/${id}/suspend`, {
@@ -384,9 +501,11 @@ async function submitSuspendBusiness(e) {
             Swal.fire({ icon: 'success', title: 'Suspended', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            resetBtn();
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
         }
     } catch(err) {
+        resetBtn();
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }

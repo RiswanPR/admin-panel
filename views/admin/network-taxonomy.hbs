@@ -92,78 +92,170 @@
 
         <!-- ROLES TAB -->
         <div class="tab-pane fade" id="roles" role="tabpanel">
-            <div class="row g-4">
-                {{#each roles}}
-                <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 p-4 border-0 shadow-sm" style="border-radius: 16px;">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="fw-bold m-0" style="color:var(--text);">{{title}}</h5>
-                            <span class="badge bg-light text-dark border">{{tier}}</span>
-                        </div>
-                        <div class="small text-primary mb-2">{{discipline}} &bull; {{experienceRange}}</div>
-                        <div class="mb-3">
-                            <strong class="small d-block text-muted mb-1">Required Skills:</strong>
-                            <div class="d-flex flex-wrap gap-1">
-                                {{#each requiredSkills}}
-                                <span class="badge bg-light text-secondary border small">{{this}}</span>
-                                {{/each}}
+            {{> admin/view-toggle section="taxonomy-roles" total=roles.length itemLabel="roles" viewMode=viewMode}}
+
+            <!-- CARD VIEW (DEFAULT) -->
+            <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="taxonomy-rolesCardView" data-section="taxonomy-roles">
+                <div class="row g-4">
+                    {{#each roles}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold m-0" style="color:var(--text);">{{title}}</h5>
+                                <span class="badge bg-light text-dark border">{{tier}}</span>
                             </div>
-                        </div>
-                        <div>
-                            <strong class="small d-block text-muted mb-1">Required Software:</strong>
-                            <div class="d-flex flex-wrap gap-1">
-                                {{#each requiredSoftware}}
-                                <span class="badge bg-info bg-opacity-10 text-primary border small">{{this}}</span>
-                                {{/each}}
+                            <div class="small text-primary mb-2">{{discipline}} &bull; {{experienceRange}}</div>
+                            <div class="mb-3">
+                                <strong class="small d-block text-muted mb-1" style="font-size: 11px;">Required Skills:</strong>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {{#each requiredSkills}}
+                                    <span class="badge bg-light text-secondary border small">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="small d-block text-muted mb-1" style="font-size: 11px;">Required Software:</strong>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {{#each requiredSoftware}}
+                                    <span class="badge bg-info bg-opacity-10 text-primary border small">{{this}}</span>
+                                    {{/each}}
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {{/each}}
                 </div>
-                {{/each}}
+            </div>
+
+            <!-- TABLE VIEW -->
+            <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="taxonomy-rolesTableView" data-section="taxonomy-roles">
+                <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                    <div class="table-responsive mb-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr style="font-size: 12px; text-transform: uppercase;">
+                                    <th class="ps-4">Role Title</th>
+                                    <th>Discipline</th>
+                                    <th>Tier</th>
+                                    <th>Experience</th>
+                                    <th>Required Skills</th>
+                                    <th class="pe-4 text-end">Required Software</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each roles}}
+                                <tr>
+                                    <td class="ps-4 fw-bold" style="color:var(--text);">{{title}}</td>
+                                    <td><span class="badge bg-light text-primary border">{{discipline}}</span></td>
+                                    <td><span class="badge bg-light text-dark border">{{tier}}</span></td>
+                                    <td class="small text-muted">{{experienceRange}}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1" style="max-width: 250px;">
+                                            {{#each requiredSkills}}
+                                            <span class="badge bg-light text-secondary border small">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex flex-wrap justify-content-end gap-1" style="max-width: 200px; margin-left: auto;">
+                                            {{#each requiredSoftware}}
+                                            <span class="badge bg-info bg-opacity-10 text-primary border small">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- SKILLS & SOFTWARE TAB -->
         <div class="tab-pane fade" id="skills" role="tabpanel">
-            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr style="font-size: 12px; text-transform: uppercase;">
-                                <th class="ps-4">Skill / Software</th>
-                                <th>Category</th>
-                                <th>Domain Sector</th>
-                                <th>Recognized Aliases</th>
-                                <th>Related Roles</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each skills}}
-                            <tr>
-                                <td class="ps-4 fw-bold" style="color:var(--text);">
+            {{> admin/view-toggle section="taxonomy-skills" total=skills.length itemLabel="skills" viewMode=viewMode}}
+
+            <!-- CARD VIEW (DEFAULT) -->
+            <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="taxonomy-skillsCardView" data-section="taxonomy-skills">
+                <div class="row g-3">
+                    {{#each skills}}
+                    <div class="col-xl-4 col-md-6">
+                        <div class="admin-governance-card h-100">
+                            <div class="admin-card-header">
+                                <span class="badge bg-light text-dark border">{{category}}</span>
+                                <span class="small text-muted">{{sector}}</span>
+                            </div>
+                            <div class="admin-card-body">
+                                <h4 class="admin-card-title mb-2">
                                     <i class="fa-solid {{#ifEquals category 'Software'}}fa-laptop-code text-info{{else}}fa-gears text-warning{{/ifEquals}} me-2"></i>
                                     {{name}}
-                                </td>
-                                <td><span class="badge bg-light text-dark border">{{category}}</span></td>
-                                <td class="small text-muted">{{sector}}</td>
-                                <td>
+                                </h4>
+                                <div class="mb-2">
+                                    <strong class="small text-muted d-block mb-1" style="font-size: 11px;">Recognized Aliases:</strong>
                                     <div class="d-flex flex-wrap gap-1">
                                         {{#each aliases}}
                                         <span class="badge bg-light text-muted border small">{{this}}</span>
                                         {{/each}}
                                     </div>
-                                </td>
-                                <td>
+                                </div>
+                                <div>
+                                    <strong class="small text-muted d-block mb-1" style="font-size: 11px;">Related Roles:</strong>
                                     <div class="d-flex flex-wrap gap-1">
                                         {{#each relatedRoles}}
                                         <span class="badge bg-primary bg-opacity-10 text-primary border small">{{this}}</span>
                                         {{/each}}
                                     </div>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+
+            <!-- TABLE VIEW -->
+            <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="taxonomy-skillsTableView" data-section="taxonomy-skills">
+                <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                    <div class="table-responsive mb-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr style="font-size: 12px; text-transform: uppercase;">
+                                    <th class="ps-4">Skill / Software</th>
+                                    <th>Category</th>
+                                    <th>Domain Sector</th>
+                                    <th>Recognized Aliases</th>
+                                    <th class="pe-4 text-end">Related Roles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each skills}}
+                                <tr>
+                                    <td class="ps-4 fw-bold" style="color:var(--text);">
+                                        <i class="fa-solid {{#ifEquals category 'Software'}}fa-laptop-code text-info{{else}}fa-gears text-warning{{/ifEquals}} me-2"></i>
+                                        {{name}}
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">{{category}}</span></td>
+                                    <td class="small text-muted">{{sector}}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {{#each aliases}}
+                                            <span class="badge bg-light text-muted border small">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex flex-wrap justify-content-end gap-1" style="max-width: 250px; margin-left: auto;">
+                                            {{#each relatedRoles}}
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border small">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

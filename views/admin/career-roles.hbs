@@ -29,7 +29,8 @@
     </div>
 
     <!-- FILTER TOOLBAR -->
-    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/career-intelligence/roles" style="border-radius: 16px;">
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/career-intelligence/roles" style="border-radius: 16px;">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
         <div class="row g-2 align-items-center">
             <div class="col-lg-5 col-md-6">
                 <div class="input-group">
@@ -60,57 +61,144 @@
         </div>
     </form>
 
-    <!-- ROLES LISTING -->
-    <div class="row g-4">
-        {{#each roles}}
-        <div class="col-lg-6">
-            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 16px;">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h4 class="fw-bold m-0" style="color:var(--text);">{{title}}</h4>
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="career-roles" total=roles.length itemLabel="roles" viewMode=viewMode}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="career-rolesCardView" data-section="career-roles">
+        <div class="row g-4">
+            {{#if roles.length}}
+            {{#each roles}}
+            <div class="col-lg-6 col-12">
+                <div class="admin-governance-card h-100">
+                    <div class="admin-card-header">
+                        <span class="badge bg-light text-dark border">{{tier}}</span>
                         <span class="text-primary small fw-semibold">{{discipline}} &bull; {{experienceRange}}</span>
                     </div>
-                    <span class="badge bg-light text-dark border">{{tier}}</span>
-                </div>
 
-                <div class="mb-3">
-                    <strong class="small text-muted d-block mb-1">Target Sectors:</strong>
-                    <div class="d-flex flex-wrap gap-1">
-                        {{#each sectors}}
-                        <span class="badge bg-success-subtle text-success small">{{this}}</span>
-                        {{/each}}
+                    <div class="admin-card-body">
+                        <h4 class="admin-card-title mb-2">{{title}}</h4>
+
+                        <div class="mb-3">
+                            <strong class="small text-muted d-block mb-1" style="font-size: 11px;">Target Sectors:</strong>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each sectors}}
+                                <span class="badge bg-success-subtle text-success small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong class="small text-muted d-block mb-1" style="font-size: 11px;">Required Competencies:</strong>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each requiredSkills}}
+                                <span class="badge bg-light text-primary border small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong class="small text-muted d-block mb-1" style="font-size: 11px;">Required Software:</strong>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each requiredSoftware}}
+                                <span class="badge bg-info bg-opacity-10 text-info border small">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        {{#if pathway}}
+                        <div class="p-2 rounded bg-light border mt-auto small">
+                            <span class="text-muted d-block" style="font-size: 11px;">Progression Predecessors &rarr; Successors:</span>
+                            <span class="text-secondary">{{#each pathway.predecessors}}{{this}}, {{/each}}</span>
+                            <strong class="text-dark">&rarr; {{title}} &rarr;</strong>
+                            <span class="text-primary">{{#each pathway.successors}}{{this}} {{/each}}</span>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="admin-card-footer">
+                        <a href="/admin/jobs?discipline={{discipline}}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-briefcase me-1"></i> View Related Jobs
+                        </a>
+                        <span class="badge bg-light text-secondary border small ms-auto">{{experienceRange}}</span>
                     </div>
                 </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon"><i class="fa-solid fa-id-card-clip"></i></div>
+                    <div class="admin-empty-state-title">No Roles Found</div>
+                    <p class="admin-empty-state-desc">No infrastructure role definitions match the selected criteria.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
 
-                <div class="mb-3">
-                    <strong class="small text-muted d-block mb-1">Required Competencies:</strong>
-                    <div class="d-flex flex-wrap gap-1">
-                        {{#each requiredSkills}}
-                        <span class="badge bg-light text-primary border small">{{this}}</span>
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="career-rolesTableView" data-section="career-roles">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-4">Role Title</th>
+                            <th>Discipline</th>
+                            <th>Experience Tier</th>
+                            <th>Experience Range</th>
+                            <th>Target Sectors</th>
+                            <th>Key Software</th>
+                            <th class="pe-4 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if roles.length}}
+                        {{#each roles}}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold" style="color:var(--text);">{{title}}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-primary border">{{discipline}}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{tier}}</span>
+                            </td>
+                            <td class="small text-muted">{{experienceRange}}</td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1" style="max-width: 200px;">
+                                    {{#each sectors}}
+                                    <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1" style="max-width: 200px;">
+                                    {{#each requiredSoftware}}
+                                    <span class="badge bg-info bg-opacity-10 text-info border small" style="font-size: 10px;">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <div class="table-actions">
+                                    <a href="/admin/jobs?discipline={{discipline}}" class="btn btn-sm btn-outline-secondary" title="View Related Jobs">
+                                        <i class="fa-solid fa-briefcase"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
                         {{/each}}
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong class="small text-muted d-block mb-1">Required Software:</strong>
-                    <div class="d-flex flex-wrap gap-1">
-                        {{#each requiredSoftware}}
-                        <span class="badge bg-info bg-opacity-10 text-info border small">{{this}}</span>
-                        {{/each}}
-                    </div>
-                </div>
-
-                {{#if pathway}}
-                <div class="p-2 rounded bg-light border mt-auto small">
-                    <span class="text-muted d-block" style="font-size: 11px;">Ladder Predecessors &rarr; Successors:</span>
-                    <span class="text-secondary">{{#each pathway.predecessors}}{{this}}, {{/each}}</span>
-                    <strong class="text-dark">&rarr; {{title}} &rarr;</strong>
-                    <span class="text-primary">{{#each pathway.successors}}{{this}} {{/each}}</span>
-                </div>
-                {{/if}}
+                        {{else}}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">No roles found matching query.</td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {{/each}}
     </div>
 
 </div>

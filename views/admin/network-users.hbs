@@ -87,6 +87,7 @@
 
     <!-- FILTER TOOLBAR -->
     <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/network/users" id="userFilterForm" style="border-radius: 16px;">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="admin-view-input">
         <div class="row g-2 align-items-center">
             <div class="col-lg-3 col-md-6">
                 <div class="input-group">
@@ -141,114 +142,211 @@
         </div>
     </form>
 
-    <!-- USERS DIRECTORY TABLE -->
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <th class="ps-4">User</th>
-                        <th>Role</th>
-                        <th>Discipline</th>
-                        <th>Sector</th>
-                        <th>Status</th>
-                        <th>Verification</th>
-                        <th>Joined</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#if records.length}}
-                    {{#each records}}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="{{resolveImage profileImage 'student-images'}}" alt="{{name}}" class="rounded-circle" style="width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
-                                <div>
-                                    <a href="/admin/network/users/{{_id}}" class="fw-bold text-decoration-none" style="color: var(--text);">
-                                        {{name}}
-                                    </a>
-                                    <div class="text-muted small">@{{username}}</div>
-                                    <div class="text-muted" style="font-size: 11px;">{{email}}</div>
-                                </div>
+    <!-- REUSABLE VIEW TOGGLE -->
+    {{> admin/view-toggle section="network_users" itemLabel="users"}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="network_usersCardView" data-section="network_users">
+        <div class="row g-4 mb-4">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="admin-governance-card">
+                    <div class="admin-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            {{#if isVerified}}
+                            <span class="admin-badge admin-badge-success" title="Identity Verified">
+                                <i class="fa-solid fa-check"></i> Verified
+                            </span>
+                            {{else}}
+                            <span class="admin-badge admin-badge-neutral">
+                                Unverified
+                            </span>
+                            {{/if}}
+                        </div>
+                        <div>
+                            {{#if isBlocked}}
+                            <span class="admin-badge admin-badge-danger">Blocked</span>
+                            {{else}}
+                            <span class="admin-badge admin-badge-success">Active</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="{{resolveImage profileImage 'student-images'}}" alt="{{name}}" class="rounded-circle shadow-xs" style="width: 52px; height: 52px; object-fit: cover; border: 2px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                            <div class="overflow-hidden">
+                                <h4 class="admin-card-title text-truncate">
+                                    <a href="/admin/network/users/{{_id}}" class="text-decoration-none" style="color:var(--text);">{{name}}</a>
+                                </h4>
+                                <div class="admin-card-subtitle text-truncate">@{{username}}</div>
+                                <div class="text-muted small text-truncate" style="font-size: 11px;">{{email}}</div>
                             </div>
-                        </td>
-                        <td>
+                        </div>
+
+                        <div>
                             {{#ifEquals primaryRole 'EDUCATOR'}}
-                            <span class="badge bg-warning text-dark px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator</span>
+                            <span class="badge badge-educator-protected px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator (Protected)</span>
                             {{else}}
                             <span class="badge bg-light text-dark border px-2 py-1">{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}</span>
                             {{/ifEquals}}
-                        </td>
-                        <td>
-                            <span class="small text-muted">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</span>
-                        </td>
-                        <td>
-                            <span class="small text-muted">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}—{{/if}}</span>
-                        </td>
-                        <td>
-                            {{#if isBlocked}}
-                            <span class="badge bg-danger">Blocked</span>
-                            {{else}}
-                            <span class="badge bg-success">Active</span>
-                            {{/if}}
-                        </td>
-                        <td>
-                            {{#if isVerified}}
-                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Verified</span>
-                            {{else}}
-                            <span class="badge bg-secondary">Unverified</span>
-                            {{/if}}
-                        </td>
-                        <td class="small text-muted">
-                            {{formatDate createdAt}}
-                        </td>
-                        <td class="text-end pe-4">
-                            <div class="btn-group btn-group-sm">
-                                <a href="/admin/network/users/{{_id}}" class="btn btn-outline-secondary" title="Inspect Profile">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}')" title="Assign Protected Role">
-                                    <i class="fa-solid fa-user-tag"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-success" onclick="openVerificationModal('{{_id}}', '{{name}}', '{{#if isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')" title="Update Verification">
-                                    <i class="fa-solid fa-shield-check"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {{/each}}
-                    {{else}}
-                    <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-users fa-3x mb-3 text-secondary opacity-50"></i>
-                            <p class="m-0">No users found matching current filters.</p>
-                        </td>
-                    </tr>
-                    {{/if}}
-                </tbody>
-            </table>
-        </div>
+                        </div>
 
-        <!-- PAGINATION -->
-        {{#if (gt totalPages 1)}}
-        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
-            <span class="small text-muted">Showing page {{page}} of {{totalPages}} ({{total}} total users)</span>
-            <div class="d-flex gap-2">
-                {{#if (gt page 1)}}
-                <a href="/admin/network/users?page={{dec page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-chevron-left me-1"></i> Previous
-                </a>
-                {{/if}}
-                {{#if (lt page totalPages)}}
-                <a href="/admin/network/users?page={{inc page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}" class="btn btn-sm btn-outline-secondary">
-                    Next <i class="fa-solid fa-chevron-right ms-1"></i>
-                </a>
-                {{/if}}
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span class="text-truncate">{{#if discipline}}{{discipline}}{{else}}Discipline not specified{{/if}}</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-mountain-city"></i>
+                                <span class="text-truncate">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}Sector not specified{{/if}}</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Joined {{formatDate createdAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card-footer">
+                        <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile">
+                            <i class="fa-solid fa-eye me-1"></i> View
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}')" title="Assign Protected Role">
+                            <i class="fa-solid fa-user-tag me-1"></i> Role
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openVerificationModal('{{_id}}', '{{name}}', '{{#if isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')" title="Update Verification">
+                            <i class="fa-solid fa-shield-check me-1"></i> Verify
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="admin-empty-state-title">No Users Found</div>
+                    <p class="admin-empty-state-desc">There are no user profiles matching the current filter parameters.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="network_usersTableView" data-section="network_users">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <th class="ps-4">User</th>
+                            <th>Role</th>
+                            <th>Discipline</th>
+                            <th>Sector</th>
+                            <th>Status</th>
+                            <th>Verification</th>
+                            <th>Joined</th>
+                            <th class="text-end pe-4" style="min-width: 140px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="{{resolveImage profileImage 'student-images'}}" alt="{{name}}" class="rounded-circle shadow-xs" style="width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                                    <div>
+                                        <a href="/admin/network/users/{{_id}}" class="fw-bold text-decoration-none" style="color: var(--text);">
+                                            {{name}}
+                                        </a>
+                                        <div class="text-muted small">@{{username}}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{email}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {{#ifEquals primaryRole 'EDUCATOR'}}
+                                <span class="badge badge-educator-protected px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator</span>
+                                {{else}}
+                                <span class="badge bg-light text-dark border px-2 py-1">{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}</span>
+                                {{/ifEquals}}
+                            </td>
+                            <td>
+                                <span class="small text-muted">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</span>
+                            </td>
+                            <td>
+                                <span class="small text-muted">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}—{{/if}}</span>
+                            </td>
+                            <td>
+                                {{#if isBlocked}}
+                                <span class="admin-badge admin-badge-danger">Blocked</span>
+                                {{else}}
+                                <span class="admin-badge admin-badge-success">Active</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if isVerified}}
+                                <span class="admin-badge admin-badge-success"><i class="fa-solid fa-check me-1"></i> Verified</span>
+                                {{else}}
+                                <span class="admin-badge admin-badge-neutral">Unverified</span>
+                                {{/if}}
+                            </td>
+                            <td class="small text-muted">
+                                {{formatDate createdAt}}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="table-actions">
+                                    <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}')" title="Assign Protected Role">
+                                        <i class="fa-solid fa-user-tag"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="openVerificationModal('{{_id}}', '{{name}}', '{{#if isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')" title="Update Verification">
+                                        <i class="fa-solid fa-shield-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-users fa-3x mb-3 text-secondary opacity-50"></i>
+                                <p class="m-0">No users found matching current filters.</p>
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {{/if}}
     </div>
+
+    <!-- PAGINATION (PRESERVES VIEW STATE) -->
+    {{#if (gt totalPages 1)}}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-1 mt-3">
+        <span class="small text-muted">Showing page {{page}} of {{totalPages}} ({{total}} total users)</span>
+        <div class="d-flex gap-2">
+            {{#if (gt page 1)}}
+            <a href="/admin/network/users?page={{dec page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-chevron-left me-1"></i> Previous
+            </a>
+            {{/if}}
+            {{#if (lt page totalPages)}}
+            <a href="/admin/network/users?page={{inc page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+            </a>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
 
 </div>
 
@@ -359,6 +457,7 @@ function checkEducatorWarning(role) {
 
 async function submitRoleChange(e) {
     e.preventDefault();
+    const btn = document.getElementById('saveRoleBtn') || e.target.querySelector('button[type="submit"]');
     const userId = document.getElementById('modalUserId').value;
     const role = document.getElementById('newRoleSelect').value;
 
@@ -374,6 +473,8 @@ async function submitRoleChange(e) {
         if (!confirmRes.isConfirmed) return;
     }
 
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Auditing...');
+
     try {
         const res = await fetch(`/admin/network/users/${userId}/role`, {
             method: 'POST',
@@ -385,9 +486,11 @@ async function submitRoleChange(e) {
             Swal.fire({ icon: 'success', title: 'Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
             Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update role' });
         }
     } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
         Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
     }
 }
@@ -401,9 +504,12 @@ function openVerificationModal(userId, name, currentStatus) {
 
 async function submitVerification(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const userId = document.getElementById('modalVerifUserId').value;
     const status = document.getElementById('verifStatusSelect').value;
     const notes = document.getElementById('verifNotes').value;
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Saving...');
 
     try {
         const res = await fetch(`/admin/network/users/${userId}/verification`, {
@@ -416,9 +522,11 @@ async function submitVerification(e) {
             Swal.fire({ icon: 'success', title: 'Verification Updated', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
             Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update verification' });
         }
     } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
         Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
     }
 }

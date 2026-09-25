@@ -1,0 +1,489 @@
+/**
+ * Zeitnah Admin Panel — Modern Cards & Table Design System
+ * Provides unified, premium styling for Card View, Table View, View Toggle,
+ * Status Badges, Action Columns, and Responsive Layouts across Light and Dark themes.
+ */
+
+/* ==========================================================================
+   1. VIEW TOGGLE COMPONENT
+   ========================================================================== */
+.admin-view-header-bar {
+  min-height: 44px;
+}
+
+.admin-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.admin-view-toggle .view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 38px;
+  min-width: 90px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  user-select: none;
+}
+
+.admin-view-toggle .view-toggle-btn i {
+  font-size: 14px;
+}
+
+.admin-view-toggle .view-toggle-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.5);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .admin-view-toggle .view-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.admin-view-toggle .view-toggle-btn.active {
+  color: var(--btn-primary-text) !important;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2)) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px var(--shadow-brand);
+}
+
+.admin-view-toggle .view-toggle-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   2. CARD VIEW ARCHITECTURE & GRID SYSTEM
+   ========================================================================== */
+.admin-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-governance-card {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.admin-governance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 35px -10px rgba(0, 0, 0, 0.18), var(--shadow-glow);
+  border-color: rgba(159, 213, 178, 0.35) !important;
+}
+
+.admin-card-header {
+  padding: 18px 22px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-card-body {
+  padding: 22px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
+}
+
+.admin-card-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.admin-card-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.admin-card-meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.admin-card-meta-item i {
+  color: var(--muted);
+  width: 16px;
+  text-align: center;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.admin-card-footer {
+  padding: 16px 22px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   3. TABLE VIEW ALIGNMENT & STRUCTURAL PRECISION
+   ========================================================================== */
+.table-responsive {
+  border-radius: 18px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table {
+  width: 100%;
+  margin-bottom: 0;
+  color: var(--text);
+  border-collapse: separate;
+}
+
+.table thead {
+  background: var(--surface-2) !important;
+  vertical-align: middle;
+}
+
+.table thead th {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 16px 18px;
+  vertical-align: middle !important;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+.table tbody tr:hover td {
+  background-color: var(--surface-2) !important;
+}
+
+.table tbody td {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 16px 18px;
+  color: var(--text);
+  vertical-align: middle !important;
+  font-size: 13.5px;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Fixed Minimum Width Action Column & Flex Alignment */
+.table-actions,
+.table td.text-end,
+.table th.text-end {
+  text-align: right;
+  vertical-align: middle !important;
+}
+
+.table-actions,
+.table td .table-action-group,
+.table td .btn-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 130px;
+}
+
+/* Standard button sizes in table actions */
+.table td .btn-sm,
+.table-actions .btn-sm {
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+/* Numeric alignment in tables */
+.table-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Safe text truncation in table cells */
+.cell-truncate {
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   4. STANDARDIZED STATUS BADGES & CHIPS
+   ========================================================================== */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.admin-badge i {
+  font-size: 10px;
+}
+
+/* Status variants */
+.admin-badge-success,
+.badge-status-approved,
+.badge-status-published,
+.badge-status-active,
+.badge-status-verified,
+.badge-status-resolved {
+  background: rgba(25, 135, 84, 0.15) !important;
+  color: #198754 !important;
+  border: 1px solid rgba(25, 135, 84, 0.28) !important;
+}
+
+html[data-theme="dark"] .admin-badge-success,
+html[data-theme="dark"] .badge-status-approved,
+html[data-theme="dark"] .badge-status-published,
+html[data-theme="dark"] .badge-status-active,
+html[data-theme="dark"] .badge-status-verified,
+html[data-theme="dark"] .badge-status-resolved {
+  background: rgba(159, 213, 178, 0.18) !important;
+  color: var(--green) !important;
+  border-color: rgba(159, 213, 178, 0.35) !important;
+}
+
+.admin-badge-warning,
+.badge-status-pending,
+.badge-status-under-review,
+.badge-status-draft {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+html[data-theme="dark"] .admin-badge-warning,
+html[data-theme="dark"] .badge-status-pending,
+html[data-theme="dark"] .badge-status-under-review,
+html[data-theme="dark"] .badge-status-draft {
+  background: rgba(246, 237, 74, 0.14) !important;
+  color: #f6ed4a !important;
+  border-color: rgba(246, 237, 74, 0.3) !important;
+}
+
+.admin-badge-danger,
+.badge-status-rejected,
+.badge-status-suspended,
+.badge-status-flagged,
+.badge-status-blocked {
+  background: rgba(220, 53, 69, 0.14) !important;
+  color: #dc3545 !important;
+  border: 1px solid rgba(220, 53, 69, 0.28) !important;
+}
+
+html[data-theme="dark"] .admin-badge-danger,
+html[data-theme="dark"] .badge-status-rejected,
+html[data-theme="dark"] .badge-status-suspended,
+html[data-theme="dark"] .badge-status-flagged,
+html[data-theme="dark"] .badge-status-blocked {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.admin-badge-neutral,
+.badge-status-closed,
+.badge-status-dismissed,
+.badge-status-unverified {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Protected Educator badge */
+.badge-educator-protected {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.25)) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15);
+}
+
+html[data-theme="dark"] .badge-educator-protected {
+  color: #f6ed4a !important;
+  border-color: rgba(246, 237, 74, 0.4) !important;
+}
+
+/* ==========================================================================
+   5. EMPTY STATES & LOADING INDICATORS
+   ========================================================================== */
+.admin-empty-state {
+  padding: 56px 24px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+}
+
+.admin-empty-state-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.admin-empty-state-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.admin-empty-state-desc {
+  font-size: 13.5px;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   6. DOUBLE-SUBMISSION & SUBMITTING SPINNER
+   ========================================================================== */
+button[disabled],
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.btn-submitting {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.btn-submitting::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  vertical-align: middle;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btnSpinner 0.75s linear infinite;
+}
+
+@keyframes btnSpinner {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   7. RESPONSIVE DESIGN ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 767.98px) {
+  .admin-view-header-bar {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+
+  .admin-view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-view-toggle .view-toggle-btn {
+    flex: 1;
+    min-height: 44px; /* Accessible 44px minimum touch target */
+  }
+
+  .admin-card-footer {
+    justify-content: stretch;
+  }
+
+  .admin-card-footer .btn {
+    flex: 1;
+    min-height: 42px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 12px 14px;
+  }
+}

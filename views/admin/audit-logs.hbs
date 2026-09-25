@@ -58,7 +58,8 @@
         </div>
     </div>
 
-    <form class="toolbar-card mb-4" method="get" action="/audit-logs">
+    <form class="toolbar-card mb-3" method="get" action="/audit-logs">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
         <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="search" value="{{filters.search}}" placeholder="Search logs...">
@@ -93,48 +94,108 @@
         </button>
     </form>
 
-    <div class="table-responsive">
-        <table class="table premium-table align-middle">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Action</th>
-                    <th>Entity</th>
-                    <th>Admin</th>
-                    <th>Status</th>
-                    <th>Message</th>
-                    <th>IP</th>
-                </tr>
-            </thead>
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="audit-logs" total=logs.length itemLabel="logs" viewMode=viewMode}}
 
-            <tbody>
-                {{#each logs}}
-                <tr>
-                    <td class="text-nowrap">
-                        <strong>{{formatDateTime this.createdAt}}</strong>
-                    </td>
-                    <td>
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="audit-logsCardView" data-section="audit-logs">
+        <div class="row g-3">
+            {{#if logs.length}}
+            {{#each logs}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card h-100">
+                    <div class="admin-card-header">
                         <span class="action-chip">{{this.action}}</span>
-                    </td>
-                    <td>
-                        <strong>{{this.entityType}}</strong>
-                        <small class="d-block text-muted">{{this.entityName}}</small>
-                    </td>
-                    <td>
-                        <strong>{{this.admin.name}}</strong>
-                        <small class="d-block text-muted">{{this.admin.email}}</small>
-                    </td>
-                    <td>
                         <span class="status-pill {{#ifEquals this.status "failed"}}blocked-pill{{else}}active-pill{{/ifEquals}}">
                             {{this.status}}
                         </span>
-                    </td>
-                    <td>{{this.message}}</td>
-                    <td class="text-muted">{{this.ipAddress}}</td>
-                </tr>
-                {{/each}}
-            </tbody>
-        </table>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <h4 class="admin-card-title text-truncate mb-1">{{this.entityType}}</h4>
+                        {{#if this.entityName}}
+                        <div class="admin-card-subtitle text-truncate mb-2">{{this.entityName}}</div>
+                        {{/if}}
+
+                        <div class="p-2 rounded bg-light border small mb-3">
+                            <span class="text-secondary">{{this.message}}</span>
+                        </div>
+
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-user-shield"></i>
+                                <span class="text-truncate">Admin: <strong>{{this.admin.name}}</strong> ({{this.admin.email}})</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <span>IP: {{this.ipAddress}}</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{formatDateTime this.createdAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="admin-empty-state-title">No Audit Logs Found</div>
+                    <p class="admin-empty-state-desc">New admin actions and governance changes will appear here.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="audit-logsTableView" data-section="audit-logs">
+        <div class="table-responsive">
+            <table class="table premium-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Admin</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {{#each logs}}
+                    <tr>
+                        <td class="text-nowrap">
+                            <strong>{{formatDateTime this.createdAt}}</strong>
+                        </td>
+                        <td>
+                            <span class="action-chip">{{this.action}}</span>
+                        </td>
+                        <td>
+                            <strong>{{this.entityType}}</strong>
+                            <small class="d-block text-muted">{{this.entityName}}</small>
+                        </td>
+                        <td>
+                            <strong>{{this.admin.name}}</strong>
+                            <small class="d-block text-muted">{{this.admin.email}}</small>
+                        </td>
+                        <td>
+                            <span class="status-pill {{#ifEquals this.status "failed"}}blocked-pill{{else}}active-pill{{/ifEquals}}">
+                                {{this.status}}
+                            </span>
+                        </td>
+                        <td>{{this.message}}</td>
+                        <td class="text-muted">{{this.ipAddress}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {{#unless logs.length}}

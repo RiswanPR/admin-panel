@@ -31,38 +31,82 @@
         <strong>Methodological Note:</strong> Career progression pathways depict empirical infrastructure industry trajectories and historical mobility patterns observed across engineering EPC firms. They are not guaranteed individual career outcomes.
     </div>
 
-    <!-- PATHWAYS LISTING -->
-    <div class="row g-4">
-        {{#each pathways}}
-        <div class="col-lg-6">
-            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 16px;">
-                <h5 class="fw-bold mb-1" style="color:var(--text);"><i class="fa-solid fa-layer-group text-primary me-2"></i> {{trackName}}</h5>
-                <p class="small text-muted mb-4">{{description}}</p>
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="career-pathways" total=pathways.length itemLabel="pathways" viewMode=viewMode}}
 
-                <!-- LADDER STEPS -->
-                <div class="d-flex flex-column gap-3">
-                    {{#each steps}}
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #12314c, #1d4e89); font-size: 13px;">
-                            {{tier}}
-                        </div>
-                        <div class="flex-grow-1 p-3 rounded border bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <strong class="text-dark">{{title}}</strong>
-                                <span class="badge bg-white text-primary border small">{{experience}}</span>
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="career-pathwaysCardView" data-section="career-pathways">
+        <div class="row g-4">
+            {{#each pathways}}
+            <div class="col-lg-6">
+                <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <h5 class="fw-bold mb-1" style="color:var(--text);"><i class="fa-solid fa-layer-group text-primary me-2"></i> {{trackName}}</h5>
+                    <p class="small text-muted mb-4">{{description}}</p>
+
+                    <!-- LADDER STEPS -->
+                    <div class="d-flex flex-column gap-3">
+                        {{#each steps}}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #12314c, #1d4e89); font-size: 13px;">
+                                {{tier}}
+                            </div>
+                            <div class="flex-grow-1 p-3 rounded border bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-dark">{{title}}</strong>
+                                    <span class="badge bg-white text-primary border small">{{experience}}</span>
+                                </div>
                             </div>
                         </div>
+                        {{#unless @last}}
+                        <div class="text-center text-muted" style="margin-top: -8px; margin-bottom: -8px;">
+                            <i class="fa-solid fa-arrow-down text-primary opacity-50"></i>
+                        </div>
+                        {{/unless}}
+                        {{/each}}
                     </div>
-                    {{#unless @last}}
-                    <div class="text-center text-muted" style="margin-top: -8px; margin-bottom: -8px;">
-                        <i class="fa-solid fa-arrow-down text-primary opacity-50"></i>
-                    </div>
-                    {{/unless}}
-                    {{/each}}
                 </div>
             </div>
+            {{/each}}
         </div>
-        {{/each}}
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="career-pathwaysTableView" data-section="career-pathways">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-4">Discipline Track</th>
+                            <th>Description</th>
+                            <th>Ladder Progression Steps</th>
+                            <th class="pe-4 text-end">Steps Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each pathways}}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold" style="color:var(--text);"><i class="fa-solid fa-route text-primary me-2"></i>{{trackName}}</div>
+                            </td>
+                            <td class="small text-muted">{{description}}</td>
+                            <td>
+                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                    {{#each steps}}
+                                    <span class="badge bg-light text-primary border small">{{title}} ({{experience}})</span>
+                                    {{#unless @last}}<i class="fa-solid fa-arrow-right text-muted small mx-1" style="font-size: 10px;"></i>{{/unless}}
+                                    {{/each}}
+                                </div>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <span class="badge bg-secondary">{{steps.length}} Tiers</span>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 </div>

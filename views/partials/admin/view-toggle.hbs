@@ -1,0 +1,46 @@
+{{!
+  Zeitnah Admin Panel — Reusable View Toggle Partial
+  Provides accessible, state-preserving switching between Card View (default) and Table View.
+  Parameters:
+    section: Unique section identifier (e.g. 'network_users', 'businesses', 'jobs', 'ai_job_matches', 'ai_recs', 'roles', 'skills', 'moderation')
+    totalCount: Total number of records (optional)
+    itemLabel: Label for records (optional, e.g. 'users', 'businesses', 'jobs')
+}}
+<div class="admin-view-header-bar d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div class="admin-result-count small text-muted">
+        {{#if total}}
+            <span class="fw-semibold text-dark">{{total}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{else if totalCount}}
+            <span class="fw-semibold text-dark">{{totalCount}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{else if records.length}}
+            <span class="fw-semibold text-dark">{{records.length}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{else if skills.length}}
+            <span class="fw-semibold text-dark">{{skills.length}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{else if roles.length}}
+            <span class="fw-semibold text-dark">{{roles.length}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{else if pathways.length}}
+            <span class="fw-semibold text-dark">{{pathways.length}}</span> {{#if itemLabel}}{{itemLabel}}{{else}}records{{/if}}
+        {{/if}}
+    </div>
+
+    <div class="admin-view-toggle" role="group" aria-label="View representation switch" data-section="{{section}}">
+        <button type="button" 
+                class="view-toggle-btn {{#ifEquals viewMode 'table'}}{{else}}active{{/ifEquals}}" 
+                data-view="card" 
+                title="Card View (Default)" 
+                aria-label="Cards View" 
+                aria-pressed="{{#ifEquals viewMode 'table'}}false{{else}}true{{/ifEquals}}">
+            <i class="fa-solid fa-table-cells-large"></i>
+            <span class="view-toggle-label">Cards</span>
+        </button>
+        <button type="button" 
+                class="view-toggle-btn {{#ifEquals viewMode 'table'}}active{{/ifEquals}}" 
+                data-view="table" 
+                title="Table View" 
+                aria-label="Table View" 
+                aria-pressed="{{#ifEquals viewMode 'table'}}true{{else}}false{{/ifEquals}}">
+            <i class="fa-solid fa-list"></i>
+            <span class="view-toggle-label">Table</span>
+        </button>
+    </div>
+</div>

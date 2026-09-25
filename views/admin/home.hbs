@@ -180,82 +180,97 @@
                     <div class="row g-3">
                         <!-- Network Users & Profiles -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/network/users" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-users-rays text-primary fs-5"></i>
-                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                        <span class="badge bg-light text-primary border small" style="font-size: 10px;">Phase 1</span>
                                     </div>
                                     <span class="text-muted small d-block">Network Users</span>
-                                    <strong class="text-dark fs-6">Directory &amp; Roles</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Directory &amp; Roles</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/network/users" class="btn btn-sm btn-outline-primary w-100 mt-auto">
+                                    <i class="fa-solid fa-user-gear me-1"></i> Manage
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Businesses Review -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/businesses" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-building-shield text-warning fs-5"></i>
                                         {{#if dashboard.governance.pendingBusinesses}}
                                         <span class="badge bg-danger rounded-pill" style="font-size: 10px;">{{dashboard.governance.pendingBusinesses}} Pending</span>
                                         {{else}}
-                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                        <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">Verified</span>
                                         {{/if}}
                                     </div>
                                     <span class="text-muted small d-block">Businesses</span>
-                                    <strong class="text-dark fs-6">Review &amp; Verify</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Pending Review</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/businesses?tab=pending" class="btn btn-sm btn-outline-warning text-dark w-100 mt-auto">
+                                    <i class="fa-solid fa-clipboard-check me-1"></i> Review
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Jobs Governance -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/jobs" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-briefcase text-success fs-5"></i>
                                         <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{dashboard.governance.activeJobs}} Active</span>
                                     </div>
                                     <span class="text-muted small d-block">Job Governance</span>
-                                    <strong class="text-dark fs-6">Postings &amp; Flags</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Postings &amp; Flags</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/jobs?tab=published" class="btn btn-sm btn-outline-success w-100 mt-auto">
+                                    <i class="fa-solid fa-eye me-1"></i> View
+                                </a>
+                            </div>
                         </div>
 
                         <!-- AI Matching Engine -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/ai/matching" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-brain text-info fs-5"></i>
                                         <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">Live</span>
                                     </div>
                                     <span class="text-muted small d-block">AI Matching</span>
-                                    <strong class="text-dark fs-6">Health &amp; Telemetry</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Telemetry Engine</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/ai/matching" class="btn btn-sm btn-outline-info w-100 mt-auto">
+                                    <i class="fa-solid fa-magnifying-glass-chart me-1"></i> Inspect
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Career Intelligence -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/career-intelligence/roles" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-route text-primary fs-5"></i>
-                                        <i class="fa-solid fa-arrow-right text-muted small"></i>
+                                        <span class="badge bg-light text-dark border small" style="font-size: 10px;">Taxonomy</span>
                                     </div>
                                     <span class="text-muted small d-block">Career Intel</span>
-                                    <strong class="text-dark fs-6">Taxonomy &amp; Market</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Roles &amp; Ladders</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/career-intelligence/roles" class="btn btn-sm btn-outline-primary w-100 mt-auto">
+                                    <i class="fa-solid fa-compass me-1"></i> Explore
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Moderation Queue -->
                         <div class="col-xl-2 col-md-4 col-6">
-                            <a href="/admin/moderation" class="text-decoration-none">
-                                <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition">
+                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                                <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-shield-halved text-danger fs-5"></i>
                                         {{#if dashboard.governance.openModeration}}
@@ -265,9 +280,12 @@
                                         {{/if}}
                                     </div>
                                     <span class="text-muted small d-block">Moderation</span>
-                                    <strong class="text-dark fs-6">Incident Reports</strong>
+                                    <strong class="text-dark fs-6 d-block mb-3">Triage Queue</strong>
                                 </div>
-                            </a>
+                                <a href="/admin/moderation?tab=open" class="btn btn-sm btn-outline-danger w-100 mt-auto">
+                                    <i class="fa-solid fa-gavel me-1"></i> Moderate
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -206,6 +206,12 @@ const reviveBackupValue = (value, key = '') => {
   return value;
 };
 
+// Inject view mode for listing pages (card is default)
+router.use((req, res, next) => {
+  res.locals.viewMode = req.query?.view === 'table' ? 'table' : 'card';
+  next();
+});
+
 /* GET users listing. */
 
 router.get('/', async function (req, res, next) {
