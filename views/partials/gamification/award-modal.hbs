@@ -97,11 +97,11 @@
           <!-- Quick Increment Chips -->
           <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
             <span class="text-muted small fw-semibold me-1" style="font-size:11px;">Quick XP:</span>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(50)">+50</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(100)">+100</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(250)">+250</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(500)">+500</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardPointsValue(1000)">+1,000</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill fw-semibold" style="font-size:11px;" onclick="setAwardPointsValue(50)">+50</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill fw-semibold" style="font-size:11px;" onclick="setAwardPointsValue(100)">+100</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill fw-semibold" style="font-size:11px;" onclick="setAwardPointsValue(250)">+250</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill fw-semibold" style="font-size:11px;" onclick="setAwardPointsValue(500)">+500</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill fw-semibold" style="font-size:11px;" onclick="setAwardPointsValue(1000)">+1,000</button>
           </div>
         </div>
 
@@ -115,11 +115,11 @@
           <!-- Quick Reason Chips -->
           <div class="d-flex align-items-center flex-wrap gap-1 mt-2">
             <span class="text-muted small fw-semibold me-1" style="font-size:11px;">Suggestions:</span>
-            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Outstanding class participation')">Class Participation</button>
-            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Top assignment score')">Assignment Excellence</button>
-            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Quiz high performer bonus')">Quiz Bonus</button>
-            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Extra project completion')">Extra Project</button>
-            <button type="button" class="badge rounded-pill border bg-transparent text-muted text-decoration-none p-1 px-2" style="font-size:11px; cursor:pointer;" onclick="setAwardReasonValue('Manual administrative balance adjustment')">Balance Adjustment</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardReasonValue('Outstanding class participation')"><i class="fa-solid fa-hand me-1 text-primary"></i> Participation</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardReasonValue('Top assignment score')"><i class="fa-solid fa-file-lines me-1 text-success"></i> Assignment</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardReasonValue('Quiz high performer bonus')"><i class="fa-solid fa-circle-question me-1 text-warning"></i> Quiz Bonus</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardReasonValue('Extra project completion')"><i class="fa-solid fa-code me-1 text-info"></i> Extra Project</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size:11px;" onclick="setAwardReasonValue('Manual administrative balance adjustment')"><i class="fa-solid fa-sliders me-1 text-secondary"></i> Adjustment</button>
           </div>
         </div>
 
@@ -129,9 +129,15 @@
             <small>Current Balance</small>
             <span id="previewCurrentBalance">0 XP</span>
           </div>
+          <div class="preview-arrow text-muted px-2" style="font-size:12px; opacity:0.6;">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
           <div class="preview-col">
             <small>Adjustment</small>
             <span id="previewChangeAmount">+0 XP</span>
+          </div>
+          <div class="preview-arrow text-muted px-2" style="font-size:12px; opacity:0.6;">
+            <i class="fa-solid fa-arrow-right"></i>
           </div>
           <div class="preview-col after-award">
             <small>New XP Balance</small>
