@@ -968,6 +968,7 @@ module.exports = {
   SYSTEM_RESERVED_USERNAMES,
   normalizeUsername,
   validateUsername,
+  validateUsernameFormat: validateUsername,
   isReservedUsername,
   isUsernameReserved: isReservedUsername,
   deriveBaseHandle,

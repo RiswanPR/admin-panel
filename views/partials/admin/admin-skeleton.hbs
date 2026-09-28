@@ -1,0 +1,49 @@
+{{!-- Reusable Admin Skeleton Loading Component --}}
+<div class="admin-skeleton-wrapper {{extraClass}}" aria-hidden="true">
+  {{#ifEquals type "table"}}
+  <div class="admin-skeleton-table">
+    <div class="skeleton-row skeleton-header">
+      <div class="skeleton-cell w-25"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-15"></div>
+      <div class="skeleton-cell w-20"></div>
+    </div>
+    <div class="skeleton-row">
+      <div class="skeleton-cell w-25"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-15"></div>
+      <div class="skeleton-cell w-20"></div>
+    </div>
+    <div class="skeleton-row">
+      <div class="skeleton-cell w-25"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-20"></div>
+      <div class="skeleton-cell w-15"></div>
+      <div class="skeleton-cell w-20"></div>
+    </div>
+  </div>
+  {{else}}
+  <div class="admin-skeleton-cards">
+    <div class="skeleton-card">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line subtitle"></div>
+      <div class="skeleton-line detail"></div>
+      <div class="skeleton-actions"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line subtitle"></div>
+      <div class="skeleton-line detail"></div>
+      <div class="skeleton-actions"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line subtitle"></div>
+      <div class="skeleton-line detail"></div>
+      <div class="skeleton-actions"></div>
+    </div>
+  </div>
+  {{/ifEquals}}
+</div>

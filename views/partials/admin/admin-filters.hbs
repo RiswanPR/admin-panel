@@ -1,0 +1,24 @@
+{{!-- Reusable Admin Filters Component --}}
+<div class="admin-filters-bar {{extraClass}}">
+  <form action="{{action}}" method="GET" class="admin-filters-form">
+    {{#if viewMode}}<input type="hidden" name="view" value="{{viewMode}}">{{/if}}
+    {{#if filters.search}}<input type="hidden" name="search" value="{{filters.search}}">{{/if}}
+
+    <div class="filters-group-row">
+      {{{bodyHtml}}}
+
+      <div class="filter-actions">
+        <button type="submit" class="admin-btn admin-btn-secondary filter-apply-btn">
+          <i class="fa-solid fa-filter"></i>
+          <span>Apply Filters</span>
+        </button>
+        {{#if hasActiveFilters}}
+        <a href="{{action}}{{#if viewMode}}?view={{viewMode}}{{/if}}" class="admin-btn admin-btn-outline filter-reset-btn">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+          <span>Reset</span>
+        </a>
+        {{/if}}
+      </div>
+    </div>
+  </form>
+</div>

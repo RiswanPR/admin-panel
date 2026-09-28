@@ -100,10 +100,13 @@
             <div class="col-lg-4 col-md-4">
                 <select class="form-select" name="targetType" onchange="document.getElementById('moderationFilterForm').submit()">
                     <option value="all" {{#ifEquals targetType 'ALL'}}selected{{/ifEquals}}>All Entity Types</option>
-                    <option value="USER" {{#ifEquals targetType 'USER'}}selected{{/ifEquals}}>Reported Users</option>
-                    <option value="OPPORTUNITY" {{#ifEquals targetType 'OPPORTUNITY'}}selected{{/ifEquals}}>Reported Jobs</option>
-                    <option value="ORGANIZATION" {{#ifEquals targetType 'ORGANIZATION'}}selected{{/ifEquals}}>Reported Businesses</option>
-                    <option value="DISCUSSION" {{#ifEquals targetType 'DISCUSSION'}}selected{{/ifEquals}}>Reported Discussions</option>
+                    <option value="USER" {{#ifEquals targetType 'USER'}}selected{{/ifEquals}}>User Reports</option>
+                    <option value="PROFILE" {{#ifEquals targetType 'PROFILE'}}selected{{/ifEquals}}>Profile Reports</option>
+                    <option value="MESSAGE" {{#ifEquals targetType 'MESSAGE'}}selected{{/ifEquals}}>Message Reports</option>
+                    <option value="OPPORTUNITY" {{#ifEquals targetType 'OPPORTUNITY'}}selected{{/ifEquals}}>Job Reports</option>
+                    <option value="ORGANIZATION" {{#ifEquals targetType 'ORGANIZATION'}}selected{{/ifEquals}}>Business Reports</option>
+                    <option value="PORTFOLIO" {{#ifEquals targetType 'PORTFOLIO'}}selected{{/ifEquals}}>Portfolio Reports</option>
+                    <option value="VERIFICATION_ISSUE" {{#ifEquals targetType 'VERIFICATION_ISSUE'}}selected{{/ifEquals}}>Verification Issues</option>
                 </select>
             </div>
             <div class="col-lg-2 col-md-2 text-end">

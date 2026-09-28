@@ -1,0 +1,7 @@
+{{!-- Reusable Admin Status Badge --}}
+{{#if status}}
+<span class="admin-badge {{statusBadgeClass status}} {{extraClass}}">
+  <span class="badge-dot"></span>
+  <span class="badge-text">{{upper status}}</span>
+</span>
+{{/if}}

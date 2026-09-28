@@ -1,0 +1,52 @@
+{{!-- Reusable Admin Modal Component --}}
+<div class="admin-modal-backdrop" id="{{id}}" role="dialog" aria-modal="true" aria-labelledby="{{id}}-title" style="display: none;">
+  <div class="admin-modal-container admin-modal-{{#if size}}{{size}}{{else}}md{{/if}}">
+    <div class="admin-modal-header">
+      <div class="admin-modal-title-group">
+        {{#if icon}}<i class="{{icon}} modal-title-icon"></i>{{/if}}
+        <div>
+          <h3 class="admin-modal-title" id="{{id}}-title">{{title}}</h3>
+          {{#if subtitle}}<p class="admin-modal-subtitle">{{subtitle}}</p>{{/if}}
+        </div>
+      </div>
+      <button type="button" class="admin-modal-close-btn" data-modal-close="{{id}}" aria-label="Close modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    {{#if formAction}}
+    <form action="{{formAction}}" method="{{#if formMethod}}{{formMethod}}{{else}}POST{{/if}}" class="admin-modal-form" id="{{id}}-form">
+      {{#if csrfToken}}<input type="hidden" name="_csrf" value="{{csrfToken}}">{{/if}}
+      <div class="admin-modal-body">
+        {{{bodyHtml}}}
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="admin-btn admin-btn-secondary" data-modal-close="{{id}}">
+          {{#if cancelText}}{{cancelText}}{{else}}Cancel{{/if}}
+        </button>
+        <button type="submit" class="admin-btn admin-btn-{{#if submitVariant}}{{submitVariant}}{{else}}primary{{/if}}" id="{{id}}-submit">
+          {{#if submitIcon}}<i class="{{submitIcon}}"></i>{{/if}}
+          <span>{{#if submitText}}{{submitText}}{{else}}Confirm{{/if}}</span>
+        </button>
+      </div>
+    </form>
+    {{else}}
+    <div class="admin-modal-body">
+      {{{bodyHtml}}}
+    </div>
+    {{#unless noFooter}}
+    <div class="admin-modal-footer">
+      <button type="button" class="admin-btn admin-btn-secondary" data-modal-close="{{id}}">
+        {{#if cancelText}}{{cancelText}}{{else}}Close{{/if}}
+      </button>
+      {{#if actionUrl}}
+      <a href="{{actionUrl}}" class="admin-btn admin-btn-{{#if actionVariant}}{{actionVariant}}{{else}}primary{{/if}}">
+        {{#if actionIcon}}<i class="{{actionIcon}}"></i>{{/if}}
+        <span>{{actionText}}</span>
+      </a>
+      {{/if}}
+    </div>
+    {{/unless}}
+    {{/if}}
+  </div>
+</div>

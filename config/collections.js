@@ -39,5 +39,7 @@ module.exports = {
     INFRASTRUCTURE_MARKET_SNAPSHOTS_COLLECTION: 'infrastructure_market_snapshots',
     CAREER_INSIGHTS_COLLECTION: 'career_insights',
     MODERATION_REPORTS_COLLECTION: 'moderation_reports',
-    MODERATION_BLOCKS_COLLECTION: 'moderation_blocks'
+    MODERATION_BLOCKS_COLLECTION: 'moderation_blocks',
+    ERROR_REPORTS_COLLECTION: 'error_reports',
+    VERIFICATION_REQUESTS_COLLECTION: 'verification_requests'
 };

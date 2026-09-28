@@ -1,0 +1,21 @@
+{{!-- Reusable Admin Error State Component --}}
+<div class="admin-error-state {{extraClass}}" role="alert">
+  <div class="error-state-icon">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+  </div>
+  <div class="error-state-content">
+    <h4 class="error-state-title">{{#if title}}{{title}}{{else}}Operation or Data Load Error{{/if}}</h4>
+    <p class="error-state-message">{{#if message}}{{message}}{{else}}An unexpected error occurred while loading this administrative view.{{/if}}</p>
+    {{#if code}}
+    <span class="error-state-code">Code: <code>{{code}}</code></span>
+    {{/if}}
+  </div>
+  {{#if retryUrl}}
+  <div class="error-state-action">
+    <a href="{{retryUrl}}" class="admin-btn admin-btn-outline">
+      <i class="fa-solid fa-rotate-right"></i>
+      <span>Retry</span>
+    </a>
+  </div>
+  {{/if}}
+</div>

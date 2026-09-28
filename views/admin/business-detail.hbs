@@ -10,15 +10,16 @@
                 </ol>
             </nav>
             <h2 class="fw-bold m-0" style="color:var(--brand);">
-                <i class="fa-solid fa-building-circle-check me-2"></i> Business Verification &amp; Review
+                <i class="fa-solid fa-building-circle-check me-2"></i> Business Governance Dossier
             </h2>
-            <small class="text-muted">Inspect corporate credentials, ownership history, infrastructure specialization, and integrity signals.</small>
+            <small class="text-muted">Inspect corporate credentials, ownership history, infrastructure specialization, verification evidence, and compliance signals.</small>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a href="/admin/businesses" class="btn btn-outline-secondary px-3">
                 <i class="fa-solid fa-arrow-left me-1"></i> Back to Directory
             </a>
+
             {{#ifEquals business.statusNormalized 'PENDING'}}
             <button class="btn btn-success px-3" onclick="approveBusiness('{{business._id}}', '{{business.name}}')">
                 <i class="fa-solid fa-check me-1"></i> Approve Business
@@ -27,11 +28,28 @@
                 <i class="fa-solid fa-xmark me-1"></i> Reject
             </button>
             {{/ifEquals}}
+
             {{#ifEquals business.statusNormalized 'APPROVED'}}
             <button class="btn btn-warning px-3" onclick="openSuspendModal('{{business._id}}', '{{business.name}}')">
                 <i class="fa-solid fa-pause me-1"></i> Suspend Business
             </button>
             {{/ifEquals}}
+
+            {{#ifEquals business.statusNormalized 'SUSPENDED'}}
+            <button class="btn btn-success px-3" onclick="restoreBusiness('{{business._id}}', '{{business.name}}')">
+                <i class="fa-solid fa-rotate-left me-1"></i> Restore Business
+            </button>
+            {{/ifEquals}}
+
+            {{#ifEquals business.statusNormalized 'REJECTED'}}
+            <button class="btn btn-success px-3" onclick="restoreBusiness('{{business._id}}', '{{business.name}}')">
+                <i class="fa-solid fa-rotate-left me-1"></i> Restore / Re-Approve
+            </button>
+            {{/ifEquals}}
+
+            <button class="btn btn-outline-primary px-3" onclick="openTransferOwnershipModal('{{business._id}}', '{{business.name}}', '{{business.createdBy}}')">
+                <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Transfer Ownership
+            </button>
         </div>
     </div>
 
@@ -53,41 +71,52 @@
 
     <div class="row g-4">
 
-        <!-- LEFT COLUMN: BUSINESS INFO -->
+        <!-- LEFT COLUMN: MAIN GOVERNANCE DOSSIER -->
         <div class="col-lg-8">
 
+            <!-- 1. IDENTITY & PROFILE -->
             <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-3 d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px; background: #fff;">
+                        <div class="rounded-circle p-3 d-flex align-items-center justify-content-center border" style="width: 64px; height: 64px; background: #fff;">
+                            {{#if business.logo}}
+                            <img src="{{business.logo}}" class="img-fluid rounded" alt="{{business.name}}" style="max-height: 48px; object-fit: contain;">
+                            {{else}}
                             <i class="fa-solid fa-building text-primary fa-2x"></i>
+                            {{/if}}
                         </div>
                         <div>
                             <h3 class="fw-bold m-0" style="color:var(--text);">{{business.name}}</h3>
-                            <div class="text-muted">@{{business.slug}} &bull; {{business.industry}}</div>
+                            <div class="text-muted">@{{business.slug}} &bull; {{#if business.industry}}{{business.industry}}{{else}}Infrastructure{{/if}}</div>
                         </div>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         {{#ifEquals business.statusNormalized 'APPROVED'}}
                         <span class="badge bg-success fs-6 px-3 py-2"><i class="fa-solid fa-check me-1"></i> Approved</span>
-                        {{else}}
-                        {{#ifEquals business.statusNormalized 'PENDING'}}
+                        {{else ifEquals business.statusNormalized 'PENDING'}}
                         <span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="fa-solid fa-clock me-1"></i> Pending Review</span>
-                        {{else}}
-                        {{#ifEquals business.statusNormalized 'REJECTED'}}
+                        {{else ifEquals business.statusNormalized 'REJECTED'}}
                         <span class="badge bg-danger fs-6 px-3 py-2"><i class="fa-solid fa-circle-xmark me-1"></i> Rejected</span>
                         {{else}}
                         <span class="badge bg-dark fs-6 px-3 py-2"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
                         {{/ifEquals}}
-                        {{/ifEquals}}
+
+                        {{#ifEquals business.verificationStatusNormalized 'VERIFIED'}}
+                        <span class="badge bg-success bg-opacity-25 text-success border border-success fs-6 px-3 py-2"><i class="fa-solid fa-shield-check me-1"></i> Verified</span>
+                        {{else ifEquals business.verificationStatusNormalized 'PENDING'}}
+                        <span class="badge bg-warning bg-opacity-25 text-dark border border-warning fs-6 px-3 py-2"><i class="fa-solid fa-shield-halved me-1"></i> Verif. Pending</span>
+                        {{else ifEquals business.verificationStatusNormalized 'REJECTED'}}
+                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger fs-6 px-3 py-2"><i class="fa-solid fa-shield-xmark me-1"></i> Verif. Rejected</span>
+                        {{else}}
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary border fs-6 px-3 py-2"><i class="fa-solid fa-shield me-1"></i> Unverified</span>
                         {{/ifEquals}}
                     </div>
                 </div>
 
                 <hr class="my-3">
 
-                <h6 class="fw-bold mb-2">Description</h6>
-                <p class="text-muted small mb-4">{{#if business.description}}{{business.description}}{{else}}No corporate description provided.{{/if}}</p>
+                <h6 class="fw-bold mb-2">Corporate Description</h6>
+                <p class="text-muted small mb-4" style="line-height: 1.6;">{{#if business.description}}{{business.description}}{{else}}No corporate description provided.{{/if}}</p>
 
                 <h6 class="fw-bold mb-2">Infrastructure Specializations</h6>
                 <div class="d-flex flex-wrap gap-2 mb-4">
@@ -105,7 +134,7 @@
                         <div class="p-3 bg-light rounded border">
                             <span class="text-muted d-block">Website</span>
                             {{#if business.website}}
-                            <a href="{{business.website}}" target="_blank" class="fw-semibold text-truncate d-block">{{business.website}}</a>
+                            <a href="{{business.website}}" target="_blank" rel="noopener noreferrer" class="fw-semibold text-truncate d-block">{{business.website}}</a>
                             {{else}}
                             <span class="text-muted">Not specified</span>
                             {{/if}}
@@ -156,35 +185,294 @@
                 {{/if}}
             </div>
 
-            <!-- AUDIT & SUBMISSION HISTORY -->
-            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Administrative Audit History</h5>
-                {{#if auditLogs.length}}
-                <div class="timeline d-flex flex-column gap-3">
-                    {{#each auditLogs}}
-                    <div class="p-3 rounded border bg-light small">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="badge bg-secondary">{{action}}</span>
-                            <span class="text-muted">{{formatDateTime createdAt}}</span>
+            <!-- 2. OWNERSHIP & MEMBERSHIP GOVERNANCE -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-users-gear me-2 text-primary"></i> Ownership &amp; Members Governance</h5>
+                    <span class="badge bg-light text-muted border">{{members.length}} Members</span>
+                </div>
+
+                <!-- LEADERSHIP & RECRUITER PILLS -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded border bg-light">
+                            <span class="text-muted small d-block mb-1"><i class="fa-solid fa-crown text-warning me-1"></i> Founders &amp; Ownership</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#if founders.length}}
+                                {{#each founders}}
+                                <span class="badge bg-white text-dark border p-2">
+                                    {{user.name}} (@{{user.username}})
+                                </span>
+                                {{/each}}
+                                {{else}}
+                                <span class="text-muted small">None designated</span>
+                                {{/if}}
+                            </div>
                         </div>
-                        <div class="fw-semibold text-dark">{{message}}</div>
-                        <div class="text-muted" style="font-size: 11px;">By: {{admin.name}} ({{admin.email}}) &bull; IP: {{ipAddress}}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded border bg-light">
+                            <span class="text-muted small d-block mb-1"><i class="fa-solid fa-user-check text-info me-1"></i> Authorized Recruiters</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#if recruiters.length}}
+                                {{#each recruiters}}
+                                <span class="badge bg-white text-dark border p-2">
+                                    {{user.name}} (@{{user.username}})
+                                </span>
+                                {{/each}}
+                                {{else}}
+                                <span class="text-muted small">No active recruiters</span>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEMBERS TABLE -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th>Platform Role</th>
+                                <th>Organization Role</th>
+                                <th>Joined</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#if members.length}}
+                            {{#each members}}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{user.name}}</div>
+                                    <div class="text-muted" style="font-size: 11px;">@{{user.username}} &bull; {{user.email}}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-muted border">{{user.primaryRole}}</span>
+                                </td>
+                                <td>
+                                    <span class="badge {{#ifEquals role 'owner'}}bg-warning text-dark{{else ifEquals role 'recruiter'}}bg-info text-dark{{else ifEquals role 'admin'}}bg-primary{{else}}bg-secondary{{/ifEquals}}">
+                                        {{roleDisplay}}
+                                    </span>
+                                </td>
+                                <td class="text-muted">{{formatDate joinedAt}}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="openChangeRoleModal('{{../business._id}}', '{{membershipId}}', '{{user.name}}', '{{role}}')" title="Change Role">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {{/each}}
+                            {{else}}
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">No associated members found in organization directory.</td>
+                            </tr>
+                            {{/if}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. VERIFICATION & CREDENTIAL EVIDENCE -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-file-shield me-2 text-primary"></i> Verification &amp; Evidence Audit</h5>
+                    <span class="badge {{#if canViewEvidence}}bg-success{{else}}bg-secondary{{/if}} small">
+                        {{#if canViewEvidence}}Evidence Access Granted{{else}}Evidence Protected{{/if}}
+                    </span>
+                </div>
+
+                {{#if verificationRequests.length}}
+                <div class="d-flex flex-column gap-3">
+                    {{#each verificationRequests}}
+                    <div class="p-3 rounded border bg-light small">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="badge bg-secondary me-2">{{category}}</span>
+                                <span class="fw-bold text-dark">{{#if targetName}}{{targetName}}{{else}}Corporate Verification{{/if}}</span>
+                            </div>
+                            <span class="badge {{#ifEquals statusNormalized 'VERIFIED'}}bg-success{{else ifEquals statusNormalized 'PENDING'}}bg-warning text-dark{{else}}bg-danger{{/ifEquals}}">
+                                {{statusNormalized}}
+                            </span>
+                        </div>
+                        <div class="row g-2 text-muted">
+                            <div class="col-md-6">
+                                <strong>Submitted:</strong> {{formatDateTime submittedAt}}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Reviewed:</strong> {{#if reviewedAt}}{{formatDateTime reviewedAt}}{{else}}Pending Review{{/if}}
+                            </div>
+                            <div class="col-12">
+                                <strong>Evidence &amp; Documents:</strong>
+                                {{#if evidenceRedacted}}
+                                <span class="badge bg-secondary ms-1"><i class="fa-solid fa-lock me-1"></i> REDACTED</span>
+                                <span class="text-muted ms-1" style="font-size: 11px;">(Restricted: Requires <code>view_verification_evidence</code> capability)</span>
+                                {{else}}
+                                {{#if evidenceUrl}}
+                                <a href="{{evidenceUrl}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary ms-2 py-0 px-2" style="font-size: 11px;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Evidence Document
+                                </a>
+                                {{else if documentUrl}}
+                                <a href="{{documentUrl}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary ms-2 py-0 px-2" style="font-size: 11px;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Document
+                                </a>
+                                {{else}}
+                                <span class="text-muted ms-1">No attached external documents</span>
+                                {{/if}}
+                                {{/if}}
+                            </div>
+                            {{#if notes}}
+                            <div class="col-12 mt-1">
+                                <strong>Reviewer Notes:</strong> {{notes}}
+                            </div>
+                            {{/if}}
+                        </div>
                     </div>
                     {{/each}}
                 </div>
                 {{else}}
-                <p class="text-muted small m-0">No prior administrative mutations logged for this business entity.</p>
+                <p class="text-muted small m-0">No verification submissions registered in verification center for this organization.</p>
+                {{/if}}
+            </div>
+
+            <!-- 4. INFRASTRUCTURE JOBS PORTFOLIO -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-briefcase me-2 text-primary"></i> Infrastructure Jobs Portfolio</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success small">{{jobs.active.length}} Active</span>
+                        <span class="badge bg-warning text-dark small">{{jobs.draft.length}} Draft</span>
+                        <span class="badge bg-secondary small">{{jobs.closed.length}} Closed</span>
+                        {{#if jobs.suspended.length}}
+                        <span class="badge bg-danger small">{{jobs.suspended.length}} Suspended</span>
+                        {{/if}}
+                    </div>
+                </div>
+
+                {{#if jobs.total}}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Discipline</th>
+                                <th>Sector</th>
+                                <th>Status</th>
+                                <th class="text-end">Inspect</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each jobs.active}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/jobs/{{_id}}" class="fw-semibold text-decoration-none" style="color:var(--brand);">{{title}}</a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{discipline}}</span></td>
+                                <td class="text-muted">{{infrastructureSector}}</td>
+                                <td><span class="badge bg-success">PUBLISHED</span></td>
+                                <td class="text-end">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                            {{#each jobs.pending}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/jobs/{{_id}}" class="fw-semibold text-decoration-none text-warning">{{title}}</a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{discipline}}</span></td>
+                                <td class="text-muted">{{infrastructureSector}}</td>
+                                <td><span class="badge bg-warning text-dark">PENDING REVIEW</span></td>
+                                <td class="text-end">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                            {{#each jobs.draft}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/jobs/{{_id}}" class="fw-semibold text-decoration-none text-muted">{{title}}</a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{discipline}}</span></td>
+                                <td class="text-muted">{{infrastructureSector}}</td>
+                                <td><span class="badge bg-secondary">DRAFT</span></td>
+                                <td class="text-end">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                            {{#each jobs.closed}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/jobs/{{_id}}" class="fw-semibold text-decoration-none text-muted">{{title}}</a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{discipline}}</span></td>
+                                <td class="text-muted">{{infrastructureSector}}</td>
+                                <td><span class="badge bg-dark">CLOSED</span></td>
+                                <td class="text-end">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                            {{#each jobs.suspended}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/jobs/{{_id}}" class="fw-semibold text-decoration-none text-danger">{{title}}</a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{discipline}}</span></td>
+                                <td class="text-muted">{{infrastructureSector}}</td>
+                                <td><span class="badge bg-danger">SUSPENDED</span></td>
+                                <td class="text-end">
+                                    <a href="/admin/jobs/{{_id}}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-muted small m-0">No job postings created under this corporate entity profile.</p>
+                {{/if}}
+            </div>
+
+            <!-- 5. COMPLIANCE & MODERATION REPORTS -->
+            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i> Compliance &amp; Reports</h5>
+                    <span class="badge bg-light text-muted border">{{moderationReports.length}} Reports</span>
+                </div>
+
+                {{#if moderationReports.length}}
+                <div class="d-flex flex-column gap-2">
+                    {{#each moderationReports}}
+                    <div class="p-3 rounded border bg-light small">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-dark">{{reason}}</strong>
+                            <span class="badge {{#ifEquals status 'RESOLVED'}}bg-success{{else ifEquals status 'DISMISSED'}}bg-secondary{{else}}bg-danger{{/ifEquals}}">
+                                {{status}}
+                            </span>
+                        </div>
+                        <p class="text-muted m-0">{{details}}</p>
+                        <div class="text-muted mt-2" style="font-size: 11px;">Reported on {{formatDateTime createdAt}}</div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="p-3 bg-light rounded text-center small text-muted">
+                    <i class="fa-solid fa-circle-check text-success me-1"></i> Clean compliance standing: Zero open reports filed against this employer.
+                </div>
                 {{/if}}
             </div>
 
         </div>
 
-        <!-- RIGHT COLUMN: OWNER & METRICS -->
+        <!-- RIGHT COLUMN: OWNER, GOVERNANCE & AUDIT TIMELINE -->
         <div class="col-lg-4">
 
-            <!-- OWNER INFORMATION -->
+            <!-- OWNER INFORMATION CARD -->
             <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-user-tie me-2 text-primary"></i> Owner Account</h5>
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-user-tie me-2 text-primary"></i> Designated Owner</h5>
                 {{#if owner}}
                 <div class="text-center mb-3">
                     <img src="/img/placeholders/profile.svg" class="rounded-circle mb-2" style="width: 70px; height: 70px;">
@@ -196,6 +484,7 @@
                 <div class="d-flex flex-column gap-2 small">
                     <div><strong>Email:</strong> <span class="text-muted">{{owner.email}}{{owner.Email}}</span></div>
                     <div><strong>Phone:</strong> <span class="text-muted">{{#if owner.Phone_Number}}{{owner.Phone_Number}}{{else}}—{{/if}}</span></div>
+                    <div><strong>Status:</strong> <span class="badge bg-light text-dark border">{{#if owner.account_Status.status}}{{owner.account_Status.status}}{{else}}active{{/if}}</span></div>
                     <div><strong>User Joined:</strong> <span class="text-muted">{{formatDate owner.createdAt}}</span></div>
                 </div>
                 <div class="mt-3 text-center">
@@ -208,16 +497,56 @@
                 {{/if}}
             </div>
 
-            <!-- JOB STATISTICS -->
-            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-briefcase me-2 text-primary"></i> Business Opportunities</h5>
-                <div class="text-center p-3 bg-light rounded border mb-3">
-                    <h2 class="fw-bold m-0 text-primary">{{jobsCount}}</h2>
-                    <span class="text-muted small">Active / Total Jobs Posted</span>
+            <!-- GOVERNANCE QUICK CONTROLS -->
+            <div class="card p-4 border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-sliders me-2 text-primary"></i> Governance Actions</h5>
+                <div class="d-flex flex-column gap-2">
+                    {{#ifEquals business.statusNormalized 'PENDING'}}
+                    <button class="btn btn-success w-100 text-start" onclick="approveBusiness('{{business._id}}', '{{business.name}}')">
+                        <i class="fa-solid fa-check me-2"></i> Approve Organization
+                    </button>
+                    <button class="btn btn-danger w-100 text-start" onclick="openRejectModal('{{business._id}}', '{{business.name}}')">
+                        <i class="fa-solid fa-xmark me-2"></i> Reject Organization
+                    </button>
+                    {{/ifEquals}}
+
+                    {{#ifEquals business.statusNormalized 'APPROVED'}}
+                    <button class="btn btn-warning w-100 text-start" onclick="openSuspendModal('{{business._id}}', '{{business.name}}')">
+                        <i class="fa-solid fa-pause me-2"></i> Suspend Organization
+                    </button>
+                    {{/ifEquals}}
+
+                    {{#ifEquals business.statusNormalized 'SUSPENDED'}}
+                    <button class="btn btn-success w-100 text-start" onclick="restoreBusiness('{{business._id}}', '{{business.name}}')">
+                        <i class="fa-solid fa-rotate-left me-2"></i> Restore Organization
+                    </button>
+                    {{/ifEquals}}
+
+                    <button class="btn btn-outline-secondary w-100 text-start" onclick="openTransferOwnershipModal('{{business._id}}', '{{business.name}}', '{{business.createdBy}}')">
+                        <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Transfer Ownership
+                    </button>
                 </div>
-                <a href="/admin/jobs?search={{business.name}}" class="btn btn-sm btn-outline-primary w-100">
-                    <i class="fa-solid fa-list-check me-1"></i> View Jobs from this Business
-                </a>
+            </div>
+
+            <!-- ADMINISTRATIVE AUDIT TIMELINE -->
+            <div class="card p-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Administrative Audit Trail</h5>
+                {{#if auditLogs.length}}
+                <div class="timeline d-flex flex-column gap-3">
+                    {{#each auditLogs}}
+                    <div class="p-3 rounded border bg-light small">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-secondary">{{action}}</span>
+                            <span class="text-muted" style="font-size: 10px;">{{formatDateTime createdAt}}</span>
+                        </div>
+                        <div class="fw-semibold text-dark">{{message}}</div>
+                        <div class="text-muted mt-1" style="font-size: 11px;">By: {{admin.name}} ({{admin.email}})</div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="text-muted small m-0">No administrative mutations recorded for this entity.</p>
+                {{/if}}
             </div>
 
         </div>
@@ -278,13 +607,81 @@
     </div>
 </div>
 
+<!-- TRANSFER OWNERSHIP MODAL -->
+<div class="modal fade" id="transferOwnershipModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Transfer Business Ownership</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="transferOwnershipForm" onsubmit="submitTransferOwnership(event)">
+                <div class="modal-body py-3">
+                    <p class="small text-muted">Reassigning primary ownership for <strong id="transferBusinessName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="transferBusinessId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">New Owner User ID (24-hex ObjectId)</label>
+                        <input type="text" class="form-control font-monospace" id="transferNewOwnerId" placeholder="e.g. 64b8f...29a" required pattern="[0-9a-fA-F]{24}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Transfer Justification Reason (Mandatory)</label>
+                        <textarea class="form-control" id="transferReason" rows="2" placeholder="Administrative reason for transferring primary business principal..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Transfer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CHANGE MEMBER ROLE MODAL -->
+<div class="modal fade" id="changeMemberRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-user-gear me-2"></i> Update Member Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="changeMemberRoleForm" onsubmit="submitChangeMemberRole(event)">
+                <div class="modal-body py-3">
+                    <p class="small text-muted">Updating membership role for <strong id="roleMemberName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="roleBusinessId">
+                    <input type="hidden" id="roleMemberId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Designated Organization Role</label>
+                        <select class="form-select" id="roleSelect" required>
+                            <option value="member">Member</option>
+                            <option value="recruiter">Recruiter</option>
+                            <option value="admin">Admin</option>
+                            <option value="owner">Owner (Transfers primary ownership)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Reason for Change</label>
+                        <input type="text" class="form-control" id="roleReason" placeholder="e.g. Promotion, role reassignment...">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-let rejectModal, suspendModal;
+let rejectModal, suspendModal, transferModal, roleModal;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.bootstrap) {
         rejectModal = new bootstrap.Modal(document.getElementById('rejectBusinessModal'));
         suspendModal = new bootstrap.Modal(document.getElementById('suspendBusinessModal'));
+        transferModal = new bootstrap.Modal(document.getElementById('transferOwnershipModal'));
+        roleModal = new bootstrap.Modal(document.getElementById('changeMemberRoleModal'));
     }
 });
 
@@ -307,6 +704,34 @@ async function approveBusiness(id, name) {
         const json = await res.json();
         if (json.success) {
             Swal.fire({ icon: 'success', title: 'Approved', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: e.message });
+    }
+}
+
+async function restoreBusiness(id, name) {
+    const confirmRes = await Swal.fire({
+        title: 'Restore Business?',
+        text: `Restore ${name} to active approved standing?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        confirmButtonText: 'Yes, Restore'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/admin/businesses/${id}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Restored', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
@@ -370,6 +795,72 @@ async function submitSuspendBusiness(e) {
             setTimeout(() => window.location.reload(), 1500);
         } else {
             Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+
+function openTransferOwnershipModal(businessId, businessName, currentOwnerId) {
+    document.getElementById('transferBusinessId').value = businessId;
+    document.getElementById('transferBusinessName').innerText = businessName;
+    document.getElementById('transferNewOwnerId').value = '';
+    document.getElementById('transferReason').value = '';
+    transferModal.show();
+}
+
+async function submitTransferOwnership(e) {
+    e.preventDefault();
+    const businessId = document.getElementById('transferBusinessId').value;
+    const newOwnerId = document.getElementById('transferNewOwnerId').value.trim();
+    const reason = document.getElementById('transferReason').value.trim();
+
+    try {
+        const res = await fetch(`/admin/businesses/${businessId}/transfer-ownership`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ newOwnerId, reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Transferred', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Transfer Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+}
+
+function openChangeRoleModal(businessId, memberId, memberName, currentRole) {
+    document.getElementById('roleBusinessId').value = businessId;
+    document.getElementById('roleMemberId').value = memberId;
+    document.getElementById('roleMemberName').innerText = memberName;
+    document.getElementById('roleSelect').value = currentRole || 'member';
+    document.getElementById('roleReason').value = '';
+    roleModal.show();
+}
+
+async function submitChangeMemberRole(e) {
+    e.preventDefault();
+    const businessId = document.getElementById('roleBusinessId').value;
+    const memberId = document.getElementById('roleMemberId').value;
+    const role = document.getElementById('roleSelect').value;
+    const reason = document.getElementById('roleReason').value.trim();
+
+    try {
+        const res = await fetch(`/admin/businesses/${businessId}/members/${memberId}/role`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ role, reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message });
         }
     } catch(err) {
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });

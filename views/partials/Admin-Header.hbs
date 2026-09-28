@@ -19,217 +19,211 @@
     <!-- MENU -->
     <nav class="sidebar-nav">
 
+        <!-- 1. OVERVIEW -->
         <a href="/" class="{{#ifEquals currentPage 'dashboard'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-chart-line"></i>
+            <i class="fa-solid fa-gauge-high"></i>
             <span>Dashboard</span>
         </a>
 
-        <a href="/students" class="{{#ifEquals currentPage 'students'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-user-graduate"></i>
-            <span>Students</span>
-        </a>
-
-        <a href="/registered-users" class="{{#ifEquals currentPage 'registered-users'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>Registered Users</span>
-        </a>
-
-        <a href="/usernames" class="{{#ifEquals currentPage 'usernames'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-at"></i>
-            <span>Usernames</span>
-        </a>
-
-        <a href="/network" class="{{#ifEquals currentPage 'network'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-users-rays"></i>
-            <span>Network / People</span>
-        </a>
-
-        <a href="/announcements" class="{{#ifEquals currentPage 'announcements'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-bullhorn"></i>
-            <span>Announcements</span>
-        </a>
-
-        <a href="/learning-spaces" class="{{#ifEquals currentPage 'learning-spaces'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-shapes"></i>
-            <span>Learning Spaces</span>
-        </a>
-
-        <a href="/courses" class="{{#ifEquals currentPage 'courses'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-layer-group"></i>
-            <span>Courses</span>
-        </a>
-
-        <a href="/chapters" class="{{#ifEquals currentPage 'chapters'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-book-open"></i>
-            <span>Chapters</span>
-        </a>
-
-        <a href="/classes" class="{{#ifEquals currentPage 'classes'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-play-circle"></i>
-            <span>Classes</span>
-        </a>
-
-        <a href="/teachers" class="{{#ifEquals currentPage 'teachers'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-chalkboard-user"></i>
-            <span>Teachers</span>
-        </a>
-
-        <!-- NETWORK & GOVERNANCE -->
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-            NETWORK GOVERNANCE
+        <!-- 2. PLATFORM -->
+        {{#if (or canManageNetwork canManageTaxonomy isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            PLATFORM
         </div>
-
+        {{#if (or canManageNetwork isSuperuser)}}
         <a href="/admin/network/users" class="{{#ifEquals currentPage 'network-users'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-users-rays"></i>
-            <span>Network Users</span>
+            <i class="fa-solid fa-users"></i>
+            <span>Users</span>
         </a>
-
+        <a href="/network" class="{{#ifEquals currentPage 'network'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-address-card"></i>
+            <span>Profiles</span>
+        </a>
+        {{/if}}
+        {{#if isSuperuser}}
+        <a href="/admins" class="{{#ifEquals currentPage 'admins'}}active{{/ifEquals}} superuser-nav-item">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Role Governance</span>
+            <span class="su-badge">SU</span>
+        </a>
+        {{/if}}
+        {{#if (or canManageTaxonomy isSuperuser)}}
         <a href="/admin/network/taxonomy" class="{{#ifEquals currentPage 'network-taxonomy'}}active{{/ifEquals}}">
             <i class="fa-solid fa-sitemap"></i>
             <span>Taxonomy</span>
         </a>
+        {{/if}}
+        {{/if}}
 
+        <!-- 3. NETWORK -->
+        {{#if (or canManageNetwork canModerateContent isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            NETWORK
+        </div>
+        {{#if (or canManageNetwork isSuperuser)}}
+        <a href="/network" class="{{#ifEquals currentPage 'network-connections'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-people-arrows"></i>
+            <span>Connections</span>
+        </a>
+        <a href="/admin/network/users" class="{{#ifEquals currentPage 'network-messaging'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-comments"></i>
+            <span>Messaging</span>
+        </a>
+        {{/if}}
+        {{#if (or canModerateContent isSuperuser)}}
+        <a href="/admin/moderation" class="{{#ifEquals currentPage 'moderation'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-flag"></i>
+            <span>Reports &amp; Moderation</span>
+        </a>
+        {{/if}}
+        {{/if}}
+
+        <!-- 4. BUSINESSES -->
+        {{#if (or canReviewBusinesses isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            BUSINESSES
+        </div>
         <a href="/admin/businesses" class="{{#ifEquals currentPage 'businesses'}}active{{/ifEquals}}">
             <i class="fa-solid fa-building-shield"></i>
-            <span>Businesses</span>
+            <span>Organizations</span>
         </a>
-
-        <a href="/admin/jobs" class="{{#ifEquals currentPage 'jobs'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-briefcase"></i>
-            <span>Jobs Governance</span>
+        {{#if (or canManageVerification isSuperuser)}}
+        <a href="/admin/verification?category=BUSINESS_AFFILIATION" class="{{#ifEquals currentPage 'business-verification'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-stamp"></i>
+            <span>Verification</span>
         </a>
-
-        <!-- AI & MATCHING -->
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-            AI &amp; MATCHING
-        </div>
-
-        <a href="/admin/ai/matching" class="{{#ifEquals currentPage 'ai-matching'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-brain"></i>
-            <span>Matching Health</span>
+        {{/if}}
+        <a href="/admin/businesses?type=recruiter" class="{{#ifEquals currentPage 'recruiters'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-user-tie"></i>
+            <span>Recruiters</span>
         </a>
-
-        <a href="/admin/ai/job-matches" class="{{#ifEquals currentPage 'ai-job-matches'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-user-check"></i>
-            <span>Job → Talent</span>
-        </a>
-
-        <a href="/admin/ai/talent-recommendations" class="{{#ifEquals currentPage 'ai-talent-recommendations'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Talent → Jobs</span>
-        </a>
-
-        <a href="/admin/ai/config" class="{{#ifEquals currentPage 'ai-config'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-sliders"></i>
-            <span>Weights Config</span>
-        </a>
-
-        <!-- CAREER INTELLIGENCE -->
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-            CAREER INTELLIGENCE
-        </div>
-
-        <a href="/admin/career-intelligence/roles" class="{{#ifEquals currentPage 'career-roles'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-id-card-clip"></i>
-            <span>Role Taxonomy</span>
-        </a>
-
-        <a href="/admin/career-intelligence/skills" class="{{#ifEquals currentPage 'career-skills'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-diagram-project"></i>
-            <span>Skill Graph &amp; Aliases</span>
-        </a>
-
-        <a href="/admin/career-intelligence/pathways" class="{{#ifEquals currentPage 'career-pathways'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-route"></i>
-            <span>Career Pathways</span>
-        </a>
-
-        <a href="/admin/career-intelligence/market" class="{{#ifEquals currentPage 'career-market'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-chart-pie"></i>
-            <span>Market Intelligence</span>
-        </a>
-
-        <a href="/admin/career-intelligence/assistant" class="{{#ifEquals currentPage 'career-assistant'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-comments"></i>
-            <span>Assistant Telemetry</span>
-        </a>
-
-        <!-- OPERATIONS & MODERATION -->
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-            OPERATIONS &amp; AUDIT
-        </div>
-
-        <a href="/admin/moderation" class="{{#ifEquals currentPage 'moderation'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Moderation Center</span>
-        </a>
-
-        <a href="/admin/analytics" class="{{#ifEquals currentPage 'analytics'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-chart-column"></i>
-            <span>Platform Analytics</span>
-        </a>
-
-        <!-- GAMIFICATION GROUP -->
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-            GAMIFICATION
-        </div>
-
-        <a href="/admin/leaderboard" class="{{#ifEquals currentPage 'leaderboard'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-trophy"></i>
-            <span>Leaderboard</span>
-        </a>
-
-        <a href="/admin/leaderboard/courses" class="{{#ifEquals currentPage 'course-leaderboards'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-ranking-star"></i>
-            <span>Course Leaderboards</span>
-        </a>
-
-        <a href="/admin/leaderboard/students" class="{{#ifEquals currentPage 'students-points'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-star"></i>
-            <span>Students & Points</span>
-        </a>
-
-        <a href="/admin/points/history" class="{{#ifEquals currentPage 'point-history'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Point History</span>
-        </a>
-
-        {{#if isSuperuser}}
-        <a href="/admin/gamification/reconcile" class="{{#ifEquals currentPage 'reconciliation'}}active{{/ifEquals}} superuser-nav-item">
-            <i class="fa-solid fa-scale-balanced"></i>
-            <span>Reconciliation</span>
-            <span class="su-badge">SU</span>
+        <a href="/admin/businesses?type=founder" class="{{#ifEquals currentPage 'founders'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span>Founders</span>
         </a>
         {{/if}}
 
-        <div class="sidebar-heading mt-3 mb-1 ms-3"
-            style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
+        <!-- 5. JOBS -->
+        {{#if (or canManageJobs isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            JOBS
         </div>
-        <a href="/cover-images" class="{{#ifEquals currentPage 'cover-images'}}active{{/ifEquals}}">
-            <i class="fa-solid fa-images"></i>
-            <span>Cover Images</span>
+        <a href="/admin/jobs" class="{{#ifEquals currentPage 'jobs'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>Jobs</span>
         </a>
+        <a href="/admin/jobs?status=open" class="{{#ifEquals currentPage 'applications-oversight'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>Applications Oversight</span>
+        </a>
+        <a href="/admin/ai/job-matches" class="{{#ifEquals currentPage 'ai-job-matches'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-user-check"></i>
+            <span>Matching Oversight</span>
+        </a>
+        {{/if}}
 
+        <!-- 6. PROFESSIONAL -->
+        {{#if (or canManageVerification canModerateContent isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            PROFESSIONAL
+        </div>
+        <a href="/admin/verification" class="{{#ifEquals currentPage 'verification'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-shield-check"></i>
+            <span>Verification Review</span>
+        </a>
+        <a href="/admin/moderation?type=PORTFOLIO" class="{{#ifEquals currentPage 'portfolio-oversight'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-id-badge"></i>
+            <span>Portfolio</span>
+        </a>
+        <a href="/admin/jobs" class="{{#ifEquals currentPage 'professional-opportunities'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-compass"></i>
+            <span>Opportunities</span>
+        </a>
+        {{/if}}
+
+        <!-- 7. CAREER INTELLIGENCE -->
+        {{#if (or canManageAI canManageTaxonomy isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            CAREER INTELLIGENCE
+        </div>
+        <a href="/admin/career-intelligence/roles" class="{{#ifEquals currentPage 'career-roles'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-id-card-clip"></i>
+            <span>Roles</span>
+        </a>
+        <a href="/admin/career-intelligence/skills" class="{{#ifEquals currentPage 'career-skills'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-diagram-project"></i>
+            <span>Skills</span>
+        </a>
+        <a href="/admin/career-intelligence/pathways" class="{{#ifEquals currentPage 'career-pathways'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-route"></i>
+            <span>Pathways</span>
+        </a>
+        <a href="/admin/ai/matching" class="{{#ifEquals currentPage 'ai-matching'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-brain"></i>
+            <span>Matching</span>
+        </a>
+        <a href="/admin/ai/config" class="{{#ifEquals currentPage 'ai-config'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-sliders"></i>
+            <span>AI Monitoring</span>
+        </a>
+        {{/if}}
+
+        <!-- 8. PLATFORM SYSTEMS & ACADEMY -->
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            PLATFORM SYSTEMS
+        </div>
+        <a href="/announcements" class="{{#ifEquals currentPage 'announcements'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+        {{#if (or canManageSettings isSuperuser)}}
         <a href="/settings" class="{{#ifEquals currentPage 'settings'}}active{{/ifEquals}}">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
         </a>
+        {{/if}}
+        <!-- Academy & LMS Modules -->
+        <a href="/students" class="{{#ifEquals currentPage 'students'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>Academy Students</span>
+        </a>
+        <a href="/courses" class="{{#ifEquals currentPage 'courses'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Academy Courses</span>
+        </a>
+        <a href="/teachers" class="{{#ifEquals currentPage 'teachers'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            <span>Academy Teachers</span>
+        </a>
+        <a href="/admin/leaderboard" class="{{#ifEquals currentPage 'leaderboard'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-trophy"></i>
+            <span>Gamification</span>
+        </a>
 
-        <a href="/audit-logs" class="{{#ifEquals currentPage 'audit-logs'}}active{{/ifEquals}}">
+        <!-- 9. GOVERNANCE -->
+        {{#if (or canViewAuditLogs canViewErrors isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            GOVERNANCE
+        </div>
+        {{#if (or canViewAuditLogs isSuperuser)}}
+        <a href="/admin/audit-logs" class="{{#ifEquals currentPage 'audit-logs'}}active{{/ifEquals}}">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Audit Logs</span>
         </a>
-
-        {{#if isSuperuser}}
-        <a href="/admins" class="{{#ifEquals currentPage 'admins'}}active{{/ifEquals}} superuser-nav-item">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>Admins</span>
-            <span class="su-badge">SU</span>
+        {{/if}}
+        {{#if (or canViewErrors isSuperuser)}}
+        <a href="/admin/error-reports" class="{{#ifEquals currentPage 'error-reports'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Error Reports</span>
+        </a>
+        {{/if}}
+        <a href="/audit-logs" class="{{#ifEquals currentPage 'security-logs'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Security</span>
+        </a>
+        <a href="/admin/analytics" class="{{#ifEquals currentPage 'analytics'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-chart-column"></i>
+            <span>Analytics</span>
         </a>
         {{/if}}
 

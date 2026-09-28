@@ -51,6 +51,57 @@
     </div>
 
 
+    <!-- SYSTEM HEALTH & OPERATIONAL STATUS -->
+    {{#if dashboard.systemHealth}}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="p-3 bg-surface border rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-3" style="border-color: var(--border) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge {{#ifEquals dashboard.systemHealth.database 'ONLINE'}}bg-success-subtle text-success{{else}}bg-danger-subtle text-danger{{/ifEquals}} px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5" style="font-size: 11.5px; font-weight: 700;">
+                        <span class="badge-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
+                        DB: {{dashboard.systemHealth.database}}
+                    </span>
+                    <span class="badge bg-surface-2 text-muted px-2.5 py-1.5 rounded-pill border" style="font-size: 11.5px; font-weight: 600;">
+                        <i class="fa-solid fa-server me-1"></i> Sessions: {{dashboard.systemHealth.sessionStore}}
+                    </span>
+                    <span class="badge {{#ifEquals dashboard.systemHealth.errorRate 'NORMAL'}}bg-success-subtle text-success{{else}}bg-warning-subtle text-warning{{/ifEquals}} px-2.5 py-1.5 rounded-pill border" style="font-size: 11.5px; font-weight: 600;">
+                        <i class="fa-solid fa-heart-pulse me-1"></i> Error Rate: {{dashboard.systemHealth.errorRate}}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 12px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Uptime: <strong>{{dashboard.systemHealth.uptimeFormatted}}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- ACTIONABLE OPERATIONAL ALERTS -->
+    {{#if dashboard.alerts.length}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column gap-2">
+                {{#each dashboard.alerts}}
+                <div class="alert alert-{{this.type}} d-flex align-items-center justify-content-between p-3 mb-0 rounded-3 shadow-xs border" style="background: {{#ifEquals this.type 'danger'}}rgba(239, 68, 68, 0.08){{else}}rgba(245, 158, 11, 0.08){{/ifEquals}};">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="{{this.icon}} fs-5 {{#ifEquals this.type 'danger'}}text-danger{{else}}text-warning{{/ifEquals}}"></i>
+                        <div>
+                            <strong class="d-block" style="font-size: 13.5px; color: var(--text);">{{this.title}}</strong>
+                            <span class="text-muted" style="font-size: 12.5px;">{{this.message}}</span>
+                        </div>
+                    </div>
+                    <a href="{{this.url}}" class="admin-btn admin-btn-sm {{#ifEquals this.type 'danger'}}admin-btn-danger{{else}}admin-btn-secondary{{/ifEquals}}" style="min-height: 32px; padding: 4px 12px; font-size: 12px;">
+                        <span>Review</span>
+                        <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
     <!-- STAT CARDS ROW -->
     <div class="real-content">
         <div class="row mb-4">

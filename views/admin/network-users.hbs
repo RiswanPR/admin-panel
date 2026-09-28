@@ -86,7 +86,7 @@
     </div>
 
     <!-- FILTER TOOLBAR -->
-    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/network/users" id="userFilterForm" style="border-radius: 16px;">
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/network/users" id="userFilterForm" style="border-radius: 16px;">
         <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="admin-view-input">
         <div class="row g-2 align-items-center">
             <div class="col-lg-3 col-md-6">
@@ -111,6 +111,15 @@
             </div>
 
             <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="status" onchange="document.getElementById('userFilterForm').submit()">
+                    <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+                    <option value="active" {{#ifEquals filters.status 'active'}}selected{{/ifEquals}}>Active</option>
+                    <option value="suspended" {{#ifEquals filters.status 'suspended'}}selected{{/ifEquals}}>Suspended / Blocked</option>
+                    <option value="restricted" {{#ifEquals filters.status 'restricted'}}selected{{/ifEquals}}>Restricted</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-3 col-6">
                 <select class="form-select" name="discipline" onchange="document.getElementById('userFilterForm').submit()">
                     <option value="all">All Disciplines</option>
                     {{#each disciplines}}
@@ -119,18 +128,18 @@
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-3 col-6">
+            <div class="col-lg-1 col-md-3 col-6">
                 <select class="form-select" name="sector" onchange="document.getElementById('userFilterForm').submit()">
-                    <option value="all">All Sectors</option>
+                    <option value="all">Sectors</option>
                     {{#each sectors}}
                     <option value="{{this}}" {{#ifEquals ../filters.sector this}}selected{{/ifEquals}}>{{this}}</option>
                     {{/each}}
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-3 col-6">
+            <div class="col-lg-1 col-md-3 col-6">
                 <select class="form-select" name="verified" onchange="document.getElementById('userFilterForm').submit()">
-                    <option value="all" {{#ifEquals filters.verified 'all'}}selected{{/ifEquals}}>All Verifications</option>
+                    <option value="all" {{#ifEquals filters.verified 'all'}}selected{{/ifEquals}}>All Verif</option>
                     <option value="verified" {{#ifEquals filters.verified 'verified'}}selected{{/ifEquals}}>Verified</option>
                     <option value="unverified" {{#ifEquals filters.verified 'unverified'}}selected{{/ifEquals}}>Unverified</option>
                 </select>
@@ -141,6 +150,22 @@
             </div>
         </div>
     </form>
+
+    <!-- ACTIVE FILTER CHIPS -->
+    {{#if hasActiveFilters}}
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3 px-1">
+        <span class="small text-muted fw-bold me-1"><i class="fa-solid fa-filter me-1"></i>Active:</span>
+        {{#if filters.search}}<span class="badge bg-light text-dark border px-2 py-1">"{{filters.search}}"</span>{{/if}}
+        {{#ifNotEquals filters.role 'all'}}<span class="badge bg-light text-dark border px-2 py-1">Role: {{filters.role}}</span>{{/ifNotEquals}}
+        {{#ifNotEquals filters.status 'all'}}<span class="badge bg-light text-dark border px-2 py-1">Status: {{filters.status}}</span>{{/ifNotEquals}}
+        {{#ifNotEquals filters.discipline 'all'}}<span class="badge bg-light text-dark border px-2 py-1">Discipline: {{filters.discipline}}</span>{{/ifNotEquals}}
+        {{#ifNotEquals filters.sector 'all'}}<span class="badge bg-light text-dark border px-2 py-1">Sector: {{filters.sector}}</span>{{/ifNotEquals}}
+        {{#ifNotEquals filters.verified 'all'}}<span class="badge bg-light text-dark border px-2 py-1">Verification: {{filters.verified}}</span>{{/ifNotEquals}}
+        <a href="/admin/network/users?view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="badge bg-danger text-white text-decoration-none px-2 py-1">
+            <i class="fa-solid fa-xmark me-1"></i>Clear All
+        </a>
+    </div>
+    {{/if}}
 
     <!-- REUSABLE VIEW TOGGLE -->
     {{> admin/view-toggle section="network_users" itemLabel="users"}}
@@ -166,9 +191,13 @@
                         </div>
                         <div>
                             {{#if isBlocked}}
-                            <span class="admin-badge admin-badge-danger">Blocked</span>
+                            <span class="admin-badge admin-badge-danger" title="Account Suspended"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
+                            {{else}}
+                            {{#if isRestricted}}
+                            <span class="admin-badge admin-badge-warning" title="Account Restricted"><i class="fa-solid fa-triangle-exclamation me-1"></i> Restricted</span>
                             {{else}}
                             <span class="admin-badge admin-badge-success">Active</span>
+                            {{/if}}
                             {{/if}}
                         </div>
                     </div>
@@ -180,7 +209,12 @@
                                 <h4 class="admin-card-title text-truncate">
                                     <a href="/admin/network/users/{{_id}}" class="text-decoration-none" style="color:var(--text);">{{name}}</a>
                                 </h4>
-                                <div class="admin-card-subtitle text-truncate">@{{username}}</div>
+                                <div class="admin-card-subtitle text-truncate">
+                                    @{{username}}
+                                    {{#if usernameClaimed}}
+                                    <i class="fa-solid fa-circle-check text-primary ms-1" title="Claimed Handle" style="font-size: 11px;"></i>
+                                    {{/if}}
+                                </div>
                                 <div class="text-muted small text-truncate" style="font-size: 11px;">{{email}}</div>
                             </div>
                         </div>
@@ -209,16 +243,22 @@
                         </div>
                     </div>
 
-                    <div class="admin-card-footer">
-                        <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile">
+                    <div class="admin-card-footer d-flex gap-1 flex-wrap">
+                        <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile Dossier">
                             <i class="fa-solid fa-eye me-1"></i> View
                         </a>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}')" title="Assign Protected Role">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{primaryRole}}')" title="Assign Role">
                             <i class="fa-solid fa-user-tag me-1"></i> Role
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openVerificationModal('{{_id}}', '{{name}}', '{{#if isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')" title="Update Verification">
-                            <i class="fa-solid fa-shield-check me-1"></i> Verify
+                        {{#if isBlocked}}
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="quickRestoreUser('{{_id}}', '{{name}}')" title="Restore Account">
+                            <i class="fa-solid fa-lock-open me-1"></i> Restore
                         </button>
+                        {{else}}
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend Account">
+                            <i class="fa-solid fa-ban me-1"></i> Suspend
+                        </button>
+                        {{/if}}
                     </div>
                 </div>
             </div>
@@ -285,9 +325,13 @@
                             </td>
                             <td>
                                 {{#if isBlocked}}
-                                <span class="admin-badge admin-badge-danger">Blocked</span>
+                                <span class="admin-badge admin-badge-danger" title="Account Suspended"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
+                                {{else}}
+                                {{#if isRestricted}}
+                                <span class="admin-badge admin-badge-warning" title="Account Restricted"><i class="fa-solid fa-triangle-exclamation me-1"></i> Restricted</span>
                                 {{else}}
                                 <span class="admin-badge admin-badge-success">Active</span>
+                                {{/if}}
                                 {{/if}}
                             </td>
                             <td>
@@ -302,15 +346,21 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="table-actions">
-                                    <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile">
+                                    <a href="/admin/network/users/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Inspect Profile Dossier">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}')" title="Assign Protected Role">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openRoleModal('{{_id}}', '{{name}}', '{{primaryRole}}')" title="Assign Role">
                                         <i class="fa-solid fa-user-tag"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="openVerificationModal('{{_id}}', '{{name}}', '{{#if isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')" title="Update Verification">
-                                        <i class="fa-solid fa-shield-check"></i>
+                                    {{#if isBlocked}}
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="quickRestoreUser('{{_id}}', '{{name}}')" title="Restore Account">
+                                        <i class="fa-solid fa-lock-open"></i>
                                     </button>
+                                    {{else}}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend Account">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </button>
+                                    {{/if}}
                                 </div>
                             </td>
                         </tr>
@@ -335,12 +385,12 @@
         <span class="small text-muted">Showing page {{page}} of {{totalPages}} ({{total}} total users)</span>
         <div class="d-flex gap-2">
             {{#if (gt page 1)}}
-            <a href="/admin/network/users?page={{dec page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+            <a href="/admin/network/users?page={{dec page}}&search={{filters.search}}&role={{filters.role}}&status={{filters.status}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
                 <i class="fa-solid fa-chevron-left me-1"></i> Previous
             </a>
             {{/if}}
             {{#if (lt page totalPages)}}
-            <a href="/admin/network/users?page={{inc page}}&search={{filters.search}}&role={{filters.role}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
+            <a href="/admin/network/users?page={{inc page}}&search={{filters.search}}&role={{filters.role}}&status={{filters.status}}&discipline={{filters.discipline}}&sector={{filters.sector}}&verified={{filters.verified}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="btn btn-sm btn-outline-secondary">
                 Next <i class="fa-solid fa-chevron-right ms-1"></i>
             </a>
             {{/if}}
@@ -375,15 +425,64 @@
                         </select>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Reason for Role Change (Mandatory Audit Rationale)</label>
+                        <textarea class="form-control" name="reason" id="roleReason" rows="2" placeholder="Explain the justification for this role assignment..." required minlength="3"></textarea>
+                    </div>
+
                     <!-- EDUCATOR GOVERNANCE NOTICE -->
                     <div id="educatorNotice" class="alert alert-warning border-0 small mb-0" style="display: none; border-radius: 12px;">
                         <i class="fa-solid fa-shield-halved me-1 text-warning"></i>
-                        <strong>Administrative Privilege:</strong> The <em>Educator</em> role can only be assigned by a Zeitnah Administrator. Normal users cannot self-assign or self-revoke this role. This action will be recorded in the audit trail.
+                        <strong>Administrative Privilege:</strong> The <em>Educator</em> role can only be assigned by an authorized Administrator. Normal users cannot self-assign or self-revoke this role. This action will be recorded in the audit trail.
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="saveRoleBtn">Confirm &amp; Audit Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SUSPEND USER MODAL -->
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-ban me-2"></i> Suspend User Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="suspendForm" onsubmit="submitSuspend(event)">
+                <div class="modal-body py-3">
+                    <p class="text-muted small">You are suspending the account for <strong id="suspendUserName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="suspendUserId" name="userId">
+
+                    <div class="alert alert-danger border-0 small mb-3" style="border-radius: 12px;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <strong>Impact:</strong> Suspending this account will immediately revoke all active sessions, block authentication, and disable platform participation until restored.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Administrative Reason (Required)</label>
+                        <textarea class="form-control" name="reason" id="suspendReason" rows="3" placeholder="Provide compliance or governance justification for this suspension..." required minlength="3"></textarea>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small d-block">Enforced Restrictions</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="restrMessaging" value="no_messaging" checked>
+                            <label class="form-check-label small" for="restrMessaging">Block Messaging</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="restrJobs" value="no_applications" checked>
+                            <label class="form-check-label small" for="restrJobs">Block Job Applications</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="confirmSuspendBtn">Confirm Suspension</button>
                 </div>
             </form>
         </div>
@@ -428,12 +527,13 @@
 </div>
 
 <script>
-let roleModalInstance, verificationModalInstance;
+let roleModalInstance, verificationModalInstance, suspendModalInstance;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.bootstrap) {
         roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal'));
         verificationModalInstance = new bootstrap.Modal(document.getElementById('verificationModal'));
+        suspendModalInstance = new bootstrap.Modal(document.getElementById('suspendModal'));
     }
 });
 
@@ -442,6 +542,9 @@ function openRoleModal(userId, name, currentRole) {
     document.getElementById('modalUserName').innerText = name;
     const select = document.getElementById('newRoleSelect');
     select.value = (currentRole || 'STUDENT').toUpperCase();
+    if (document.getElementById('roleReason')) {
+        document.getElementById('roleReason').value = '';
+    }
     checkEducatorWarning(select.value);
     roleModalInstance.show();
 }
@@ -460,6 +563,7 @@ async function submitRoleChange(e) {
     const btn = document.getElementById('saveRoleBtn') || e.target.querySelector('button[type="submit"]');
     const userId = document.getElementById('modalUserId').value;
     const role = document.getElementById('newRoleSelect').value;
+    const reason = (document.getElementById('roleReason')?.value || '').trim();
 
     if (role === 'EDUCATOR') {
         const confirmRes = await Swal.fire({
@@ -479,7 +583,7 @@ async function submitRoleChange(e) {
         const res = await fetch(`/admin/network/users/${userId}/role`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ role })
+            body: JSON.stringify({ role, reason })
         });
         const json = await res.json();
         if (json.success) {
@@ -491,6 +595,73 @@ async function submitRoleChange(e) {
         }
     } catch(err) {
         if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openSuspendModal(userId, name) {
+    document.getElementById('suspendUserId').value = userId;
+    document.getElementById('suspendUserName').innerText = name;
+    document.getElementById('suspendReason').value = '';
+    suspendModalInstance.show();
+}
+
+async function submitSuspend(e) {
+    e.preventDefault();
+    const btn = document.getElementById('confirmSuspendBtn');
+    const userId = document.getElementById('suspendUserId').value;
+    const reason = document.getElementById('suspendReason').value.trim();
+    const restrictions = [];
+    if (document.getElementById('restrMessaging').checked) restrictions.push('no_messaging');
+    if (document.getElementById('restrJobs').checked) restrictions.push('no_applications');
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Suspending...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason, restrictions })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'User Suspended', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Suspension Failed', text: json.message || 'Could not suspend user' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+async function quickRestoreUser(userId, name) {
+    const confirmRes = await Swal.fire({
+        title: 'Restore Account?',
+        text: `Are you sure you want to lift the suspension for ${name}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        confirmButtonText: 'Yes, Restore User'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason: 'Suspension lifted by administrator' })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'User Restored', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Restoration Failed', text: json.message || 'Could not restore user' });
+        }
+    } catch(err) {
         Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
     }
 }

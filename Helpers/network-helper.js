@@ -57,15 +57,17 @@ const getNetworkStats = async () => {
 // DIRECTORY SEARCH & PAGINATION
 // ─────────────────────────────────────────────────────────
 
-const getNetworkUsers = async (filters = {}) => {
+const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) => {
   const database = db.get();
-  const page = Math.max(1, Number(filters.page) || 1);
-  const limit = Math.min(Math.max(1, Number(filters.limit) || 20), 100);
+  const page = Math.max(1, Number(pageArg !== null ? pageArg : filters.page) || 1);
+  const limit = Math.min(Math.max(1, Number(limitArg !== null ? limitArg : filters.limit) || 20), 100);
   const skip = (page - 1) * limit;
 
   const role = filters.role || 'all';
   const search = (filters.search || '').trim();
+  const cleanSearch = search.replace(/^@+/, '').trim();
   const searchRegex = search ? new RegExp(escapeRegex(search), 'i') : null;
+  const cleanSearchRegex = cleanSearch ? new RegExp(escapeRegex(cleanSearch), 'i') : null;
 
   // Space filter: if spaceId is provided, get member userIds first from platform memberships or legacy
   let spaceUserIds = null;
@@ -129,7 +131,7 @@ const getNetworkUsers = async (filters = {}) => {
       detailLink: `/network/user/${t._id}?role=teacher`
     }));
 
-    return { records, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+    return { records, users: records, total, totalUsers: total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
   }
 
   // If role is specific to Admin
@@ -170,18 +172,28 @@ const getNetworkUsers = async (filters = {}) => {
       detailLink: `/network/user/${a._id}?role=admin`
     }));
 
-    return { records, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+    return { records, users: records, total, totalUsers: total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
   }
 
-  // For Students / Registered / All:
+  // For Students / Registered / Professional Roles / All:
   // Base query on STUDENTS_COLLECTION ('users')
   const userQuery = {
     'account_Status.isDeleted': { $ne: true }
   };
 
-  if (role === 'student') {
-    userQuery['course.0'] = { $exists: true };
-  } else if (role === 'registered') {
+  const normalizedRole = role.toLowerCase();
+  if (['educator', 'professional', 'mentor', 'recruiter', 'founder'].includes(normalizedRole)) {
+    userQuery.$or = [
+      { primaryRole: normalizedRole.toUpperCase() },
+      { role: normalizedRole }
+    ];
+  } else if (normalizedRole === 'student') {
+    userQuery.$or = [
+      { primaryRole: 'STUDENT' },
+      { role: 'student' },
+      { 'course.0': { $exists: true } }
+    ];
+  } else if (normalizedRole === 'registered') {
     userQuery.$or = [
       { course: { $exists: false } },
       { course: { $eq: [] } }
@@ -189,28 +201,67 @@ const getNetworkUsers = async (filters = {}) => {
   }
 
   if (searchRegex) {
+    const searchConditions = [
+      { Name: searchRegex },
+      { name: searchRegex },
+      { email: searchRegex },
+      { username: searchRegex },
+      { Phone_Number: searchRegex }
+    ];
+    if (cleanSearchRegex && cleanSearch !== search) {
+      searchConditions.push({ username: cleanSearchRegex });
+      searchConditions.push({ Name: cleanSearchRegex });
+      searchConditions.push({ name: cleanSearchRegex });
+    }
+    if (ObjectId.isValid(cleanSearch)) {
+      searchConditions.push({ _id: new ObjectId(cleanSearch) });
+    } else if (ObjectId.isValid(search)) {
+      searchConditions.push({ _id: new ObjectId(search) });
+    }
     userQuery.$and = userQuery.$and || [];
-    userQuery.$and.push({
-      $or: [
-        { Name: searchRegex },
-        { name: searchRegex },
-        { email: searchRegex },
-        { username: searchRegex },
-        { Phone_Number: searchRegex }
-      ]
-    });
+    userQuery.$and.push({ $or: searchConditions });
   }
 
   if (filters.status === 'active') {
     userQuery['account_Status.isBlocked'] = { $ne: true };
-  } else if (filters.status === 'blocked') {
+  } else if (filters.status === 'blocked' || filters.status === 'suspended') {
     userQuery['account_Status.isBlocked'] = true;
+  } else if (filters.status === 'restricted') {
+    userQuery['account_Status.restrictions.0'] = { $exists: true };
   }
 
-  if (filters.isVerified === 'true' || filters.isVerified === true) {
-    userQuery['account_Status.isVerified'] = true;
-  } else if (filters.isVerified === 'false' || filters.isVerified === false) {
-    userQuery['account_Status.isVerified'] = { $ne: true };
+  if (filters.verified === 'verified' || filters.isVerified === 'true' || filters.isVerified === true) {
+    userQuery.$and = userQuery.$and || [];
+    userQuery.$and.push({
+      $or: [
+        { isVerified: true },
+        { 'account_Status.isVerified': true },
+        { verificationStatus: 'VERIFIED' }
+      ]
+    });
+  } else if (filters.verified === 'unverified' || filters.isVerified === 'false' || filters.isVerified === false) {
+    userQuery.$and = userQuery.$and || [];
+    userQuery.$and.push({
+      $and: [
+        { isVerified: { $ne: true } },
+        { 'account_Status.isVerified': { $ne: true } },
+        { verificationStatus: { $ne: 'VERIFIED' } }
+      ]
+    });
+  }
+
+  if (filters.discipline && filters.discipline !== 'all') {
+    userQuery.discipline = filters.discipline;
+  }
+
+  if (filters.sector && filters.sector !== 'all') {
+    userQuery.infrastructureSector = filters.sector;
+  }
+
+  if (filters.usernameState === 'claimed') {
+    userQuery.usernameClaimed = true;
+  } else if (filters.usernameState === 'auto') {
+    userQuery.usernameClaimed = { $ne: true };
   }
 
   if (filters.courseId && ObjectId.isValid(filters.courseId)) {
@@ -231,8 +282,15 @@ const getNetworkUsers = async (filters = {}) => {
         email: 1,
         username: 1,
         Phone_Number: 1,
+        primaryRole: 1,
+        role: 1,
+        discipline: 1,
+        infrastructureSector: 1,
         course: 1,
         account_Status: 1,
+        isVerified: 1,
+        verificationStatus: 1,
+        usernameClaimed: 1,
         profileImage: 1,
         createdAt: 1
       }
@@ -244,30 +302,56 @@ const getNetworkUsers = async (filters = {}) => {
 
   await Promise.all(users.map(u => decorateProfileImage(u, 'profileImage')));
 
+  // Single-query batch lookup for community profiles (prevents N+1 database queries)
+  const userIds = users.map(u => u._id);
+  const commProfiles = userIds.length ? await database.collection(collection.COMMUNITY_PROFILES_COLLECTION)
+    .find({ $or: [{ userId: { $in: userIds } }, { userId: { $in: userIds.map(String) } }] })
+    .toArray()
+    .catch(() => []) : [];
+
+  const commProfileMap = {};
+  commProfiles.forEach(p => {
+    commProfileMap[String(p.userId)] = p;
+  });
+
   const records = users.map(u => {
     const isEnrolled = Array.isArray(u.course) && u.course.length > 0;
     const isBlocked = Boolean(u.account_Status?.isBlocked);
-    const isVerified = Boolean(u.account_Status?.isVerified);
+    const isVerified = Boolean(u.isVerified || u.account_Status?.isVerified || u.verificationStatus === 'VERIFIED');
+    const isRestricted = Boolean(u.account_Status?.restrictions && u.account_Status.restrictions.length);
+    const commProfile = commProfileMap[String(u._id)] || {};
+
+    const rawRole = u.primaryRole || u.role || (isEnrolled ? 'STUDENT' : 'REGISTERED');
+    const primaryRole = String(rawRole).toUpperCase();
 
     return {
       _id: u._id,
       name: u.Name || u.name || 'Learner',
       email: u.email,
       username: u.username || (u.email ? u.email.split('@')[0] : 'user'),
-      role: isEnrolled ? 'student' : 'registered',
-      roleBadge: isEnrolled ? 'Student' : 'Registered User',
-      status: isBlocked ? 'blocked' : (u.account_Status?.isActive === false ? 'inactive' : 'active'),
+      usernameClaimed: Boolean(u.usernameClaimed),
+      primaryRole,
+      role: primaryRole.toLowerCase(),
+      roleBadge: primaryRole === 'EDUCATOR' ? 'Educator (Protected)' : (primaryRole.charAt(0) + primaryRole.slice(1).toLowerCase()),
+      discipline: u.discipline || commProfile.discipline || null,
+      infrastructureSector: u.infrastructureSector || commProfile.infrastructureSector || null,
+      status: isBlocked ? 'suspended' : (isRestricted ? 'restricted' : (u.account_Status?.isActive === false ? 'inactive' : 'active')),
+      accountStatus: isBlocked ? 'suspended' : (isRestricted ? 'restricted' : (u.account_Status?.isActive === false ? 'inactive' : 'active')),
       isVerified,
+      verificationStatus: u.verificationStatus || (isVerified ? 'VERIFIED' : 'UNVERIFIED'),
       isBlocked,
+      isSuspended: isBlocked,
+      isRestricted,
       coursesCount: isEnrolled ? u.course.length : 0,
       avatar: u.profileImageUrl || '/img/placeholders/profile.svg',
       joinedAt: u.createdAt,
+      createdAt: u.createdAt,
       lastSeen: u.account_Status?.lastSeen || null,
-      detailLink: `/network/user/${u._id}?role=${isEnrolled ? 'student' : 'registered'}`
+      detailLink: `/admin/network/users/${u._id}`
     };
   });
 
-  return { records, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+  return { records, users: records, total, totalUsers: total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
 };
 
 // ─────────────────────────────────────────────────────────

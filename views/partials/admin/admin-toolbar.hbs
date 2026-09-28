@@ -1,0 +1,53 @@
+{{!-- Reusable Admin Toolbar Component --}}
+<div class="admin-toolbar-container {{extraClass}}">
+  <div class="toolbar-left">
+    {{#if searchAction}}
+    <form action="{{searchAction}}" method="GET" class="toolbar-search-form" role="search">
+      {{#if viewMode}}<input type="hidden" name="view" value="{{viewMode}}">{{/if}}
+      {{#if filters.status}}<input type="hidden" name="status" value="{{filters.status}}">{{/if}}
+      {{#if filters.role}}<input type="hidden" name="role" value="{{filters.role}}">{{/if}}
+      {{#if filters.category}}<input type="hidden" name="category" value="{{filters.category}}">{{/if}}
+      <div class="toolbar-search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" name="search" value="{{#if filters.search}}{{filters.search}}{{else}}{{search}}{{/if}}" 
+               class="toolbar-search-input" placeholder="{{#if searchPlaceholder}}{{searchPlaceholder}}{{else}}Search records...{{/if}}"
+               aria-label="{{#if searchPlaceholder}}{{searchPlaceholder}}{{else}}Search records{{/if}}">
+        {{#if filters.search}}
+        <a href="{{searchAction}}{{#if viewMode}}?view={{viewMode}}{{/if}}" class="search-clear-btn" title="Clear search" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        {{/if}}
+      </div>
+      <button type="submit" class="admin-btn admin-btn-secondary btn-search" aria-label="Submit search">
+        <span>Search</span>
+      </button>
+    </form>
+    {{/if}}
+  </div>
+
+  <div class="toolbar-right">
+    {{#if enableViewToggle}}
+      {{> admin/view-toggle section=section total=total itemLabel=itemLabel viewMode=viewMode}}
+    {{/if}}
+
+    {{#if actionUrl}}
+      {{#if actionCapability}}
+        {{#hasAdminCapability actionCapability}}
+        <a href="{{actionUrl}}" class="admin-btn admin-btn-primary toolbar-primary-action">
+          {{#if actionIcon}}<i class="{{actionIcon}}"></i>{{/if}}
+          <span>{{actionLabel}}</span>
+        </a>
+        {{/hasAdminCapability}}
+      {{else}}
+      <a href="{{actionUrl}}" class="admin-btn admin-btn-primary toolbar-primary-action">
+        {{#if actionIcon}}<i class="{{actionIcon}}"></i>{{/if}}
+        <span>{{actionLabel}}</span>
+      </a>
+      {{/if}}
+    {{/if}}
+
+    {{#if customActionHtml}}
+      {{{customActionHtml}}}
+    {{/if}}
+  </div>
+</div>

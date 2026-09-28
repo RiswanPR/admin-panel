@@ -16,6 +16,8 @@ const adminHelpers = require('../Helpers/admin-helper');
 const teacherHelpers = require('../Helpers/teacher-helper');
 const announcementHelper = require('../Helpers/announcement-helper');
 const networkHelper = require('../Helpers/network-helper');
+const permissionsHelper = require('../Helpers/permissions-helper');
+const { requireCapability } = permissionsHelper;
 const learningSpaceHelper = require('../Helpers/learning-space-helper');
 const { getVideoDurationInSeconds } = require('get-video-duration');
 const ffprobeStatic = require('ffprobe-static');
@@ -206,9 +208,23 @@ const reviveBackupValue = (value, key = '') => {
   return value;
 };
 
-// Inject view mode for listing pages (card is default)
+// Inject view mode and admin permissions for governance navigation
 router.use((req, res, next) => {
+  const admin = req.session?.admin || null;
   res.locals.viewMode = req.query?.view === 'table' ? 'table' : 'card';
+  res.locals.sessionAdmin = admin;
+  res.locals.isSuperuser = admin?.role === 'superuser';
+  res.locals.adminCapabilities = permissionsHelper.getAdminCapabilities(admin);
+  res.locals.canManageNetwork = permissionsHelper.hasCapability(admin, 'manage_network');
+  res.locals.canManageVerification = permissionsHelper.hasCapability(admin, 'manage_verification');
+  res.locals.canReviewBusinesses = permissionsHelper.hasCapability(admin, 'review_businesses');
+  res.locals.canManageJobs = permissionsHelper.hasCapability(admin, 'manage_jobs');
+  res.locals.canModerateContent = permissionsHelper.hasCapability(admin, 'moderate_content');
+  res.locals.canManageAI = permissionsHelper.hasCapability(admin, 'manage_ai_config');
+  res.locals.canManageTaxonomy = permissionsHelper.hasCapability(admin, 'manage_taxonomy');
+  res.locals.canViewAuditLogs = permissionsHelper.hasCapability(admin, 'view_audit_logs');
+  res.locals.canViewErrors = permissionsHelper.hasCapability(admin, 'view_system_errors');
+  res.locals.canManageSettings = permissionsHelper.hasCapability(admin, 'manage_settings');
   next();
 });
 
@@ -677,7 +693,7 @@ router.post(
   }
 );
 
-router.post('/delete-student/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/delete-student/:id', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
 
   try {
 
@@ -806,8 +822,8 @@ router.post(
     }
   }
 );
-// ✅ Protected with verifyLogin
-router.post('/change-status/:id/:status', verifyLogin, validateObjectIds(['id']), (req, res) => {
+// Protected with verifyLogin and requireCapability
+router.post('/change-status/:id/:status', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), (req, res) => {
   const studentId = req.params.id;
   const status = req.params.status === 'true';
 
@@ -827,8 +843,8 @@ router.post('/change-status/:id/:status', verifyLogin, validateObjectIds(['id'])
     });
 });
 
-// ✅ Protected with verifyLogin
-router.post('/verify-account/:id', verifyLogin, validateObjectIds(['id']), (req, res) => {
+// Protected with verifyLogin and requireCapability
+router.post('/verify-account/:id', verifyLogin, requireCapability('manage_verification'), validateObjectIds(['id']), (req, res) => {
   const studentId = req.params.id;
 
   studentHelpers.verifyStudent(studentId)
@@ -1238,6 +1254,10 @@ router.post(
   }
 );
 
+router.get('/add-class', verifyLogin, (req, res) => {
+  res.redirect('/classes');
+});
+
 router.get(
   '/add-class/:chapterCode',
   verifyLogin,
@@ -1490,6 +1510,10 @@ router.get(
 // ===========================
 // VIEW EXERCISES
 // ===========================
+router.get('/chapters/exercises/:chapterCode', verifyLogin, (req, res) => {
+  res.redirect('/chapters');
+});
+
 router.get(
   '/chapters/exercises/:chapterId/:classId',
   verifyLogin,
@@ -2015,14 +2039,15 @@ router.post(
   }
 );
 
-router.get('/audit-logs', verifyLogin, verifySuperuser, async (req, res) => {
+router.get('/audit-logs', verifyLogin, requireCapability('view_audit_logs'), async (req, res) => {
   try {
     const filters = {
       search: req.query.search || '',
       action: req.query.action || '',
       entityType: req.query.entityType || '',
       status: req.query.status || '',
-      limit: req.query.limit || 200
+      page: req.query.page || 1,
+      limit: req.query.limit || 50
     };
 
     const logs = await auditHelper.getLogs(filters);
@@ -2030,9 +2055,14 @@ router.get('/audit-logs', verifyLogin, verifySuperuser, async (req, res) => {
     res.render('admin/audit-logs', {
       admins: true,
       currentPage: 'audit-logs',
-      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Audit Logs' }],
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Governance' }, { label: 'Audit Logs' }],
       logs,
-      filters
+      total: logs.total,
+      page: logs.page,
+      limit: logs.limit,
+      totalPages: logs.totalPages,
+      filters,
+      viewMode: req.query.view === 'table' ? 'table' : 'card'
     });
   } catch (err) {
     logger.info('Audit Logs Route Error:', err.message);
@@ -2685,7 +2715,8 @@ router.get('/teachers', verifyLogin, async (req, res) => {
   }
 });
 
-// ADD TEACHER — FORM
+// ADD TEACHER — ALIAS & FORM
+router.get('/add-teacher', verifyLogin, (req, res) => res.redirect('/teachers/add'));
 router.get('/teachers/add', verifyLogin, async (req, res) => {
   const courses = await courseHelpers.getCourses();
   res.render('admin/add-teacher', {
@@ -3737,7 +3768,7 @@ router.get('/network/user/:id', verifyLogin, validateObjectIds(['id']), async (r
 });
 
 // 3. Update User Status (active / blocked)
-router.post('/network/user/:id/status', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/network/user/:id/status', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
   try {
     const isBlocked = req.body.isBlocked === 'true' || req.body.isBlocked === true;
     const isActive = req.body.isActive === 'true' || req.body.isActive === true;
@@ -3757,8 +3788,29 @@ router.post('/network/user/:id/status', verifyLogin, validateObjectIds(['id']), 
   }
 });
 
+// Also support plural path
+router.post('/network/users/:id/status', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
+  try {
+    const isBlocked = req.body.isBlocked === 'true' || req.body.isBlocked === true;
+    const isActive = req.body.isActive === 'true' || req.body.isActive === true;
+
+    await networkHelper.updateUserAccountStatus(req.params.id, { isBlocked, isActive }, req.session.admin, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'User status updated successfully.' });
+    }
+    res.redirect(`/admin/network/users/${req.params.id}`);
+  } catch (err) {
+    logger.error('Update User Status Error:', err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(400).render('error', { message: err.message });
+  }
+});
+
 // 4. Remove Relationship
-router.post('/network/user/:id/relationship/remove', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/network/user/:id/relationship/remove', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
   try {
     const { targetId, relationshipType } = req.body;
     if (!targetId || !ObjectId.isValid(targetId)) {

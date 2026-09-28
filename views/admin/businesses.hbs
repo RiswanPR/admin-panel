@@ -5,10 +5,10 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
             <div>
                 <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                    <i class="fa-solid fa-building-shield me-1"></i> Phase 2 Governance
+                    <i class="fa-solid fa-building-shield me-1"></i> Phase 3 Enterprise Governance
                 </span>
-                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Business Review Center</h2>
-                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Review, verify, approve, reject, or suspend infrastructure employers and corporate entities.</p>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Business Governance Center</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Govern, verify, approve, reject, or suspend infrastructure employers and corporate organizations.</p>
             </div>
 
             <div class="d-flex gap-2 flex-wrap">
@@ -106,16 +106,25 @@
         <input type="hidden" name="tab" value="{{tab}}">
         <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}" class="admin-view-input">
         <div class="row g-2 align-items-center">
-            <div class="col-lg-6 col-md-8">
+            <div class="col-lg-5 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search by business name, slug, industry, location...">
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search by business name, slug, owner, recruiter, location...">
                 </div>
             </div>
-            <div class="col-lg-4 col-md-3">
-                <input type="text" class="form-control" name="industry" value="{{#ifEquals filters.industry 'all'}}{{else}}{{filters.industry}}{{/ifEquals}}" placeholder="Filter by industry (e.g. EPC, Highways)...">
+            <div class="col-lg-3 col-md-3 col-6">
+                <input type="text" class="form-control" name="industry" value="{{#ifEquals filters.industry 'all'}}{{else}}{{filters.industry}}{{/ifEquals}}" placeholder="Industry (e.g. EPC, Energy)...">
             </div>
-            <div class="col-lg-2 col-md-1 text-end">
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="verification" onchange="document.getElementById('businessFilterForm').submit()">
+                    <option value="all">All Verifications</option>
+                    <option value="VERIFIED" {{#ifEquals filters.verification 'VERIFIED'}}selected{{/ifEquals}}>Verified</option>
+                    <option value="PENDING" {{#ifEquals filters.verification 'PENDING'}}selected{{/ifEquals}}>Pending</option>
+                    <option value="REJECTED" {{#ifEquals filters.verification 'REJECTED'}}selected{{/ifEquals}}>Rejected</option>
+                    <option value="REVOKED" {{#ifEquals filters.verification 'REVOKED'}}selected{{/ifEquals}}>Revoked</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-12 text-end">
                 <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> Filter</button>
             </div>
         </div>
@@ -132,7 +141,7 @@
             <div class="col-xl-4 col-md-6">
                 <div class="admin-governance-card">
                     <div class="admin-card-header">
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                             {{#ifEquals statusNormalized 'APPROVED'}}
                             <span class="admin-badge admin-badge-success"><i class="fa-solid fa-circle-check"></i> Approved</span>
                             {{else ifEquals statusNormalized 'PENDING'}}
@@ -142,6 +151,14 @@
                             {{else}}
                             <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-ban"></i> Suspended</span>
                             {{/ifEquals}}
+
+                            {{#ifEquals verificationStatusNormalized 'VERIFIED'}}
+                            <span class="admin-badge admin-badge-success"><i class="fa-solid fa-shield-check"></i> Verified</span>
+                            {{else ifEquals verificationStatusNormalized 'PENDING'}}
+                            <span class="admin-badge admin-badge-warning"><i class="fa-solid fa-shield-halved"></i> Verif. Pending</span>
+                            {{else ifEquals verificationStatusNormalized 'REJECTED'}}
+                            <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-shield-xmark"></i> Verif. Rejected</span>
+                            {{/ifEquals}}
                         </div>
                         <span class="badge bg-light text-muted border small">{{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</span>
                     </div>
@@ -149,13 +166,33 @@
                     <div class="admin-card-body">
                         <div class="d-flex align-items-start gap-3">
                             <div class="rounded-3 p-2 d-flex align-items-center justify-content-center border shadow-xs" style="width: 48px; height: 48px; background: var(--surface);">
+                                {{#if logo}}
+                                <img src="{{logo}}" class="img-fluid rounded" alt="{{name}}" style="max-height: 36px; object-fit: contain;">
+                                {{else}}
                                 <i class="fa-solid fa-building text-primary fs-5"></i>
+                                {{/if}}
                             </div>
                             <div class="overflow-hidden">
                                 <h4 class="admin-card-title text-truncate">
                                     <a href="/admin/businesses/{{_id}}" class="text-decoration-none" style="color:var(--text);">{{name}}</a>
                                 </h4>
                                 <div class="admin-card-subtitle text-truncate">@{{slug}}</div>
+                            </div>
+                        </div>
+
+                        <!-- GOVERNANCE METRICS RIBBON -->
+                        <div class="d-flex justify-content-between p-2 rounded bg-light border my-3 text-center small">
+                            <div>
+                                <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Members</span>
+                                <strong class="text-dark">{{membersCount}}</strong>
+                            </div>
+                            <div class="border-start ps-2">
+                                <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Open Jobs</span>
+                                <strong class="text-primary">{{openJobsCount}}</strong>
+                            </div>
+                            <div class="border-start ps-2">
+                                <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Reports</span>
+                                <strong class="{{#if reportsCount}}text-danger{{else}}text-muted{{/if}}">{{reportsCount}}</strong>
                             </div>
                         </div>
 
@@ -206,6 +243,11 @@
                             <i class="fa-solid fa-pause me-1"></i> Suspend
                         </button>
                         {{/ifEquals}}
+                        {{#ifEquals statusNormalized 'SUSPENDED'}}
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="restoreBusiness('{{_id}}', '{{name}}', this)" title="Restore Entity">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Restore
+                        </button>
+                        {{/ifEquals}}
                     </div>
                 </div>
             </div>
@@ -233,12 +275,12 @@
                         <tr style="font-size: 12px; text-transform: uppercase;">
                             <th class="ps-4">Business</th>
                             <th>Owner</th>
-                            <th>Role</th>
-                            <th>Industry</th>
-                            <th>Specialization</th>
-                            <th>Location</th>
-                            <th>Submitted</th>
+                            <th>Verification</th>
                             <th>Status</th>
+                            <th>Members</th>
+                            <th>Open Jobs</th>
+                            <th>Reports</th>
+                            <th>Submitted</th>
                             <th class="text-end pe-4" style="min-width: 140px;">Actions</th>
                         </tr>
                     </thead>
@@ -249,48 +291,56 @@
                             <td class="ps-4">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="rounded p-2 d-flex align-items-center justify-content-center border shadow-xs" style="width: 44px; height: 44px; background: var(--surface);">
+                                        {{#if logo}}
+                                        <img src="{{logo}}" class="img-fluid rounded" alt="{{name}}" style="max-height: 28px; object-fit: contain;">
+                                        {{else}}
                                         <i class="fa-solid fa-building text-primary"></i>
+                                        {{/if}}
                                     </div>
                                     <div>
                                         <a href="/admin/businesses/{{_id}}" class="fw-bold text-decoration-none" style="color:var(--text);">
                                             {{name}}
                                         </a>
-                                        <div class="text-muted small">@{{slug}}</div>
+                                        <div class="text-muted small">@{{slug}} &bull; {{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</div>
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div class="small fw-semibold">{{ownerName}}</div>
-                                <div class="text-muted" style="font-size: 11px;">{{ownerEmail}}</div>
+                                <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{ownerRole}}</span>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border">{{ownerRole}}</span>
-                            </td>
-                            <td class="small text-muted">{{#if industry}}{{industry}}{{else}}Infrastructure{{/if}}</td>
-                            <td>
-                                {{#if infrastructureSpecializations.length}}
-                                <span class="badge bg-light text-secondary border">{{infrastructureSpecializations.[0]}}</span>
+                                {{#ifEquals verificationStatusNormalized 'VERIFIED'}}
+                                <span class="admin-badge admin-badge-success"><i class="fa-solid fa-shield-check me-1"></i> Verified</span>
+                                {{else ifEquals verificationStatusNormalized 'PENDING'}}
+                                <span class="admin-badge admin-badge-warning"><i class="fa-solid fa-shield-halved me-1"></i> Pending</span>
+                                {{else ifEquals verificationStatusNormalized 'REJECTED'}}
+                                <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-shield-xmark me-1"></i> Rejected</span>
                                 {{else}}
-                                <span class="text-muted small">—</span>
-                                {{/if}}
+                                <span class="admin-badge admin-badge-secondary"><i class="fa-solid fa-shield me-1"></i> Unverified</span>
+                                {{/ifEquals}}
                             </td>
-                            <td class="small text-muted">{{#if location}}{{location}}{{else}}—{{/if}}</td>
-                            <td class="small text-muted">{{formatDate createdAt}}</td>
                             <td>
                                 {{#ifEquals statusNormalized 'APPROVED'}}
                                 <span class="admin-badge admin-badge-success"><i class="fa-solid fa-check-circle me-1"></i> Approved</span>
-                                {{else}}
-                                {{#ifEquals statusNormalized 'PENDING'}}
+                                {{else ifEquals statusNormalized 'PENDING'}}
                                 <span class="admin-badge admin-badge-warning"><i class="fa-solid fa-clock me-1"></i> Pending</span>
-                                {{else}}
-                                {{#ifEquals statusNormalized 'REJECTED'}}
+                                {{else ifEquals statusNormalized 'REJECTED'}}
                                 <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Rejected</span>
                                 {{else}}
                                 <span class="admin-badge admin-badge-danger"><i class="fa-solid fa-ban me-1"></i> Suspended</span>
                                 {{/ifEquals}}
-                                {{/ifEquals}}
-                                {{/ifEquals}}
                             </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{membersCount}}</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-primary">{{openJobsCount}}</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold {{#if reportsCount}}text-danger{{else}}text-muted{{/if}}">{{reportsCount}}</span>
+                            </td>
+                            <td class="small text-muted">{{formatDate createdAt}}</td>
                             <td class="text-end pe-4">
                                 <div class="table-actions">
                                     <a href="/admin/businesses/{{_id}}" class="btn btn-sm btn-outline-secondary" title="Review Detail">
@@ -307,6 +357,11 @@
                                     {{#ifEquals statusNormalized 'APPROVED'}}
                                     <button type="button" class="btn btn-sm btn-outline-warning" onclick="openSuspendModal('{{_id}}', '{{name}}')" title="Suspend">
                                         <i class="fa-solid fa-pause"></i>
+                                    </button>
+                                    {{/ifEquals}}
+                                    {{#ifEquals statusNormalized 'SUSPENDED'}}
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="restoreBusiness('{{_id}}', '{{name}}', this)" title="Restore">
+                                        <i class="fa-solid fa-rotate-left"></i>
                                     </button>
                                     {{/ifEquals}}
                                 </div>
@@ -431,6 +486,39 @@ async function approveBusiness(id, name, btn) {
         const json = await res.json();
         if (json.success) {
             Swal.fire({ icon: 'success', title: 'Approved', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            resetBtn();
+            Swal.fire({ icon: 'error', title: 'Failed', text: json.message });
+        }
+    } catch (e) {
+        resetBtn();
+        Swal.fire({ icon: 'error', title: 'Error', text: e.message });
+    }
+}
+
+async function restoreBusiness(id, name, btn) {
+    const confirmRes = await Swal.fire({
+        title: 'Restore Business?',
+        text: `Restore active governance status for "${name}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Restore'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    const resetBtn = (window.zeitnahSetSubmitting && btn) ? window.zeitnahSetSubmitting(btn, 'Restoring...') : () => {};
+
+    try {
+        const res = await fetch(`/admin/businesses/${id}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Restored', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
             resetBtn();

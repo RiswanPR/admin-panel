@@ -488,3 +488,478 @@ button[disabled],
     padding: 12px 14px;
   }
 }
+
+/* ==========================================================================
+   8. REUSABLE ADMIN TOOLBAR & FILTERS
+   ========================================================================== */
+.admin-toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.toolbar-search-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.toolbar-search-box {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-search-box .search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.toolbar-search-input {
+  width: 100%;
+  padding: 9px 36px 9px 38px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--text);
+  min-height: 40px;
+  transition: all 0.2s ease;
+}
+
+.toolbar-search-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  background: var(--surface);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.search-clear-btn:hover {
+  color: var(--text);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-filters-bar {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+}
+
+.admin-filters-form .filters-group-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   9. REUSABLE ADMIN BUTTONS & CONTROLS
+   ========================================================================== */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.admin-btn:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.admin-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.admin-btn-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.admin-btn-secondary {
+  background: var(--surface);
+  color: var(--text) !important;
+  border-color: var(--border);
+}
+
+.admin-btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover, #64748b);
+}
+
+.admin-btn-outline {
+  background: transparent;
+  color: var(--muted) !important;
+  border-color: var(--border);
+}
+
+.admin-btn-outline:hover {
+  background: var(--surface-2);
+  color: var(--text) !important;
+}
+
+.admin-btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.admin-btn-danger:hover {
+  background: #ef4444;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   10. REUSABLE ADMIN PAGINATION
+   ========================================================================== */
+.admin-pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 4px 24px;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pagination-info strong {
+  color: var(--text);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(.disabled):not(:disabled) {
+  background: var(--surface-hover);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.pagination-btn.disabled,
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pagination-current {
+  color: #10b981;
+}
+
+.pagination-separator,
+.pagination-total {
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   11. REUSABLE MODALS & DRAWERS
+   ========================================================================== */
+.admin-modal-backdrop,
+.admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: backdropFadeIn 0.2s ease;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.admin-modal-container {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.admin-modal-sm { max-width: 440px; }
+.admin-modal-md { max-width: 600px; }
+.admin-modal-lg { max-width: 800px; }
+.admin-modal-xl { max-width: 1050px; }
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.admin-modal-header,
+.admin-drawer-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-modal-title-group,
+.admin-drawer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-title-icon,
+.drawer-title-icon {
+  font-size: 20px;
+  color: #10b981;
+}
+
+.admin-modal-title,
+.admin-drawer-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.admin-modal-subtitle,
+.admin-drawer-subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.admin-modal-close-btn,
+.admin-drawer-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-modal-close-btn:hover,
+.admin-drawer-close-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.admin-modal-body,
+.admin-drawer-body {
+  padding: 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-modal-footer,
+.admin-drawer-footer {
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--surface-2);
+}
+
+/* Off-canvas Drawer */
+.admin-drawer-backdrop {
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.admin-drawer-panel {
+  background: var(--card);
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 25px rgba(0, 0, 0, 0.3);
+  animation: drawerSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* ==========================================================================
+   12. SKELETONS, ERROR STATES & EMPTY STATES
+   ========================================================================== */
+.admin-skeleton-wrapper {
+  width: 100%;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s infinite;
+  border-radius: 6px;
+}
+
+.skeleton-line.title { height: 20px; width: 60%; margin-bottom: 10px; }
+.skeleton-line.subtitle { height: 14px; width: 40%; margin-bottom: 14px; }
+.skeleton-line.detail { height: 14px; width: 85%; margin-bottom: 8px; }
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.admin-error-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 16px 0;
+}
+
+.error-state-icon {
+  font-size: 22px;
+  color: #ef4444;
+  margin-top: 2px;
+}
+
+.error-state-content {
+  flex: 1;
+}
+
+.error-state-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.error-state-message {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.error-state-code {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   13. MOBILE TOUCH TARGET COMPLIANCE (>= 44px)
+   ========================================================================== */
+@media (max-width: 991.98px) {
+  .admin-btn,
+  .pagination-btn,
+  .toolbar-search-input,
+  .filter-select {
+    min-height: 44px;
+  }
+}
+

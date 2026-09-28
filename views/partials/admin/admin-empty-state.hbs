@@ -1,0 +1,18 @@
+{{!-- Reusable Admin Empty State Component --}}
+<div class="admin-empty-state {{extraClass}}">
+  <div class="empty-state-icon">
+    <i class="{{#if icon}}{{icon}}{{else}}fa-solid fa-inbox{{/if}}"></i>
+  </div>
+  <h4 class="empty-state-title">{{#if title}}{{title}}{{else}}No records found{{/if}}</h4>
+  <p class="empty-state-description">
+    {{#if message}}{{message}}{{else}}There are no items matching your criteria or currently available in this section.{{/if}}
+  </p>
+  {{#if actionUrl}}
+  <div class="empty-state-action">
+    <a href="{{actionUrl}}" class="admin-btn admin-btn-primary">
+      {{#if actionIcon}}<i class="{{actionIcon}}"></i>{{/if}}
+      <span>{{#if actionLabel}}{{actionLabel}}{{else}}Get Started{{/if}}</span>
+    </a>
+  </div>
+  {{/if}}
+</div>

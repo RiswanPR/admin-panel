@@ -19,7 +19,22 @@ const getRelativeTime = (date) => {
 const getActionIconAndColor = (action = '', entityType = '') => {
     const text = `${action} ${entityType}`.toLowerCase();
     if (text.includes('student') || text.includes('user')) {
-        return { icon: 'fa-solid fa-user-graduate', colorClass: 'activity-student' };
+        return { icon: 'fa-solid fa-user', colorClass: 'activity-student' };
+    }
+    if (text.includes('business') || text.includes('organization')) {
+        return { icon: 'fa-solid fa-building-shield', colorClass: 'activity-business' };
+    }
+    if (text.includes('job') || text.includes('opportunity')) {
+        return { icon: 'fa-solid fa-briefcase', colorClass: 'activity-job' };
+    }
+    if (text.includes('verification')) {
+        return { icon: 'fa-solid fa-shield-check', colorClass: 'activity-verification' };
+    }
+    if (text.includes('moderation') || text.includes('report')) {
+        return { icon: 'fa-solid fa-shield-halved', colorClass: 'activity-moderation' };
+    }
+    if (text.includes('error')) {
+        return { icon: 'fa-solid fa-triangle-exclamation', colorClass: 'activity-error' };
     }
     if (text.includes('course')) {
         return { icon: 'fa-solid fa-book-open', colorClass: 'activity-course' };
@@ -47,9 +62,33 @@ module.exports = {
     getDashboardData: async () => {
         try {
             const dbConn = db.get();
+            if (!dbConn) {
+                return {
+                    totalStudents: 0,
+                    activeStudents: 0,
+                    totalRevenue: 0,
+                    totalCourses: 0,
+                    totalChapters: 0,
+                    governance: {
+                        totalUsers: 0,
+                        activeUsers: 0,
+                        newUsers7d: 0,
+                        pendingVerification: 0,
+                        pendingBusinesses: 0,
+                        publishedJobs: 0,
+                        openOpportunities: 0,
+                        openModeration: 0,
+                        systemErrors: 0
+                    },
+                    alerts: [],
+                    systemHealth: { database: 'OFFLINE', sessionStore: 'UNKNOWN', errorRate: 'UNKNOWN' },
+                    recentActivity: []
+                };
+            }
 
             // Build last 6 months keys & labels
             const now = new Date();
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const monthLabels = [];
             const monthKeys = [];
             for (let i = 5; i >= 0; i--) {
@@ -64,6 +103,9 @@ module.exports = {
                 totalStudents,
                 activeStudents,
                 expiredStudents,
+                newUsers7d,
+                pendingUsersVerification,
+                pendingRequestsVerification,
                 totalCourses,
                 courses,
                 revenueResult,
@@ -72,13 +114,19 @@ module.exports = {
                 totalLearningSpaces,
                 rawAuditLogs,
                 pendingBusinessesCount,
-                activeJobsCount,
+                approvedBusinessesCount,
+                publishedJobsCount,
                 openModerationCount,
+                underReviewModerationCount,
+                unresolvedErrorsCount,
                 totalMatchesCount
             ] = await Promise.all([
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments().catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ status: true }).catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ status: false }).catch(() => 0),
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ createdAt: { $gte: sevenDaysAgo } }).catch(() => 0),
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ verificationStatus: { $in: ['PENDING', 'UNDER_REVIEW'] } }).catch(() => 0),
+                dbConn.collection(collection.VERIFICATION_REQUESTS_COLLECTION).countDocuments({ status: 'PENDING' }).catch(() => 0),
                 dbConn.collection(collection.COURSE_COLLECTION).countDocuments().catch(() => 0),
                 dbConn.collection(collection.COURSE_COLLECTION).find({}, { projection: { chapters: 1 } }).toArray().catch(() => []),
                 dbConn.collection(collection.STUDENTS_COLLECTION).aggregate([
@@ -94,18 +142,22 @@ module.exports = {
                 dbConn.collection(collection.AUDIT_LOG_COLLECTION)
                     .find({})
                     .sort({ createdAt: -1 })
-                    .limit(8)
+                    .limit(10)
                     .toArray().catch(() => []),
                 dbConn.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending'] } }).catch(() => 0),
+                dbConn.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['APPROVED', 'approved', 'ACTIVE', 'active'] } }).catch(() => 0),
                 dbConn.collection(collection.OPPORTUNITIES_COLLECTION).countDocuments({ status: { $in: ['PUBLISHED', 'published'] } }).catch(() => 0),
-                dbConn.collection(collection.MODERATION_REPORTS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending', 'open'] } }).catch(() => 0),
+                dbConn.collection(collection.MODERATION_REPORTS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending', 'open', 'OPEN'] } }).catch(() => 0),
+                dbConn.collection(collection.MODERATION_REPORTS_COLLECTION).countDocuments({ status: { $in: ['REVIEWED', 'reviewed', 'under_review', 'UNDER_REVIEW'] } }).catch(() => 0),
+                dbConn.collection(collection.ERROR_REPORTS_COLLECTION).countDocuments({ status: 'UNRESOLVED' }).catch(() => 0),
                 dbConn.collection(collection.JOB_TALENT_MATCHES_COLLECTION).countDocuments({}).catch(() => 0)
             ]);
 
             const totalRevenue = revenueResult[0]?.total || 0;
+            const totalChapters = courses.reduce((sum, c) => sum + (c.chapters ? c.chapters.length : 0), 0);
 
-            const totalChapters = courses.reduce((sum, c) =>
-                sum + (c.chapters ? c.chapters.length : 0), 0);
+            // Total pending verifications combines requests and direct user states
+            const pendingVerificationCount = Math.max(pendingUsersVerification, pendingRequestsVerification);
 
             // Course distribution aggregation
             let courseDistRaw = [];
@@ -123,9 +175,7 @@ module.exports = {
 
             const courseDistLabels = courseDistRaw.length ? courseDistRaw.map(c => c._id || 'General') : ['General'];
             const courseDistData = courseDistRaw.length ? courseDistRaw.map(c => c.count) : [totalStudents || 0];
-
-            // For popular course
-            const popularCourse = courseDistRaw[0]?._id || 'No Data';
+            const popularCourse = courseDistRaw[0]?._id || 'General';
 
             // Monthly enrollments trend
             const enrollmentCountsByMonth = {};
@@ -133,11 +183,7 @@ module.exports = {
 
             try {
                 const enrollAggr = await dbConn.collection(collection.STUDENTS_COLLECTION).aggregate([
-                    {
-                        $match: {
-                            createdAt: { $gte: sixMonthsAgo }
-                        }
-                    },
+                    { $match: { createdAt: { $gte: sixMonthsAgo } } },
                     {
                         $group: {
                             _id: {
@@ -155,9 +201,7 @@ module.exports = {
                         enrollmentCountsByMonth[key] = item.count;
                     }
                 });
-            } catch (e) {
-                // Keep default 0s
-            }
+            } catch (e) {}
 
             const enrollmentChart = {
                 labels: monthLabels,
@@ -170,11 +214,7 @@ module.exports = {
 
             try {
                 const revAggr = await dbConn.collection(collection.STUDENTS_COLLECTION).aggregate([
-                    {
-                        $match: {
-                            createdAt: { $gte: sixMonthsAgo }
-                        }
-                    },
+                    { $match: { createdAt: { $gte: sixMonthsAgo } } },
                     {
                         $group: {
                             _id: {
@@ -189,12 +229,10 @@ module.exports = {
                 revAggr.forEach(item => {
                     const key = `${item._id.year}-${item._id.month}`;
                     if (revenueByMonth[key] !== undefined) {
-                        revenueByMonth[key] = Math.round(item.total || 0);
+                        revenueByMonth[key] = item.total;
                     }
                 });
-            } catch (e) {
-                // Keep default 0s
-            }
+            } catch (e) {}
 
             const revenueChart = {
                 labels: monthLabels,
@@ -217,10 +255,58 @@ module.exports = {
                 };
             });
 
-            // Calculate active ratio percentage
+            // Actionable Alerts / Pending Queue
+            const alerts = [];
+            if (pendingBusinessesCount > 0) {
+                alerts.push({
+                    type: 'warning',
+                    badge: 'Review Required',
+                    title: 'Pending Businesses Queue',
+                    message: `${pendingBusinessesCount} business organization(s) awaiting administrative review and approval.`,
+                    url: '/admin/businesses?tab=pending',
+                    icon: 'fa-solid fa-building-shield'
+                });
+            }
+            if (openModerationCount > 0) {
+                alerts.push({
+                    type: 'danger',
+                    badge: 'Action Required',
+                    title: 'Community Moderation Backlog',
+                    message: `${openModerationCount} open community report(s) requiring adjudication and resolution.`,
+                    url: '/admin/moderation?tab=open',
+                    icon: 'fa-solid fa-shield-halved'
+                });
+            }
+            if (pendingVerificationCount > 0) {
+                alerts.push({
+                    type: 'warning',
+                    badge: 'Credentials',
+                    title: 'Pending Verification Requests',
+                    message: `${pendingVerificationCount} candidate identity or credential verification request(s) awaiting review.`,
+                    url: '/admin/verification?status=PENDING',
+                    icon: 'fa-solid fa-id-card'
+                });
+            }
+            if (unresolvedErrorsCount > 0) {
+                alerts.push({
+                    type: 'danger',
+                    badge: 'System Alert',
+                    title: 'Unresolved Application Errors',
+                    message: `${unresolvedErrorsCount} unresolved application error signature(s) detected in system logs.`,
+                    url: '/admin/error-reports?status=UNRESOLVED',
+                    icon: 'fa-solid fa-triangle-exclamation'
+                });
+            }
+
             const activePercentage = totalStudents > 0 
                 ? Math.round((activeStudents / totalStudents) * 100) 
                 : 0;
+
+            const systemHealth = {
+                database: 'OPERATIONAL',
+                sessionStore: 'HEALTHY',
+                errorRate: unresolvedErrorsCount > 10 ? 'ELEVATED' : 'NORMAL'
+            };
 
             return {
                 totalStudents,
@@ -241,10 +327,20 @@ module.exports = {
                 enrollmentChart,
                 revenueChart,
                 recentActivity,
+                alerts,
+                systemHealth,
                 governance: {
+                    totalUsers: totalStudents,
+                    activeUsers: activeStudents,
+                    newUsers7d,
+                    pendingVerification: pendingVerificationCount,
                     pendingBusinesses: pendingBusinessesCount,
-                    activeJobs: activeJobsCount,
+                    approvedBusinesses: approvedBusinessesCount,
+                    publishedJobs: publishedJobsCount,
+                    openOpportunities: publishedJobsCount,
                     openModeration: openModerationCount,
+                    underReviewModeration: underReviewModerationCount,
+                    systemErrors: unresolvedErrorsCount,
                     totalMatches: totalMatchesCount
                 }
             };
@@ -252,6 +348,5 @@ module.exports = {
         } catch (err) {
             throw err;
         }
-    },
-
+    }
 };

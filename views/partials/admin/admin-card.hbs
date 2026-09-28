@@ -1,0 +1,34 @@
+{{!-- Reusable Admin Card Component --}}
+<div class="admin-card {{extraClass}}" id="{{#if id}}{{id}}{{/if}}">
+  <div class="admin-card-header">
+    <div class="admin-card-lead">
+      {{#if icon}}
+      <div class="admin-card-icon {{iconClass}}">
+        <i class="{{icon}}"></i>
+      </div>
+      {{/if}}
+      {{#if avatarUrl}}
+      <img src="{{avatarUrl}}" alt="{{title}}" class="admin-card-avatar" loading="lazy">
+      {{/if}}
+      <div class="admin-card-headings">
+        <h4 class="admin-card-title">{{title}}</h4>
+        {{#if subtitle}}<p class="admin-card-subtitle">{{subtitle}}</p>{{/if}}
+      </div>
+    </div>
+    {{#if status}}
+    <div class="admin-card-badge">
+      {{> admin/admin-status-badge status=status}}
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="admin-card-body">
+    {{{bodyHtml}}}
+  </div>
+
+  {{#if footerHtml}}
+  <div class="admin-card-footer">
+    {{{footerHtml}}}
+  </div>
+  {{/if}}
+</div>

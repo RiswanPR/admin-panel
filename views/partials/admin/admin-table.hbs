@@ -1,0 +1,15 @@
+{{!-- Reusable Admin Table Component --}}
+<div class="admin-table-container {{extraClass}}">
+  <div class="admin-table-responsive">
+    <table class="admin-table" id="{{#if id}}{{id}}{{else}}admin-table{{/if}}">
+      <thead>
+        <tr>
+          {{{headersHtml}}}
+        </tr>
+      </thead>
+      <tbody>
+        {{{rowsHtml}}}
+      </tbody>
+    </table>
+  </div>
+</div>

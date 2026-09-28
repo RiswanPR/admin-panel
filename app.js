@@ -16,6 +16,7 @@ var usersRouter = require('./routes/users');
 var teacherRouter = require('./routes/teacher');
 var adminGovernanceRouter = require('./routes/admin-governance');
 var db = require('./config/connection');
+const errorHelper = require('./Helpers/error-helper');
 
 // CRON
 const cron = require('node-cron');
@@ -298,6 +299,42 @@ app.engine(
       },
       or: function(...args) {
         return args.slice(0, -1).some(Boolean);
+      },
+      hasAdminCapability: function(cap, options) {
+        const capabilities = this.adminCapabilities || [];
+        const isSuperuser = this.isSuperuser;
+        if (isSuperuser || capabilities.includes(cap) || capabilities.includes('manage_all')) {
+          return options && options.fn ? options.fn(this) : true;
+        }
+        return options && options.inverse ? options.inverse(this) : false;
+      },
+      ternary: function(cond, a, b) {
+        return cond ? a : b;
+      },
+      statusBadgeClass: function(status) {
+        const s = String(status || '').toUpperCase();
+        switch(s) {
+          case 'ACTIVE':
+          case 'PUBLISHED':
+          case 'APPROVED':
+          case 'VERIFIED':
+          case 'RESOLVED':
+            return 'badge-status-active';
+          case 'PENDING':
+          case 'UNDER_REVIEW':
+          case 'DRAFT':
+          case 'INVESTIGATING':
+            return 'badge-status-scheduled';
+          case 'SUSPENDED':
+          case 'REJECTED':
+          case 'EXPIRED':
+          case 'CLOSED':
+          case 'PAUSED':
+          case 'BLOCKED':
+            return 'badge-status-archived';
+          default:
+            return 'badge-status-draft';
+        }
       }
     }
   })
@@ -340,34 +377,40 @@ app.use((req, res, next) => {
 
 
 // Reject cross-origin browser mutations. This protects existing forms and
-// fetch calls without requiring a breaking token rollout across every view.
+// fetch calls with origin/referer validation while allowing authorized AJAX/API mutations.
 app.use((req, res, next) => {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
     return next();
   }
 
   const source = req.get('origin') || req.get('referer');
-  
-  // Allow if missing or 'null' (sometimes sent by privacy extensions or local dev)
+  const isAjaxOrJson = req.xhr || 
+                       req.get('x-requested-with') === 'XMLHttpRequest' ||
+                       req.is('json') || 
+                       req.get('accept')?.indexOf('json') > -1;
+
+  // In production, block browser mutations if origin/referer is missing or 'null' unless verified same-site AJAX
   if (!source || source === 'null') {
+    if (process.env.NODE_ENV === 'production' && !isAjaxOrJson) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cross-origin request rejected: Missing request origin.'
+      });
+    }
     return next();
   }
 
   try {
     const sourceUrl = new URL(source);
-    // Split expectedHost to remove port if necessary, but matching exactly is usually fine
     const expectedHost = req.get('x-forwarded-host') || req.get('host');
     
-    // Some proxies may append ports, or expected host might differ slightly in local dev
-    // If they match perfectly, great.
     if (sourceUrl.host !== expectedHost) {
-        // Fallback for tricky proxy environments: check if hostname matches at least
-        if (sourceUrl.hostname !== expectedHost.split(':')[0]) {
-            return res.status(403).json({
-              success: false,
-              message: 'Cross-origin request rejected.'
-            });
-        }
+      if (sourceUrl.hostname !== expectedHost?.split(':')[0]) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cross-origin request rejected.'
+        });
+      }
     }
   } catch (err) {
     return res.status(403).json({
@@ -491,18 +534,33 @@ app.use((req, res, next) => {
 
 // error handler
 app.use((err, req, res, next) => {
+  const status = err.status || err.statusCode || 500;
+
+  // Record error to error reporting telemetry (skip common 404s to prevent noise)
+  if (status >= 400 && status !== 404) {
+    errorHelper.recordError({ req, error: err, status });
+  }
+
   // Only log full error in development (skip 404s to reduce noise)
   if (process.env.NODE_ENV !== 'production') {
-    if (err.status !== 404) {
+    if (status !== 404) {
       console.log('APP ERROR:', err.message);
     }
+  }
+
+  // If request is AJAX or expects JSON, return JSON payload instead of HTML
+  if (req.xhr || req.get('accept')?.indexOf('json') > -1 || req.is('json') || req.path.startsWith('/api') || req.path.includes('/api/')) {
+    return res.status(status).json({
+      success: false,
+      message: err.message || 'An error occurred.',
+      status
+    });
   }
 
   res.locals.message = err.message;
   // Serialize error to a plain object so Handlebars can access 'status'
   // as an own property (http-errors puts 'status' on the prototype,
   // which triggers Handlebars' prototype-access security warning).
-  const status = err.status || err.statusCode || 500;
   res.locals.error =
     req.app.get('env') === 'development'
       ? { status, stack: err.stack }

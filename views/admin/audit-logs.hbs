@@ -198,6 +198,9 @@
         </div>
     </div>
 
+    <!-- PAGINATION -->
+    {{> admin/admin-pagination totalPages=totalPages page=page total=total viewMode=viewMode filters=filters}}
+
     {{#unless logs.length}}
     <div class="empty-box text-center">
         <i class="fa-solid fa-clock-rotate-left"></i>

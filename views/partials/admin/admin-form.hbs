@@ -1,0 +1,40 @@
+{{!-- Reusable Admin Form Wrapper Component --}}
+<form action="{{action}}" method="{{#if method}}{{method}}{{else}}POST{{/if}}" 
+      class="admin-form {{extraClass}}" id="{{#if id}}{{id}}{{else}}admin-form{{/if}}" 
+      {{#if enctype}}enctype="{{enctype}}"{{/if}}>
+  {{#if csrfToken}}
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  {{/if}}
+
+  {{#if formTitle}}
+  <div class="admin-form-header">
+    <h3 class="admin-form-title">{{formTitle}}</h3>
+    {{#if formSubtitle}}<p class="admin-form-subtitle">{{formSubtitle}}</p>{{/if}}
+  </div>
+  {{/if}}
+
+  {{#if errorMessage}}
+  <div class="admin-form-alert alert-danger" role="alert">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>{{errorMessage}}</span>
+  </div>
+  {{/if}}
+
+  <div class="admin-form-fields">
+    {{{fieldsHtml}}}
+  </div>
+
+  {{#unless noFooter}}
+  <div class="admin-form-actions">
+    {{#if cancelUrl}}
+    <a href="{{cancelUrl}}" class="admin-btn admin-btn-secondary">
+      <span>{{#if cancelText}}{{cancelText}}{{else}}Cancel{{/if}}</span>
+    </a>
+    {{/if}}
+    <button type="submit" class="admin-btn admin-btn-{{#if submitVariant}}{{submitVariant}}{{else}}primary{{/if}}">
+      {{#if submitIcon}}<i class="{{submitIcon}}"></i>{{/if}}
+      <span>{{#if submitText}}{{submitText}}{{else}}Save Changes{{/if}}</span>
+    </button>
+  </div>
+  {{/unless}}
+</form>

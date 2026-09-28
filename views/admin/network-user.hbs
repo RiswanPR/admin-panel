@@ -1,35 +1,51 @@
 <div class="container-fluid mt-4 mb-5">
 
-    <!-- HEADER -->
+    <!-- BREADCRUMB & DOSSIER HEADER -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a href="/network">Network</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{user.Name}}{{user.name}}</li>
+                    <li class="breadcrumb-item"><a href="/admin/network/users" class="text-decoration-none">Network Directory</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{displayName}}</li>
                 </ol>
             </nav>
-            <h2 class="fw-bold m-0" style="color:var(--brand);">
-                <i class="fa-solid fa-user me-2"></i> User Profile &amp; Relationships
-            </h2>
-            <small class="text-muted">Inspect learner identity, course enrollments, learning spaces, and network connections</small>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h2 class="fw-bold m-0" style="color:var(--brand); font-size: 26px;">
+                    <i class="fa-solid fa-id-badge text-primary me-2"></i> User Governance Dossier
+                </h2>
+                <span class="badge {{#if isSuspended}}bg-danger{{else}}{{#if isRestricted}}bg-warning text-dark{{else}}bg-success{{/if}}{{/if}} px-2.5 py-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                    {{accountState}}
+                </span>
+                {{#ifEquals primaryRole 'EDUCATOR'}}
+                <span class="badge bg-purple text-white px-2.5 py-1" style="font-size: 11px; background-color: #6f42c1;">
+                    <i class="fa-solid fa-graduation-cap me-1"></i> Protected Educator
+                </span>
+                {{/ifEquals}}
+            </div>
+            <small class="text-muted">Inspect identity, professional credentials, verification matrix, active sessions, and governance audit trail.</small>
         </div>
 
-        <div class="d-flex gap-2">
-            <a href="/network" class="btn btn-outline-secondary px-3">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/admin/network/users" class="btn btn-outline-secondary px-3">
                 <i class="fa-solid fa-arrow-left me-1"></i> Back to Directory
+            </a>
+            <a href="/admin/verification" class="btn btn-outline-info px-3">
+                <i class="fa-solid fa-shield-halved me-1"></i> Verification Queue
+            </a>
+            <a href="/admin/audit-logs?search={{user._id}}" class="btn btn-outline-dark px-3">
+                <i class="fa-solid fa-clock-rotate-left me-1"></i> View Audit Trail
             </a>
         </div>
     </div>
 
-    <div class="row g-4">
-        <!-- USER PROFILE CARD (LEFT) -->
-        <div class="col-lg-4">
-            <div class="card p-4 text-center mb-4">
-                <div class="position-relative d-inline-block mx-auto mb-3">
-                    <img src="{{user.profileImageUrl}}" alt="{{user.Name}}{{user.name}}" class="rounded-circle shadow" style="width: 110px; height: 110px; object-fit: cover; border: 4px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
-                    {{#if user.account_Status.isBlocked}}
-                    <span class="position-absolute bottom-0 end-0 badge bg-danger p-2 rounded-circle" title="Blocked">
+    <!-- HERO IDENTITY DOSSIER CARD -->
+    <div class="card p-4 mb-4" style="border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.04); background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95));">
+        <div class="row align-items-center g-3">
+            <div class="col-auto">
+                <div class="position-relative d-inline-block">
+                    <img src="{{user.profileImageUrl}}" alt="{{displayName}}" class="rounded-circle shadow-sm" style="width: 90px; height: 90px; object-fit: cover; border: 3px solid #fff;" onerror="this.onerror=null;this.src='/img/placeholders/profile.svg'">
+                    {{#if isSuspended}}
+                    <span class="position-absolute bottom-0 end-0 badge bg-danger p-2 rounded-circle" title="Suspended / Blocked">
                         <i class="fa-solid fa-ban"></i>
                     </span>
                     {{else}}
@@ -38,433 +54,606 @@
                     </span>
                     {{/if}}
                 </div>
+            </div>
 
-                <h4 class="fw-bold m-0" style="color:var(--text);">{{user.Name}}{{user.name}}</h4>
-                <p class="text-muted mb-2">@{{user.username}}</p>
-
-                <div class="d-flex justify-content-center gap-2 mb-3">
-                    <span class="badge {{#ifEquals userType 'teacher'}}bg-warning text-dark{{else}}{{#ifEquals userType 'admin'}}bg-dark text-white{{else}}{{#if isEnrolled}}bg-success text-white{{else}}bg-info text-dark{{/if}}{{/ifEquals}}{{/ifEquals}} px-3 py-2">
-                        {{#ifEquals userType 'teacher'}}Teacher{{else}}{{#ifEquals userType 'admin'}}Admin{{else}}{{#if isEnrolled}}Enrolled Student{{else}}Registered User{{/if}}{{/ifEquals}}{{/ifEquals}}
+            <div class="col">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="fw-bold m-0" style="color:var(--text); font-size: 22px;">{{displayName}}</h3>
+                    <span class="badge bg-light text-dark border px-2 py-1">
+                        <i class="fa-solid fa-at text-muted me-0.5"></i>{{username}}
+                        {{#if user.usernameClaimed}}<i class="fa-solid fa-circle-check text-success ms-1" title="Claimed Username"></i>{{/if}}
                     </span>
-
+                    <span class="badge {{#ifEquals primaryRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals primaryRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals primaryRole 'RECRUITER'}}bg-info text-dark{{else}}bg-primary text-white{{/ifEquals}}{{/ifEquals}}{{/ifEquals}} px-2.5 py-1">
+                        {{primaryRole}}
+                    </span>
                     {{#if user.account_Status.isVerified}}
-                    <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-shield-check me-1"></i> Verified</span>
+                    <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-shield-check me-1"></i> Identity Verified</span>
                     {{else}}
-                    <span class="badge bg-secondary px-3 py-2">Unverified</span>
+                    <span class="badge bg-secondary px-2 py-1"><i class="fa-solid fa-shield me-1"></i> Unverified</span>
                     {{/if}}
                 </div>
 
-                <hr class="my-3">
-
-                <div class="text-start d-flex flex-column gap-2 small">
-                    <div><strong>Email:</strong> <span class="text-muted">{{user.email}}{{user.Email}}</span></div>
-                    <div><strong>Phone:</strong> <span class="text-muted">{{#if user.Phone_Number}}{{user.Phone_Number}}{{else}}—{{/if}}</span></div>
-                    <div><strong>Joined:</strong> <span class="text-muted">{{formatDate user.createdAt}}</span></div>
-                    <div><strong>Last Activity:</strong> <span class="text-muted">{{#if user.account_Status.lastSeen}}{{formatDateTime user.account_Status.lastSeen}}{{else}}—{{/if}}</span></div>
-                </div>
-
-                <hr class="my-3">
-
-                <!-- STATUS & ROLE ACTIONS -->
-                <div class="d-flex flex-column gap-2">
-                    <button type="button" class="btn btn-outline-primary w-100" onclick="openRoleModal('{{user._id}}', '{{user.Name}}{{user.name}}', '{{#if user.primaryRole}}{{user.primaryRole}}{{else}}{{user.role}}{{/if}}')">
-                        <i class="fa-solid fa-user-tag me-2"></i> Assign / Change Role
-                    </button>
-                    <button type="button" class="btn btn-outline-success w-100" onclick="openVerificationModal('{{user._id}}', '{{user.Name}}{{user.name}}', '{{#if user.account_Status.isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')">
-                        <i class="fa-solid fa-shield-check me-2"></i> Update Verification State
-                    </button>
-                    <button class="btn {{#if user.account_Status.isBlocked}}btn-success{{else}}btn-danger{{/if}} w-100" onclick="toggleStatus('{{user._id}}', {{#if user.account_Status.isBlocked}}true{{else}}false{{/if}})">
-                        <i class="fa-solid {{#if user.account_Status.isBlocked}}fa-lock-open{{else}}fa-ban{{/if}} me-2"></i>
-                        {{#if user.account_Status.isBlocked}}Unblock User{{else}}Block User{{/if}}
-                    </button>
-                </div>
-            </div>
-
-            <!-- COMMUNITY GAMIFICATION PROFILE -->
-            {{#if communityProfile}}
-            <div class="card p-4">
-                <h6 class="fw-bold mb-3" style="color:var(--brand);">
-                    <i class="fa-solid fa-trophy me-2 text-warning"></i> Community Standing
-                </h6>
-                <div class="row g-2 text-center">
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-light border">
-                            <small class="text-muted d-block">Level</small>
-                            <span class="fw-bold fs-5">{{communityProfile.level}}</span>
-                        </div>
+                <div class="d-flex align-items-center gap-3 flex-wrap text-muted small mt-2">
+                    <div>
+                        <i class="fa-solid fa-fingerprint me-1 text-primary"></i>
+                        <span class="font-monospace user-select-all">{{user._id}}</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-muted" onclick="navigator.clipboard.writeText('{{user._id}}')" title="Copy User ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
                     </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-light border">
-                            <small class="text-muted d-block">Rank</small>
-                            <span class="fw-bold fs-6">{{communityProfile.rank}}</span>
-                        </div>
+                    <div>
+                        <i class="fa-solid fa-envelope me-1 text-muted"></i>
+                        <span>{{user.email}}{{user.Email}}</span>
                     </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-light border">
-                            <small class="text-muted d-block">XP Points</small>
-                            <span class="fw-bold fs-5 text-primary">{{communityProfile.xp}}</span>
-                        </div>
+                    {{#if user.Phone_Number}}
+                    <div>
+                        <i class="fa-solid fa-phone me-1 text-muted"></i>
+                        <span>{{user.Phone_Number}}</span>
                     </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-light border">
-                            <small class="text-muted d-block">Streak</small>
-                            <span class="fw-bold fs-5 text-danger">{{communityProfile.currentStreak}}d</span>
-                        </div>
+                    {{/if}}
+                    <div>
+                        <i class="fa-solid fa-calendar me-1 text-muted"></i>
+                        <span>Joined {{formatDate user.createdAt}}</span>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-clock me-1 text-muted"></i>
+                        <span>Last Active: {{#if user.account_Status.lastSeen}}{{formatDateTime user.account_Status.lastSeen}}{{else}}Never{{/if}}</span>
                     </div>
                 </div>
             </div>
-            {{/if}}
-        </div>
 
-        <!-- DETAILS TABS (RIGHT) -->
-        <div class="col-lg-8">
-            <div class="card p-4">
-                <!-- TABS NAV -->
-                <ul class="nav nav-pills mb-4 gap-2" id="userTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="courses-tab" data-toggle="tab" data-target="#tabCourses" data-bs-toggle="tab" data-bs-target="#tabCourses" type="button" role="tab">
-                            <i class="fa-solid fa-book-open me-1"></i> Enrolled Courses ({{enrolledCourses.length}})
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="spaces-tab" data-toggle="tab" data-target="#tabSpaces" data-bs-toggle="tab" data-bs-target="#tabSpaces" type="button" role="tab">
-                            <i class="fa-solid fa-shapes me-1"></i> Learning Spaces ({{spaces.length}})
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="followers-tab" data-toggle="tab" data-target="#tabFollowers" data-bs-toggle="tab" data-bs-target="#tabFollowers" type="button" role="tab">
-                            <i class="fa-solid fa-user-group me-1"></i> Followers ({{followers.length}})
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="following-tab" data-toggle="tab" data-target="#tabFollowing" data-bs-toggle="tab" data-bs-target="#tabFollowing" type="button" role="tab">
-                            <i class="fa-solid fa-user-check me-1"></i> Following ({{following.length}})
-                        </button>
-                    </li>
-                </ul>
-
-                <!-- TABS CONTENT -->
-                <div class="tab-content" id="userTabsContent">
-
-                    <!-- TAB 1: COURSES -->
-                    <div class="tab-pane fade show active" id="tabCourses" role="tabpanel">
-                        {{#if enrolledCourses.length}}
-                            <div class="table-responsive">
-                                <table class="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Course Name</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Progress</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{#each enrolledCourses}}
-                                        <tr>
-                                            <td class="fw-bold">{{this.courseName}}{{this.name}}</td>
-                                            <td><small>{{formatDate this.Start_Date}}</small></td>
-                                            <td><small>{{formatDate this.End_Date}}</small></td>
-                                            <td>
-                                                {{#if this.learningProgress}}
-                                                <div class="progress" style="height: 8px;">
-                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{this.learningProgress.completionPercent}}%;"></div>
-                                                </div>
-                                                <small class="text-muted">{{this.learningProgress.completionPercent}}%</small>
-                                                {{else}}
-                                                <small class="text-muted">Active</small>
-                                                {{/if}}
-                                            </td>
-                                        </tr>
-                                        {{/each}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {{else}}
-                            <div class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-book-open fa-2x mb-2 opacity-50"></i>
-                                <p class="mb-0">No course enrollments found for this user.</p>
-                            </div>
-                        {{/if}}
-                    </div>
-
-                    <!-- TAB 2: LEARNING SPACES -->
-                    <div class="tab-pane fade" id="tabSpaces" role="tabpanel">
-                        {{#if spaces.length}}
-                            <div class="table-responsive">
-                                <table class="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Space Name</th>
-                                            <th>Code</th>
-                                            <th>Role</th>
-                                            <th>Joined Date</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{#each spaces}}
-                                        <tr>
-                                            <td class="fw-bold">
-                                                <a href="/learning-spaces/{{this.spaceId}}" class="text-decoration-none">
-                                                    {{this.name}}
-                                                </a>
-                                            </td>
-                                            <td><code>{{this.code}}</code></td>
-                                            <td><span class="badge bg-secondary text-capitalize">{{this.role}}</span></td>
-                                            <td><small>{{formatDate this.joinedAt}}</small></td>
-                                            <td>
-                                                <a href="/learning-spaces/{{this.spaceId}}/members" class="btn btn-sm btn-outline-primary">
-                                                    Manage
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {{/each}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {{else}}
-                            <div class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-shapes fa-2x mb-2 opacity-50"></i>
-                                <p class="mb-0">User is not a member of any learning space.</p>
-                            </div>
-                        {{/if}}
-                    </div>
-
-                    <!-- TAB 3: FOLLOWERS -->
-                    <div class="tab-pane fade" id="tabFollowers" role="tabpanel">
-                        {{#if followers.length}}
-                            <div class="table-responsive">
-                                <table class="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Follower</th>
-                                            <th>Since</th>
-                                            <th class="text-end">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{#each followers}}
-                                        <tr>
-                                            <td>
-                                                <strong>{{this.name}}</strong>
-                                                <small class="text-muted d-block">@{{this.username}}</small>
-                                            </td>
-                                            <td><small>{{formatDate this.createdAt}}</small></td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-danger" onclick="removeRelationship('{{../user._id}}', '{{this.followerId}}', 'follower')" title="Remove Follower">
-                                                    <i class="fa-solid fa-user-xmark me-1"></i> Remove
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {{/each}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {{else}}
-                            <div class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-user-group fa-2x mb-2 opacity-50"></i>
-                                <p class="mb-0">No followers found.</p>
-                            </div>
-                        {{/if}}
-                    </div>
-
-                    <!-- TAB 4: FOLLOWING -->
-                    <div class="tab-pane fade" id="tabFollowing" role="tabpanel">
-                        {{#if following.length}}
-                            <div class="table-responsive">
-                                <table class="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Following</th>
-                                            <th>Since</th>
-                                            <th class="text-end">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{#each following}}
-                                        <tr>
-                                            <td>
-                                                <strong>{{this.name}}</strong>
-                                                <small class="text-muted d-block">@{{this.username}}</small>
-                                            </td>
-                                            <td><small>{{formatDate this.createdAt}}</small></td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-danger" onclick="removeRelationship('{{../user._id}}', '{{this.userId}}', 'following')" title="Unfollow">
-                                                    <i class="fa-solid fa-user-minus me-1"></i> Remove
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {{/each}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {{else}}
-                            <div class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-user-check fa-2x mb-2 opacity-50"></i>
-                                <p class="mb-0">User is not following anyone.</p>
-                            </div>
-                        {{/if}}
-                    </div>
-
-                </div>
+            <div class="col-lg-auto d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
+                    <i class="fa-solid fa-user-tag me-1"></i> Change Role
+                </button>
+                {{#if isSuspended}}
+                <button type="button" class="btn btn-success btn-sm" onclick="openRestoreModal('{{user._id}}', '{{displayName}}')">
+                    <i class="fa-solid fa-unlock me-1"></i> Restore Account
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="openSuspendModal('{{user._id}}', '{{displayName}}')">
+                    <i class="fa-solid fa-ban me-1"></i> Suspend Account
+                </button>
+                {{/if}}
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openUsernameModal('{{user._id}}', '{{username}}')">
+                    <i class="fa-solid fa-pen me-1"></i> Username
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- MAIN 2-COLUMN ENTERPRISE DOSSIER LAYOUT -->
+    <div class="row g-4">
+
+        <!-- LEFT COLUMN: PROFESSIONAL PROFILE, VERIFICATION, BUSINESS, NETWORK -->
+        <div class="col-lg-8">
+
+            <!-- SECTION 1: PROFESSIONAL PROFILE GOVERNANCE -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-briefcase text-primary me-2"></i> Professional Profile Governance
+                    </h5>
+                    <span class="badge bg-light text-muted border">Read &amp; Governed</span>
+                </div>
+
+                <!-- PROFILE TAXONOMY METADATA -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded bg-light border text-center">
+                            <small class="text-muted d-block mb-1">Primary Role</small>
+                            <span class="fw-bold text-dark">{{primaryRole}}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded bg-light border text-center">
+                            <small class="text-muted d-block mb-1">Discipline</small>
+                            <span class="fw-bold text-dark">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded bg-light border text-center">
+                            <small class="text-muted d-block mb-1">Specialization</small>
+                            <span class="fw-bold text-dark">{{#if specialization}}{{specialization}}{{else}}—{{/if}}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded bg-light border text-center">
+                            <small class="text-muted d-block mb-1">Sector</small>
+                            <span class="fw-bold text-dark">{{#if infrastructureSector}}{{infrastructureSector}}{{else}}—{{/if}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HEADLINE & BIO -->
+                {{#if headline}}
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">Headline</label>
+                    <p class="mb-0 fs-6 text-dark fw-semibold">{{headline}}</p>
+                </div>
+                {{/if}}
+
+                {{#if bio}}
+                <div class="mb-4">
+                    <label class="fw-bold small text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">About / Biography</label>
+                    <div class="p-3 rounded bg-light text-muted" style="font-size: 14px; line-height: 1.6;">
+                        {{bio}}
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- SKILLS & SOFTWARE TOOLS -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="fw-bold small text-muted text-uppercase mb-2" style="font-size: 11px; letter-spacing: 0.5px;">
+                            <i class="fa-solid fa-code me-1 text-primary"></i> Skills &amp; Competencies ({{skills.length}})
+                        </label>
+                        {{#if skills.length}}
+                        <div class="d-flex flex-wrap gap-1">
+                            {{#each skills}}
+                            <span class="badge bg-light text-dark border px-2 py-1">{{this}}</span>
+                            {{/each}}
+                        </div>
+                        {{else}}
+                        <p class="text-muted small mb-0 fst-italic">No professional skills declared.</p>
+                        {{/if}}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold small text-muted text-uppercase mb-2" style="font-size: 11px; letter-spacing: 0.5px;">
+                            <i class="fa-solid fa-wrench me-1 text-info"></i> Software &amp; Tools ({{software.length}})
+                        </label>
+                        {{#if software.length}}
+                        <div class="d-flex flex-wrap gap-1">
+                            {{#each software}}
+                            <span class="badge bg-light text-dark border px-2 py-1">{{this}}</span>
+                            {{/each}}
+                        </div>
+                        {{else}}
+                        <p class="text-muted small mb-0 fst-italic">No software tools listed.</p>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- STRUCTURED EXPERIENCE & EDUCATION ACCORDION -->
+                <div class="accordion" id="profileGovernanceAccordion">
+
+                    <!-- EXPERIENCE -->
+                    <div class="accordion-item border rounded mb-2 overflow-hidden">
+                        <h2 class="accordion-header" id="headingExp">
+                            <button class="accordion-button collapsed py-2.5 px-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExp" aria-expanded="false" aria-controls="collapseExp">
+                                <span class="fw-bold small text-dark"><i class="fa-solid fa-building-columns me-2 text-primary"></i> Work Experience ({{experience.length}})</span>
+                            </button>
+                        </h2>
+                        <div id="collapseExp" class="accordion-collapse collapse" aria-labelledby="headingExp" data-bs-parent="#profileGovernanceAccordion">
+                            <div class="accordion-body p-3">
+                                {{#if experience.length}}
+                                <div class="d-flex flex-column gap-3">
+                                    {{#each experience}}
+                                    <div class="border-start border-3 border-primary ps-3 py-1">
+                                        <div class="fw-bold text-dark">{{this.title}} <span class="text-muted fw-normal">at {{this.company}}</span></div>
+                                        <small class="text-muted">{{this.startDate}} - {{#if this.current}}Present{{else}}{{this.endDate}}{{/if}} {{#if this.location}}• {{this.location}}{{/if}}</small>
+                                        {{#if this.description}}<p class="small text-muted mb-0 mt-1">{{this.description}}</p>{{/if}}
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted small mb-0 fst-italic">No professional work history recorded.</p>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EDUCATION -->
+                    <div class="accordion-item border rounded mb-2 overflow-hidden">
+                        <h2 class="accordion-header" id="headingEdu">
+                            <button class="accordion-button collapsed py-2.5 px-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdu" aria-expanded="false" aria-controls="collapseEdu">
+                                <span class="fw-bold small text-dark"><i class="fa-solid fa-graduation-cap me-2 text-success"></i> Education ({{education.length}})</span>
+                            </button>
+                        </h2>
+                        <div id="collapseEdu" class="accordion-collapse collapse" aria-labelledby="headingEdu" data-bs-parent="#profileGovernanceAccordion">
+                            <div class="accordion-body p-3">
+                                {{#if education.length}}
+                                <div class="d-flex flex-column gap-3">
+                                    {{#each education}}
+                                    <div class="border-start border-3 border-success ps-3 py-1">
+                                        <div class="fw-bold text-dark">{{this.degree}} {{#if this.fieldOfStudy}}<span class="text-muted fw-normal">in {{this.fieldOfStudy}}</span>{{/if}}</div>
+                                        <small class="text-muted">{{this.institution}} {{#if this.startYear}}({{this.startYear}} - {{#if this.endYear}}{{this.endYear}}{{else}}Present{{/if}}){{/if}}</small>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted small mb-0 fst-italic">No education records recorded.</p>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CERTIFICATIONS & LICENSES -->
+                    <div class="accordion-item border rounded mb-2 overflow-hidden">
+                        <h2 class="accordion-header" id="headingCert">
+                            <button class="accordion-button collapsed py-2.5 px-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCert" aria-expanded="false" aria-controls="collapseCert">
+                                <span class="fw-bold small text-dark"><i class="fa-solid fa-award me-2 text-warning"></i> Certifications &amp; Licenses ({{certifications.length}})</span>
+                            </button>
+                        </h2>
+                        <div id="collapseCert" class="accordion-collapse collapse" aria-labelledby="headingCert" data-bs-parent="#profileGovernanceAccordion">
+                            <div class="accordion-body p-3">
+                                {{#if certifications.length}}
+                                <div class="d-flex flex-column gap-3">
+                                    {{#each certifications}}
+                                    <div class="border-start border-3 border-warning ps-3 py-1">
+                                        <div class="fw-bold text-dark">{{this.name}} <span class="text-muted fw-normal">by {{this.issuer}}</span></div>
+                                        <small class="text-muted">Issued: {{this.issueDate}} {{#if this.credentialId}}• Credential ID: <code>{{this.credentialId}}</code>{{/if}}</small>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted small mb-0 fst-italic">No external certifications recorded.</p>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PROJECTS -->
+                    <div class="accordion-item border rounded overflow-hidden">
+                        <h2 class="accordion-header" id="headingProj">
+                            <button class="accordion-button collapsed py-2.5 px-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProj" aria-expanded="false" aria-controls="collapseProj">
+                                <span class="fw-bold small text-dark"><i class="fa-solid fa-diagram-project me-2 text-info"></i> Project Portfolio ({{projects.length}})</span>
+                            </button>
+                        </h2>
+                        <div id="collapseProj" class="accordion-collapse collapse" aria-labelledby="headingProj" data-bs-parent="#profileGovernanceAccordion">
+                            <div class="accordion-body p-3">
+                                {{#if projects.length}}
+                                <div class="d-flex flex-column gap-3">
+                                    {{#each projects}}
+                                    <div class="border-start border-3 border-info ps-3 py-1">
+                                        <div class="fw-bold text-dark">{{this.title}} {{#if this.role}}<span class="text-muted fw-normal">({{this.role}})</span>{{/if}}</div>
+                                        {{#if this.description}}<p class="small text-muted mb-1">{{this.description}}</p>{{/if}}
+                                        {{#if this.url}}<a href="{{this.url}}" target="_blank" rel="noopener noreferrer" class="small text-primary text-decoration-none"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Project</a>{{/if}}
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted small mb-0 fst-italic">No projects recorded in portfolio.</p>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 2: VERIFICATION GOVERNANCE MATRIX -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold m-0" style="color:var(--brand);">
+                            <i class="fa-solid fa-shield-halved text-success me-2"></i> Verification Governance Matrix
+                        </h5>
+                        <small class="text-muted">Independent verification categories governed under zero-trust RBAC.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/admin/verification" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-list-check me-1"></i> Review Queue
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openVerificationModal('{{user._id}}', '{{displayName}}', '{{#if user.account_Status.isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Update State
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover mb-0">
+                        <thead class="table-light">
+                            <tr style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Evidence Privacy State</th>
+                                <th>Latest Review / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each verificationBreakdown}}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">{{this.label}}</div>
+                                    <small class="text-muted font-monospace" style="font-size: 11px;">{{this.category}}</small>
+                                </td>
+                                <td>
+                                    <span class="badge {{#ifEquals this.status 'VERIFIED'}}bg-success{{else}}{{#ifEquals this.status 'UNDER_REVIEW'}}bg-warning text-dark{{else}}{{#ifEquals this.status 'PENDING'}}bg-info text-dark{{else}}{{#ifEquals this.status 'REJECTED'}}bg-danger{{else}}bg-secondary{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}} px-2 py-1">
+                                        {{this.status}}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{#if this.latestRequest}}
+                                        {{#if this.latestRequest.evidenceRedacted}}
+                                        <span class="badge bg-light text-muted border" title="Redacted by Zero-Trust Privacy Layer">
+                                            <i class="fa-solid fa-lock me-1 text-warning"></i> Redacted (Requires Capability)
+                                        </span>
+                                        {{else}}
+                                            {{#if this.latestRequest.evidenceUrl}}
+                                            <a href="{{this.latestRequest.evidenceUrl}}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size: 11px;">
+                                                <i class="fa-solid fa-file-shield me-1"></i> Inspect Document
+                                            </a>
+                                            {{else}}
+                                            <span class="text-muted small">No document attached</span>
+                                            {{/if}}
+                                        {{/if}}
+                                        {{#if this.latestRequest.idNumber}}
+                                        <div class="small font-monospace text-muted mt-0.5">ID: {{this.latestRequest.idNumber}}</div>
+                                        {{/if}}
+                                    {{else}}
+                                    <span class="text-muted small fst-italic">No requests submitted</span>
+                                    {{/if}}
+                                </td>
+                                <td>
+                                    {{#if this.latestRequest.notes}}
+                                    <span class="small text-dark">{{this.latestRequest.notes}}</span>
+                                    {{else}}
+                                    <span class="text-muted small">—</span>
+                                    {{/if}}
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 3: BUSINESS & ORGANIZATION AFFILIATIONS -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-building text-info me-2"></i> Business &amp; Organization Affiliations
+                    </h5>
+                    <a href="/admin/businesses" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-building-circle-check me-1"></i> Business Directory
+                    </a>
+                </div>
+
+                {{#if businessAffiliations.length}}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr style="font-size: 12px; text-transform: uppercase;">
+                                <th>Organization</th>
+                                <th>Affiliation Role</th>
+                                <th>Verification</th>
+                                <th>Joined</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each businessAffiliations}}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{this.organizationLogo}}" alt="{{this.organizationName}}" class="rounded" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/business.svg'">
+                                        <span class="fw-bold text-dark">{{this.organizationName}}</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{this.membershipRole}}</span></td>
+                                <td>
+                                    {{#if this.isVerified}}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-check me-1"></i> Verified</span>
+                                    {{else}}
+                                    <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Pending</span>
+                                    {{/if}}
+                                </td>
+                                <td><small class="text-muted">{{formatDate this.joinedAt}}</small></td>
+                                <td class="text-end">
+                                    <a href="/admin/businesses/{{this.organizationId}}" class="btn btn-sm btn-outline-primary">
+                                        Inspect Org
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <div class="text-center py-4 text-muted bg-light rounded">
+                    <i class="fa-solid fa-building-circle-xmark fa-2x mb-2 opacity-50"></i>
+                    <p class="mb-0 small">No verified business affiliations or organizational memberships linked.</p>
+                </div>
+                {{/if}}
+            </div>
+
+            <!-- SECTION 4: NETWORK CONNECTIONS & MODERATION STANDING -->
+            <div class="card p-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <h5 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-users-gear text-secondary me-2"></i> Network &amp; Platform Standing
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">Network Connections</small>
+                                <span class="fw-bold fs-4 text-dark">{{connectionsCount}}</span>
+                            </div>
+                            <i class="fa-solid fa-handshake fs-2 text-primary opacity-50"></i>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">Moderation Reports Filed Against</small>
+                                <span class="fw-bold fs-4 {{#if reportsAgainstCount}}text-danger{{else}}text-success{{/if}}">{{reportsAgainstCount}}</span>
+                            </div>
+                            <i class="fa-solid fa-flag fs-2 {{#if reportsAgainstCount}}text-danger{{else}}text-success{{/if}} opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{#if reportsAgainstCount}}
+                <div class="alert alert-danger border-0 d-flex align-items-center gap-2 mt-3 mb-0 small" style="border-radius: 12px;">
+                    <i class="fa-solid fa-triangle-exclamation text-danger fs-5"></i>
+                    <div>
+                        <strong>Flagged Account:</strong> This user has active moderation reports. Consider applying restrictions or inspecting moderation records.
+                    </div>
+                </div>
+                {{/if}}
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: ACCOUNT GOVERNANCE CONTROLS, SESSIONS, AUDIT -->
+        <div class="col-lg-4">
+
+            <!-- CARD 1: ACCOUNT GOVERNANCE & STATUS CONTROLS -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <h6 class="fw-bold mb-3" style="color:var(--brand);">
+                    <i class="fa-solid fa-sliders text-primary me-2"></i> Account Governance Controls
+                </h6>
+
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase d-block mb-1" style="font-size: 11px;">Current Account State</label>
+                    <span class="badge {{#if isSuspended}}bg-danger{{else}}{{#if isRestricted}}bg-warning text-dark{{else}}bg-success{{/if}}{{/if}} fs-6 px-3 py-1.5 w-100 text-center text-uppercase">
+                        {{accountState}}
+                    </span>
+                </div>
+
+                {{#if user.account_Status.restrictions.length}}
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase d-block mb-1" style="font-size: 11px;">Active Restrictions</label>
+                    <div class="d-flex flex-wrap gap-1">
+                        {{#each user.account_Status.restrictions}}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">
+                            <i class="fa-solid fa-ban me-1"></i> {{this}}
+                        </span>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+
+                <hr class="my-3">
+
+                <!-- ACTION BUTTONS -->
+                <div class="d-flex flex-column gap-2">
+                    <button type="button" class="btn btn-outline-primary w-100 text-start" onclick="openRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
+                        <i class="fa-solid fa-user-tag me-2 text-primary"></i> Assign / Change Role
+                    </button>
+
+                    <button type="button" class="btn btn-outline-success w-100 text-start" onclick="openVerificationModal('{{user._id}}', '{{displayName}}', '{{#if user.account_Status.isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')">
+                        <i class="fa-solid fa-shield-check me-2 text-success"></i> Update Verification State
+                    </button>
+
+                    <button type="button" class="btn btn-outline-warning w-100 text-start text-dark" onclick="openRestrictionsModal('{{user._id}}', '{{displayName}}')">
+                        <i class="fa-solid fa-shield-virus me-2 text-warning"></i> Manage Restrictions
+                    </button>
+
+                    <button type="button" class="btn btn-outline-secondary w-100 text-start" onclick="openUsernameModal('{{user._id}}', '{{username}}')">
+                        <i class="fa-solid fa-at me-2 text-secondary"></i> Adjust / Force Username
+                    </button>
+
+                    {{#if isSuspended}}
+                    <button type="button" class="btn btn-success w-100 text-start" onclick="openRestoreModal('{{user._id}}', '{{displayName}}')">
+                        <i class="fa-solid fa-unlock me-2"></i> Restore Account Suspension
+                    </button>
+                    {{else}}
+                    <button type="button" class="btn btn-danger w-100 text-start" onclick="openSuspendModal('{{user._id}}', '{{displayName}}')">
+                        <i class="fa-solid fa-ban me-2"></i> Suspend Account
+                    </button>
+                    {{/if}}
+                </div>
+            </div>
+
+            <!-- CARD 2: SESSION GOVERNANCE (SAFE METADATA) -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-network-wired text-info me-2"></i> Active Sessions ({{sessions.length}})
+                    </h6>
+                    {{#if sessions.length}}
+                    <button type="button" class="btn btn-xs btn-outline-danger py-0 px-2" style="font-size: 11px;" onclick="revokeAllSessions('{{user._id}}')">
+                        <i class="fa-solid fa-trash me-1"></i> Revoke All
+                    </button>
+                    {{/if}}
+                </div>
+
+                {{#if sessions.length}}
+                <div class="d-flex flex-column gap-2">
+                    {{#each sessions}}
+                    <div class="p-2.5 rounded bg-light border" style="font-size: 13px;">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <span class="fw-bold text-dark">
+                                    {{#ifEquals this.deviceType 'Mobile'}}
+                                    <i class="fa-solid fa-mobile-screen me-1 text-primary"></i>
+                                    {{else}}{{#ifEquals this.deviceType 'Tablet'}}
+                                    <i class="fa-solid fa-tablet-screen-button me-1 text-info"></i>
+                                    {{else}}
+                                    <i class="fa-solid fa-laptop me-1 text-secondary"></i>
+                                    {{/ifEquals}}{{/ifEquals}}
+                                    {{this.browser}} on {{this.os}}
+                                </span>
+                                {{#if this.isCurrentSession}}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1" style="font-size: 10px;">Your Admin Session</span>
+                                {{/if}}
+                            </div>
+                            {{#unless this.isCurrentSession}}
+                            <button type="button" class="btn btn-link btn-sm text-danger p-0" onclick="revokeSingleSession('{{../user._id}}', '{{this.sessionId}}')" title="Revoke this session">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            {{/unless}}
+                        </div>
+
+                        <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                            <span>IP: <code>{{this.ipAddress}}</code></span>
+                            <span>Session: <code class="text-muted">{{this.maskedSessionId}}</code></span>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-center py-3 text-muted bg-light rounded small fst-italic">
+                    No active sessions found for this user.
+                </div>
+                {{/if}}
+            </div>
+
+            <!-- CARD 3: RECENT ADMINISTRATIVE AUDIT TRAIL -->
+            <div class="card p-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-clock-rotate-left text-warning me-2"></i> Audit Trail
+                    </h6>
+                    <a href="/admin/audit-logs?search={{user._id}}" class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size: 11px;">
+                        Full History
+                    </a>
+                </div>
+
+                {{#if recentAuditLogs.length}}
+                <div class="d-flex flex-column gap-2">
+                    {{#each recentAuditLogs}}
+                    <div class="border-start border-2 border-warning ps-2 py-1" style="font-size: 12px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-dark border font-monospace" style="font-size: 10px;">{{this.action}}</span>
+                            <small class="text-muted">{{formatDate this.timestamp}}</small>
+                        </div>
+                        <div class="text-muted small mt-1" style="line-height: 1.4;">{{this.message}}</div>
+                        <div class="text-muted" style="font-size: 10px;">Actor: <strong>{{#if this.metadata.actor}}{{this.metadata.actor}}{{else}}Admin{{/if}}</strong></div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-center py-3 text-muted bg-light rounded small fst-italic">
+                    No recent administrative actions recorded for this user.
+                </div>
+                {{/if}}
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<script>
-function toggleStatus(userId, isCurrentlyBlocked) {
-    const actionName = isCurrentlyBlocked ? 'Unblock' : 'Block';
-    Swal.fire({
-        title: `${actionName} User?`,
-        text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
-        icon: isCurrentlyBlocked ? 'question' : 'warning',
-        showCancelButton: true,
-        confirmButtonColor: isCurrentlyBlocked ? '#198754' : '#dc3545',
-        confirmButtonText: `Yes, ${actionName}`
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/network/user/${userId}/status`, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isBlocked: !isCurrentlyBlocked, isActive: isCurrentlyBlocked })
-            })
-            .then(r => r.json())
-            .then(d => {
-                if (d.success) {
-                    Swal.fire('Updated!', d.message, 'success').then(() => location.reload());
-                } else {
-                    Swal.fire('Error', d.message, 'error');
-                }
-            });
-        }
-    });
-}
-
-function removeRelationship(userId, targetId, relationshipType) {
-    Swal.fire({
-        title: 'Remove Relationship?',
-        text: `Are you sure you want to remove this ${relationshipType} relationship?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, Remove'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/network/user/${userId}/relationship/remove`, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetId, relationshipType })
-            })
-            .then(r => r.json())
-            .then(d => {
-                if (d.success) {
-                    Swal.fire('Removed', d.message, 'success').then(() => location.reload());
-                } else {
-                    Swal.fire('Error', d.message, 'error');
-                }
-            });
-        }
-    });
-}
-
-let roleModalInstance, verificationModalInstance;
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.bootstrap) {
-        roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal'));
-        verificationModalInstance = new bootstrap.Modal(document.getElementById('verificationModal'));
-    }
-});
-
-function openRoleModal(userId, name, currentRole) {
-    document.getElementById('modalUserId').value = userId;
-    document.getElementById('modalUserName').innerText = name;
-    const select = document.getElementById('newRoleSelect');
-    select.value = (currentRole || 'STUDENT').toUpperCase();
-    checkEducatorWarning(select.value);
-    roleModalInstance.show();
-}
-
-function checkEducatorWarning(role) {
-    const notice = document.getElementById('educatorNotice');
-    if (role === 'EDUCATOR') {
-        notice.style.display = 'block';
-    } else {
-        notice.style.display = 'none';
-    }
-}
-
-async function submitRoleChange(e) {
-    e.preventDefault();
-    const userId = document.getElementById('modalUserId').value;
-    const role = document.getElementById('newRoleSelect').value;
-
-    if (role === 'EDUCATOR') {
-        const confirmRes = await Swal.fire({
-            title: 'Assign Educator Role?',
-            text: 'You are about to assign the privileged Educator role. This grants verified educator status and is audit logged.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#198754',
-            confirmButtonText: 'Yes, Assign Educator'
-        });
-        if (!confirmRes.isConfirmed) return;
-    }
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/role`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ role })
-        });
-        const json = await res.json();
-        if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update role' });
-        }
-    } catch(err) {
-        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
-    }
-}
-
-function openVerificationModal(userId, name, currentStatus) {
-    document.getElementById('modalVerifUserId').value = userId;
-    document.getElementById('modalVerifUserName').innerText = name;
-    document.getElementById('verifStatusSelect').value = (currentStatus || 'UNVERIFIED').toUpperCase();
-    verificationModalInstance.show();
-}
-
-async function submitVerification(e) {
-    e.preventDefault();
-    const userId = document.getElementById('modalVerifUserId').value;
-    const status = document.getElementById('verifStatusSelect').value;
-    const notes = document.getElementById('verifNotes').value;
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/verification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ status, notes })
-        });
-        const json = await res.json();
-        if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Verification Updated', text: json.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update verification' });
-        }
-    } catch(err) {
-        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
-    }
-}
-</script>
-
-<!-- ASSIGN ROLE MODAL -->
+<!-- ========================================== -->
+<!-- MODAL: ASSIGN / CHANGE PROFILE ROLE -->
+<!-- ========================================== -->
 <div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px;">
@@ -490,9 +679,14 @@ async function submitVerification(e) {
                     </div>
 
                     <!-- EDUCATOR GOVERNANCE NOTICE -->
-                    <div id="educatorNotice" class="alert alert-warning border-0 small mb-0" style="display: none; border-radius: 12px;">
+                    <div id="educatorNotice" class="alert alert-warning border-0 small mb-3" style="display: none; border-radius: 12px;">
                         <i class="fa-solid fa-shield-halved me-1 text-warning"></i>
-                        <strong>Administrative Privilege:</strong> The <em>Educator</em> role can only be assigned by a Zeitnah Administrator. Normal users cannot self-assign or self-revoke this role. This action will be recorded in the audit trail.
+                        <strong>Administrative Privilege:</strong> The <em>Educator</em> role can only be assigned by a Zeitnah Administrator with <code>assign_educator</code> capability. Normal users cannot self-assign or self-revoke this role. This action will be audited.
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Governance Reason / Justification <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="reason" id="roleReason" rows="2" placeholder="e.g. Verified university faculty credentials submitted..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -504,7 +698,125 @@ async function submitVerification(e) {
     </div>
 </div>
 
-<!-- VERIFICATION STATUS MODAL -->
+<!-- ========================================== -->
+<!-- MODAL: SUSPEND ACCOUNT -->
+<!-- ========================================== -->
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-ban me-2"></i> Suspend User Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="suspendForm" onsubmit="submitSuspend(event)">
+                <div class="modal-body py-3">
+                    <div class="alert alert-danger border-0 small mb-3" style="border-radius: 12px;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <strong>Impact:</strong> Suspending <strong id="suspendUserName"></strong> will block authentication, revoke all active sessions, and restrict platform access.
+                    </div>
+
+                    <input type="hidden" id="suspendUserId" name="userId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Mandatory Reason for Suspension <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="reason" id="suspendReason" rows="3" placeholder="Specify violations, investigation ID, or security rationale..." required></textarea>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Specific Operational Restrictions</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="restrMessaging" value="no_messaging" checked>
+                            <label class="form-check-label small" for="restrMessaging">Block Direct Messaging (no_messaging)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="restrJobs" value="no_applications" checked>
+                            <label class="form-check-label small" for="restrJobs">Block Job Applications (no_applications)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="confirmSuspendBtn">Suspend &amp; Terminate Sessions</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: RESTORE ACCOUNT -->
+<!-- ========================================== -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-unlock me-2"></i> Restore Account Suspension</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="restoreForm" onsubmit="submitRestore(event)">
+                <div class="modal-body py-3">
+                    <p class="text-muted small">Lifting suspension for <strong id="restoreUserName" class="text-dark"></strong>. User roles, profile credentials, and verification status will remain completely preserved.</p>
+                    <input type="hidden" id="restoreUserId" name="userId">
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Restoration Reason / Justification</label>
+                        <textarea class="form-control" name="reason" id="restoreReason" rows="2" placeholder="e.g. Investigation concluded with no infraction found..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="confirmRestoreBtn">Confirm &amp; Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: ADJUST / FORCE USERNAME -->
+<!-- ========================================== -->
+<div class="modal fade" id="usernameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-at text-info me-2"></i> Force Username Adjustment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="usernameForm" onsubmit="submitUsernameChange(event)">
+                <div class="modal-body py-3">
+                    <input type="hidden" id="usernameUserId" name="userId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Current Handle</label>
+                        <input type="text" class="form-control bg-light font-monospace" id="currentUsernameDisplay" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">New Username Handle <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control font-monospace" id="newUsernameInput" placeholder="lowercase, 3-30 chars" required>
+                        </div>
+                        <small class="text-muted">Must be 3-30 lowercase alphanumeric, underscore, dot, or hyphen. Reserved words are forbidden.</small>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Reason for Administrative Change <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="usernameReason" rows="2" placeholder="e.g. Impersonation policy or trademark dispute resolution..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="confirmUsernameBtn">Audit &amp; Change Username</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: UPDATE VERIFICATION STATUS -->
+<!-- ========================================== -->
 <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px;">
@@ -540,3 +852,362 @@ async function submitVerification(e) {
         </div>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- MODAL: MANAGE RESTRICTIONS -->
+<!-- ========================================== -->
+<div class="modal fade" id="restrictionsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-shield-virus me-2"></i> Manage Account Restrictions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="restrictionsForm" onsubmit="submitRestrictions(event)">
+                <div class="modal-body py-3">
+                    <p class="text-muted small">Configure fine-grained platform restrictions for <strong id="restrUserName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="restrUserId" name="userId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Active Feature Restrictions</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="manageRestrMessaging" value="no_messaging">
+                            <label class="form-check-label small" for="manageRestrMessaging">Block Direct Messaging (no_messaging)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="manageRestrJobs" value="no_applications">
+                            <label class="form-check-label small" for="manageRestrJobs">Block Job Applications (no_applications)</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Audit Reason</label>
+                        <textarea class="form-control" id="manageRestrReason" rows="2" placeholder="e.g. Messaging spam warnings threshold reached..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" id="saveRestrictionsBtn">Save Restrictions</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CLIENT LOGIC -->
+<script>
+let roleModalInstance, suspendModalInstance, restoreModalInstance, usernameModalInstance, verificationModalInstance, restrictionsModalInstance;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.bootstrap) {
+        roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal'));
+        suspendModalInstance = new bootstrap.Modal(document.getElementById('suspendModal'));
+        restoreModalInstance = new bootstrap.Modal(document.getElementById('restoreModal'));
+        usernameModalInstance = new bootstrap.Modal(document.getElementById('usernameModal'));
+        verificationModalInstance = new bootstrap.Modal(document.getElementById('verificationModal'));
+        restrictionsModalInstance = new bootstrap.Modal(document.getElementById('restrictionsModal'));
+    }
+});
+
+function openRoleModal(userId, name, currentRole) {
+    document.getElementById('modalUserId').value = userId;
+    document.getElementById('modalUserName').innerText = name;
+    const select = document.getElementById('newRoleSelect');
+    select.value = (currentRole || 'STUDENT').toUpperCase();
+    if (document.getElementById('roleReason')) {
+        document.getElementById('roleReason').value = '';
+    }
+    checkEducatorWarning(select.value);
+    roleModalInstance.show();
+}
+
+function checkEducatorWarning(role) {
+    const notice = document.getElementById('educatorNotice');
+    if (role === 'EDUCATOR') {
+        notice.style.display = 'block';
+    } else {
+        notice.style.display = 'none';
+    }
+}
+
+async function submitRoleChange(e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveRoleBtn') || e.target.querySelector('button[type="submit"]');
+    const userId = document.getElementById('modalUserId').value;
+    const role = document.getElementById('newRoleSelect').value;
+    const reason = (document.getElementById('roleReason')?.value || '').trim();
+
+    if (role === 'EDUCATOR') {
+        const confirmRes = await Swal.fire({
+            title: 'Assign Educator Role?',
+            text: 'You are about to assign the privileged Educator role. This grants verified educator status and is audit logged.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            confirmButtonText: 'Yes, Assign Educator'
+        });
+        if (!confirmRes.isConfirmed) return;
+    }
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Auditing...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/role`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ role, reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update role' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openSuspendModal(userId, name) {
+    document.getElementById('suspendUserId').value = userId;
+    document.getElementById('suspendUserName').innerText = name;
+    document.getElementById('suspendReason').value = '';
+    suspendModalInstance.show();
+}
+
+async function submitSuspend(e) {
+    e.preventDefault();
+    const btn = document.getElementById('confirmSuspendBtn');
+    const userId = document.getElementById('suspendUserId').value;
+    const reason = document.getElementById('suspendReason').value.trim();
+    const restrictions = [];
+    if (document.getElementById('restrMessaging').checked) restrictions.push('no_messaging');
+    if (document.getElementById('restrJobs').checked) restrictions.push('no_applications');
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Suspending...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason, restrictions })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'User Suspended', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Suspension Failed', text: json.message || 'Could not suspend user' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openRestoreModal(userId, name) {
+    document.getElementById('restoreUserId').value = userId;
+    document.getElementById('restoreUserName').innerText = name;
+    document.getElementById('restoreReason').value = '';
+    restoreModalInstance.show();
+}
+
+async function submitRestore(e) {
+    e.preventDefault();
+    const btn = document.getElementById('confirmRestoreBtn');
+    const userId = document.getElementById('restoreUserId').value;
+    const reason = (document.getElementById('restoreReason')?.value || '').trim();
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Restoring...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason: reason || 'Suspension lifted by administrator' })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'User Restored', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Restoration Failed', text: json.message || 'Could not restore user' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openUsernameModal(userId, currentUsername) {
+    document.getElementById('usernameUserId').value = userId;
+    document.getElementById('currentUsernameDisplay').value = currentUsername;
+    document.getElementById('newUsernameInput').value = '';
+    document.getElementById('usernameReason').value = '';
+    usernameModalInstance.show();
+}
+
+async function submitUsernameChange(e) {
+    e.preventDefault();
+    const btn = document.getElementById('confirmUsernameBtn');
+    const userId = document.getElementById('usernameUserId').value;
+    const newUsername = document.getElementById('newUsernameInput').value.trim();
+    const reason = document.getElementById('usernameReason').value.trim();
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Validating...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/username`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ newUsername, reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Username Updated', text: `Handle updated to @${json.newUsername}`, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Change Failed', text: json.message || 'Could not update username' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openRestrictionsModal(userId, name) {
+    document.getElementById('restrUserId').value = userId;
+    document.getElementById('restrUserName').innerText = name;
+    document.getElementById('manageRestrReason').value = '';
+    restrictionsModalInstance.show();
+}
+
+async function submitRestrictions(e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveRestrictionsBtn');
+    const userId = document.getElementById('restrUserId').value;
+    const reason = document.getElementById('manageRestrReason').value.trim();
+    const restrictions = [];
+    if (document.getElementById('manageRestrMessaging').checked) restrictions.push('no_messaging');
+    if (document.getElementById('manageRestrJobs').checked) restrictions.push('no_applications');
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Saving...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/restrict`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ restrictions, reason })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Restrictions Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update restrictions' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+async function revokeSingleSession(userId, sessionId) {
+    const confirmRes = await Swal.fire({
+        title: 'Revoke User Session?',
+        text: 'This will invalidate this specific device session immediately.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Revoke'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/sessions/${sessionId}/revoke`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Session Revoked', text: json.message, timer: 1200, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Revocation Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+async function revokeAllSessions(userId) {
+    const confirmRes = await Swal.fire({
+        title: 'Revoke All Sessions?',
+        text: 'This will log out the user from all devices immediately.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Revoke All'
+    });
+    if (!confirmRes.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/sessions/revoke-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Sessions Revoked', text: json.message, timer: 1200, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Revocation Failed', text: json.message });
+        }
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+
+function openVerificationModal(userId, name, currentStatus) {
+    document.getElementById('modalVerifUserId').value = userId;
+    document.getElementById('modalVerifUserName').innerText = name;
+    document.getElementById('verifStatusSelect').value = (currentStatus || 'UNVERIFIED').toUpperCase();
+    verificationModalInstance.show();
+}
+
+async function submitVerification(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const userId = document.getElementById('modalVerifUserId').value;
+    const status = document.getElementById('verifStatusSelect').value;
+    const notes = document.getElementById('verifNotes').value;
+
+    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Saving...');
+
+    try {
+        const res = await fetch(`/admin/network/users/${userId}/verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ status, notes })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Verification Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update verification' });
+        }
+    } catch(err) {
+        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
+    }
+}
+</script>
