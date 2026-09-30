@@ -12,9 +12,6 @@
             </div>
 
             <div class="d-flex gap-2 flex-wrap">
-                <a href="/admin/network/audit-roles" class="btn btn-warning px-3 py-2 text-dark fw-semibold">
-                    <i class="fa-solid fa-shield-halved me-1"></i> Role Consistency Audit
-                </a>
                 <a href="/admin/network/taxonomy" class="btn btn-outline-light px-3 py-2">
                     <i class="fa-solid fa-sitemap me-1"></i> View Taxonomy
                 </a>
@@ -222,35 +219,12 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                        <div>
                             {{#ifEquals primaryRole 'EDUCATOR'}}
-                            <span class="badge badge-educator-protected px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator</span>
-                            {{else}}{{#ifEquals primaryRole 'FOUNDER'}}
-                            <span class="badge bg-dark text-white px-2 py-1"><i class="fa-solid fa-rocket me-1"></i> Founder</span>
-                            {{else}}{{#ifEquals primaryRole 'RECRUITER'}}
-                            <span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-briefcase me-1"></i> Recruiter</span>
-                            {{else}}{{#ifEquals primaryRole 'MENTOR'}}
-                            <span class="badge bg-secondary text-white px-2 py-1"><i class="fa-solid fa-hands-holding-child me-1"></i> Mentor</span>
-                            {{else}}{{#ifEquals primaryRole 'PROFESSIONAL'}}
-                            <span class="badge bg-primary text-white px-2 py-1"><i class="fa-solid fa-user-tie me-1"></i> Professional</span>
+                            <span class="badge badge-educator-protected px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator (Protected)</span>
                             {{else}}
-                            <span class="badge bg-success-subtle text-success border px-2 py-1"><i class="fa-solid fa-user-graduate me-1"></i> Student</span>
-                            {{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
-
-                            {{#each secondaryRoles}}
-                            <span class="badge bg-light text-muted border px-1.5 py-0.5" style="font-size: 10px;" title="Secondary Role">+ {{this}}</span>
-                            {{/each}}
-                        </div>
-
-                        <div class="mt-2 d-flex flex-wrap gap-1 align-items-center">
-                            {{#if coursesCount}}
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" style="font-size: 11px;">
-                                <i class="fa-solid fa-book-open me-1"></i> {{coursesCount}} Course{{#ifNotEquals coursesCount 1}}s{{/ifNotEquals}}
-                            </span>
-                            {{/if}}
-                            <span class="badge bg-light text-dark border px-2 py-0.5" style="font-size: 11px;" title="Capabilities Count">
-                                <i class="fa-solid fa-key me-1 text-muted"></i> {{capabilitiesCount}} Caps
-                            </span>
+                            <span class="badge bg-light text-dark border px-2 py-1">{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}</span>
+                            {{/ifEquals}}
                         </div>
 
                         <div class="admin-card-meta-list">
@@ -337,34 +311,11 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="d-flex flex-column gap-1">
-                                    <div>
-                                        {{#ifEquals primaryRole 'EDUCATOR'}}
-                                        <span class="badge badge-educator-protected px-2 py-0.5"><i class="fa-solid fa-graduation-cap me-1"></i> Educator</span>
-                                        {{else}}{{#ifEquals primaryRole 'FOUNDER'}}
-                                        <span class="badge bg-dark text-white px-2 py-0.5"><i class="fa-solid fa-rocket me-1"></i> Founder</span>
-                                        {{else}}{{#ifEquals primaryRole 'RECRUITER'}}
-                                        <span class="badge bg-info text-dark px-2 py-0.5"><i class="fa-solid fa-briefcase me-1"></i> Recruiter</span>
-                                        {{else}}{{#ifEquals primaryRole 'MENTOR'}}
-                                        <span class="badge bg-secondary text-white px-2 py-0.5"><i class="fa-solid fa-hands-holding-child me-1"></i> Mentor</span>
-                                        {{else}}{{#ifEquals primaryRole 'PROFESSIONAL'}}
-                                        <span class="badge bg-primary text-white px-2 py-0.5"><i class="fa-solid fa-user-tie me-1"></i> Professional</span>
-                                        {{else}}
-                                        <span class="badge bg-success-subtle text-success border px-2 py-0.5"><i class="fa-solid fa-user-graduate me-1"></i> Student</span>
-                                        {{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
-                                    </div>
-                                    {{#if secondaryRoles.length}}
-                                    <div class="d-flex flex-wrap gap-1">
-                                        {{#each secondaryRoles}}
-                                        <span class="badge bg-light text-muted border" style="font-size: 9px;">+{{this}}</span>
-                                        {{/each}}
-                                    </div>
-                                    {{/if}}
-                                    <div class="text-muted" style="font-size: 10px;">
-                                        <i class="fa-solid fa-key text-muted me-1"></i>{{capabilitiesCount}} caps
-                                        {{#if coursesCount}} &bull; <i class="fa-solid fa-book-open text-primary me-0.5"></i>{{coursesCount}} courses{{/if}}
-                                    </div>
-                                </div>
+                                {{#ifEquals primaryRole 'EDUCATOR'}}
+                                <span class="badge badge-educator-protected px-2 py-1"><i class="fa-solid fa-graduation-cap me-1"></i> Educator</span>
+                                {{else}}
+                                <span class="badge bg-light text-dark border px-2 py-1">{{#if primaryRole}}{{primaryRole}}{{else}}{{role}}{{/if}}</span>
+                                {{/ifEquals}}
                             </td>
                             <td>
                                 <span class="small text-muted">{{#if discipline}}{{discipline}}{{else}}—{{/if}}</span>

@@ -63,33 +63,13 @@
                         <i class="fa-solid fa-at text-muted me-0.5"></i>{{username}}
                         {{#if user.usernameClaimed}}<i class="fa-solid fa-circle-check text-success ms-1" title="Claimed Username"></i>{{/if}}
                     </span>
-
-                    <!-- PRIMARY ROLE BADGE -->
-                    <span class="badge {{#ifEquals primaryRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals primaryRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals primaryRole 'RECRUITER'}}bg-info text-dark{{else}}{{#ifEquals primaryRole 'MENTOR'}}bg-secondary text-white{{else}}{{#ifEquals primaryRole 'PROFESSIONAL'}}bg-primary text-white{{else}}bg-success-subtle text-success border{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}} px-2.5 py-1">
-                        Primary: {{primaryRole}}
+                    <span class="badge {{#ifEquals primaryRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals primaryRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals primaryRole 'RECRUITER'}}bg-info text-dark{{else}}bg-primary text-white{{/ifEquals}}{{/ifEquals}}{{/ifEquals}} px-2.5 py-1">
+                        {{primaryRole}}
                     </span>
-
-                    <!-- ADDITIONAL SECONDARY ROLES -->
-                    {{#each secondaryRoles}}
-                    <span class="badge bg-light text-dark border px-2 py-1 d-inline-flex align-items-center gap-1" title="Secondary Role">
-                        <span>+ {{this}}</span>
-                        <button type="button" class="btn btn-link btn-xs p-0 text-danger text-decoration-none" onclick="openRemoveSecondaryRoleModal('{{../user._id}}', '{{this}}')" title="Remove Secondary Role">
-                            <i class="fa-solid fa-xmark" style="font-size: 10px;"></i>
-                        </button>
-                    </span>
-                    {{/each}}
-
-                    <!-- VERIFICATION BADGE (SEPARATE FROM ROLES) -->
                     {{#if user.account_Status.isVerified}}
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-shield-check me-1"></i> Identity Verified</span>
+                    <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-shield-check me-1"></i> Identity Verified</span>
                     {{else}}
-                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="fa-solid fa-shield me-1"></i> Identity Unverified</span>
-                    {{/if}}
-
-                    {{#if consistencyIssues.length}}
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" title="Semantic Inconsistencies Detected">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{consistencyIssues.length}} Notice{{#ifNotEquals consistencyIssues.length 1}}s{{/ifNotEquals}}
-                    </span>
+                    <span class="badge bg-secondary px-2 py-1"><i class="fa-solid fa-shield me-1"></i> Unverified</span>
                     {{/if}}
                 </div>
 
@@ -123,25 +103,16 @@
             </div>
 
             <div class="col-lg-auto d-flex gap-2 flex-wrap">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openPrimaryRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
-                    <i class="fa-solid fa-user-tag me-1"></i> Change Primary Role
-                </button>
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openAddSecondaryRoleModal('{{user._id}}', '{{displayName}}')">
-                    <i class="fa-solid fa-plus me-1"></i> Add Secondary Role
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openRoleHistoryModal('{{user._id}}')">
-                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Role History
-                </button>
-                <button type="button" class="btn btn-outline-info btn-sm" onclick="openContractPreviewModal('{{user._id}}')">
-                    <i class="fa-solid fa-code me-1"></i> API Contract
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
+                    <i class="fa-solid fa-user-tag me-1"></i> Change Role
                 </button>
                 {{#if isSuspended}}
                 <button type="button" class="btn btn-success btn-sm" onclick="openRestoreModal('{{user._id}}', '{{displayName}}')">
-                    <i class="fa-solid fa-unlock me-1"></i> Restore
+                    <i class="fa-solid fa-unlock me-1"></i> Restore Account
                 </button>
                 {{else}}
                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="openSuspendModal('{{user._id}}', '{{displayName}}')">
-                    <i class="fa-solid fa-ban me-1"></i> Suspend
+                    <i class="fa-solid fa-ban me-1"></i> Suspend Account
                 </button>
                 {{/if}}
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openUsernameModal('{{user._id}}', '{{username}}')">
@@ -154,292 +125,14 @@
     <!-- MAIN 2-COLUMN ENTERPRISE DOSSIER LAYOUT -->
     <div class="row g-4">
 
-        <!-- LEFT COLUMN: MULTI-ROLE IDENTITY, CAPABILITIES, BUSINESS, LEARNING, PROFESSIONAL, VERIFICATION -->
+        <!-- LEFT COLUMN: PROFESSIONAL PROFILE, VERIFICATION, BUSINESS, NETWORK -->
         <div class="col-lg-8">
 
-            <!-- PANEL 1: MULTI-ROLE IDENTITY & CAPABILITY GOVERNANCE -->
-            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,0.03);">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold m-0" style="color:var(--brand);">
-                            <i class="fa-solid fa-users-viewfinder text-primary me-2"></i> Multi-Role Identity &amp; Capabilities Governance
-                        </h5>
-                        <small class="text-muted">Authoritative multi-role identity resolution and real-time capability evaluation.</small>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="openPrimaryRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
-                            <i class="fa-solid fa-user-tag me-1"></i> Change Primary
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openAddSecondaryRoleModal('{{user._id}}', '{{displayName}}')">
-                            <i class="fa-solid fa-plus me-1"></i> Add Secondary
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ROLE RESOLUTION SUMMARY CARDS -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <div class="p-3 rounded bg-light border h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold small text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                                    <i class="fa-solid fa-crown text-warning me-1"></i> Primary Ecosystem Identity
-                                </span>
-                                <span class="badge {{#ifEquals primaryRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals primaryRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals primaryRole 'RECRUITER'}}bg-info text-dark{{else}}{{#ifEquals primaryRole 'MENTOR'}}bg-secondary text-white{{else}}{{#ifEquals primaryRole 'PROFESSIONAL'}}bg-primary text-white{{else}}bg-success-subtle text-success border{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}} px-2 py-1">
-                                    {{primaryRole}}
-                                </span>
-                            </div>
-                            <p class="small text-muted mb-0">The user's preferred ecosystem identity that defines their primary directory presentation and primary dashboard interface.</p>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="p-3 rounded bg-light border h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold small text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                                    <i class="fa-solid fa-tags text-primary me-1"></i> Additional Held Roles ({{secondaryRoles.length}})
-                                </span>
-                                <span class="badge bg-secondary-subtle text-dark border">
-                                    Total Roles: {{roles.length}}
-                                </span>
-                            </div>
-                            {{#if secondaryRoles.length}}
-                            <div class="d-flex flex-wrap gap-1">
-                                {{#each secondaryRoles}}
-                                <span class="badge bg-white text-dark border px-2 py-1 d-inline-flex align-items-center gap-1.5 shadow-sm" style="font-size: 12px;">
-                                    <span>+ {{this}}</span>
-                                    <button type="button" class="btn btn-link btn-xs p-0 text-danger text-decoration-none" onclick="openRemoveSecondaryRoleModal('{{../user._id}}', '{{this}}')" title="Remove Secondary Role">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </span>
-                                {{/each}}
-                            </div>
-                            {{else}}
-                            <p class="small text-muted mb-0 fst-italic">No secondary roles currently held. Click "Add Secondary" to grant additional legitimate identities.</p>
-                            {{/if}}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- COMPUTED CAPABILITY MATRIX TABLE -->
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold m-0" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand);">
-                            <i class="fa-solid fa-key text-success me-1"></i> Computed Platform Capabilities &amp; Permissions Matrix
-                        </h6>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5" style="font-size: 11px;">
-                            {{capabilities.length}} Active Capabilities
-                        </span>
-                    </div>
-                    <div class="alert alert-light border small text-muted py-2 px-3 mb-3" style="border-radius: 10px;">
-                        <i class="fa-solid fa-info-circle text-primary me-1"></i>
-                        <strong>Architecture Law:</strong> Capabilities are fine-grained permission identifiers computed from held roles and verified business affiliations. Role names are never used as capabilities.
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead class="table-light">
-                                <tr style="font-size: 11px; text-transform: uppercase;">
-                                    <th>Capability Identifier</th>
-                                    <th>Domain Category</th>
-                                    <th>Effective Status</th>
-                                    <th>Source Roles / Authorization Rationale</th>
-                                </tr>
-                            </thead>
-                            <tbody style="font-size: 12px;">
-                                {{#each capabilityDetails}}
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold font-monospace text-dark">{{this.capability}}</div>
-                                        <small class="text-muted">{{this.label}}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-muted border font-monospace" style="font-size: 10px;">{{this.category}}</span>
-                                    </td>
-                                    <td>
-                                        {{#if this.granted}}
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                            <i class="fa-solid fa-check me-1"></i> GRANTED
-                                        </span>
-                                        {{else}}{{#if this.businessGated}}
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" title="User holds role but has no approved organization membership">
-                                            <i class="fa-solid fa-lock me-1"></i> GATED (Needs Org)
-                                        </span>
-                                        {{else}}
-                                        <span class="badge bg-secondary-subtle text-secondary px-2 py-1">
-                                            <i class="fa-solid fa-minus me-1"></i> UNAVAILABLE
-                                        </span>
-                                        {{/if}}{{/if}}
-                                    </td>
-                                    <td>
-                                        {{#if this.sourceRoles.length}}
-                                        <div class="d-flex flex-wrap gap-1">
-                                            {{#each this.sourceRoles}}
-                                            <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-size: 10px;">{{this}}</span>
-                                            {{/each}}
-                                        </div>
-                                        {{else}}
-                                        <span class="text-muted small">—</span>
-                                        {{/if}}
-                                        {{#if this.requiresBusinessApproval}}
-                                        <small class="text-muted d-block mt-0.5 fst-italic" style="font-size: 10px;">Requires approved organization</small>
-                                        {{/if}}
-                                    </td>
-                                </tr>
-                                {{/each}}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANEL 2: BUSINESS AUTHORIZATION & AFFILIATIONS -->
-            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,0.03);">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold m-0" style="color:var(--brand);">
-                            <i class="fa-solid fa-building text-info me-2"></i> Business Governance &amp; Organization Memberships
-                        </h5>
-                        <small class="text-muted">Evaluates organizational ownership, membership roles, and corporate governance.</small>
-                    </div>
-                    <a href="/admin/businesses" class="btn btn-sm btn-outline-secondary">
-                        <i class="fa-solid fa-building-circle-check me-1"></i> Business Directory
-                    </a>
-                </div>
-
-                <!-- BUSINESS AUTHORIZATION OVERVIEW BANNER -->
-                <div class="alert alert-light border p-3 mb-3" style="border-radius: 12px;">
-                    <div class="row align-items-center g-3">
-                        <div class="col-md-4 col-6 border-end">
-                            <small class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Business Management</small>
-                            {{#if businessAuthorization.canManageBusiness}}
-                            <span class="fw-bold text-success"><i class="fa-solid fa-circle-check me-1"></i> Authorized</span>
-                            {{else}}
-                            <span class="fw-bold text-secondary"><i class="fa-solid fa-circle-xmark me-1"></i> Not Authorized</span>
-                            {{/if}}
-                        </div>
-                        <div class="col-md-4 col-6 border-end">
-                            <small class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Post Job Opportunities</small>
-                            {{#if businessAuthorization.canPostOpportunities}}
-                            <span class="fw-bold text-success"><i class="fa-solid fa-circle-check me-1"></i> Authorized</span>
-                            {{else}}
-                            <span class="fw-bold text-secondary"><i class="fa-solid fa-circle-xmark me-1"></i> Not Authorized</span>
-                            {{/if}}
-                        </div>
-                        <div class="col-md-4 col-12">
-                            <small class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Approved Organizations</small>
-                            <span class="fw-bold text-dark fs-6">{{businessAuthorization.authorizedOrganizationsCount}} Active Organization{{#ifNotEquals businessAuthorization.authorizedOrganizationsCount 1}}s{{/ifNotEquals}}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-info border-0 py-2 px-3 mb-3 small" style="border-radius: 10px; background-color: rgba(13, 202, 240, 0.08); color: #055160;">
-                    <i class="fa-solid fa-shield-halved me-1"></i>
-                    <strong>Requirement 10 Compliance:</strong> Holding FOUNDER or RECRUITER role does not grant automatic platform-wide business access; authorized organization ownership or active membership in an approved organization is strictly required.
-                </div>
-
-                <!-- BUSINESS AFFILIATIONS TABLE -->
-                {{#if businessAffiliations.length}}
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                            <tr style="font-size: 11px; text-transform: uppercase;">
-                                <th>Organization</th>
-                                <th>Affiliation Role</th>
-                                <th>Organization Status</th>
-                                <th>Joined</th>
-                                <th class="text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each businessAffiliations}}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="{{this.organizationLogo}}" alt="{{this.organizationName}}" class="rounded" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/business.svg'">
-                                        <span class="fw-bold text-dark">{{this.organizationName}}</span>
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-light text-dark border">{{this.membershipRole}}</span></td>
-                                <td>
-                                    {{#if this.isVerified}}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-check me-1"></i> Approved</span>
-                                    {{else}}
-                                    <span class="badge bg-warning-subtle text-warning-emphasis px-2 py-1">Pending Approval</span>
-                                    {{/if}}
-                                </td>
-                                <td><small class="text-muted">{{formatDate this.joinedAt}}</small></td>
-                                <td class="text-end">
-                                    <a href="/admin/businesses/{{this.organizationId}}" class="btn btn-sm btn-outline-primary">
-                                        Inspect Org
-                                    </a>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
-                </div>
-                {{else}}
-                <div class="text-center py-3 text-muted bg-light rounded small">
-                    <i class="fa-solid fa-building-circle-xmark fa-2x mb-1 opacity-50"></i>
-                    <p class="mb-0">No business affiliations or organizational memberships linked.</p>
-                </div>
-                {{/if}}
-            </div>
-
-            <!-- PANEL 3: LEARNING CONTEXT & COURSE PARTICIPATION -->
-            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,0.03);">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold m-0" style="color:var(--brand);">
-                            <i class="fa-solid fa-graduation-cap text-success me-2"></i> Learning Context &amp; Course Participation
-                        </h5>
-                        <small class="text-muted">Learning enrollments, curriculum relationships, and certifications.</small>
-                    </div>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1">
-                        {{learningContext.coursesCount}} Enrolled Course{{#ifNotEquals learningContext.coursesCount 1}}s{{/ifNotEquals}}
-                    </span>
-                </div>
-
-                <div class="alert alert-success border-0 py-2 px-3 mb-3 small" style="border-radius: 10px; background-color: rgba(25, 135, 84, 0.08); color: #0f5132;">
-                    <i class="fa-solid fa-circle-check me-1"></i>
-                    <strong>Requirement 11 Compliance:</strong> Course participation is independent of user role. Enrolling in courses does not alter Primary Role (e.g. a Founder who studies remains Founder) and does not force Student classification.
-                </div>
-
-                {{#if learningContext.enrolledCourses.length}}
-                <div class="row g-3">
-                    {{#each learningContext.enrolledCourses}}
-                    <div class="col-md-6">
-                        <div class="p-3 rounded border bg-light h-100 d-flex flex-column justify-content-between">
-                            <div class="d-flex align-items-center gap-2.5 mb-2">
-                                <img src="{{this.image}}" alt="{{this.title}}" class="rounded" style="width: 40px; height: 40px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/course-cover.svg'">
-                                <div>
-                                    <div class="fw-bold text-dark text-truncate" style="max-width: 200px;">{{this.title}}</div>
-                                    <small class="badge bg-white text-muted border" style="font-size: 10px;">{{this.category}}</small>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                <small class="text-muted">{{#if this.duration}}{{this.duration}}{{else}}Self-paced{{/if}}</small>
-                                <a href="/admin/courses/{{this._id}}/chapters" class="btn btn-xs btn-outline-success py-0 px-2" style="font-size: 11px;">
-                                    View Chapters
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {{/each}}
-                </div>
-                {{else}}
-                <div class="text-center py-3 text-muted bg-light rounded small">
-                    <i class="fa-solid fa-book-open fa-2x mb-1 opacity-50"></i>
-                    <p class="mb-0">No active course enrollments recorded.</p>
-                </div>
-                {{/if}}
-            </div>
-
-            <!-- PANEL 4: PROFESSIONAL PROFILE & TAXONOMY GOVERNANCE -->
+            <!-- SECTION 1: PROFESSIONAL PROFILE GOVERNANCE -->
             <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold m-0" style="color:var(--brand);">
-                        <i class="fa-solid fa-briefcase text-primary me-2"></i> Professional Profile &amp; Taxonomy
+                        <i class="fa-solid fa-briefcase text-primary me-2"></i> Professional Profile Governance
                     </h5>
                     <span class="badge bg-light text-muted border">Read &amp; Governed</span>
                 </div>
@@ -707,7 +400,66 @@
                 </div>
             </div>
 
-            <!-- PANEL 6: NETWORK CONNECTIONS & MODERATION STANDING -->
+            <!-- SECTION 3: BUSINESS & ORGANIZATION AFFILIATIONS -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--brand);">
+                        <i class="fa-solid fa-building text-info me-2"></i> Business &amp; Organization Affiliations
+                    </h5>
+                    <a href="/admin/businesses" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-building-circle-check me-1"></i> Business Directory
+                    </a>
+                </div>
+
+                {{#if businessAffiliations.length}}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr style="font-size: 12px; text-transform: uppercase;">
+                                <th>Organization</th>
+                                <th>Affiliation Role</th>
+                                <th>Verification</th>
+                                <th>Joined</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each businessAffiliations}}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{this.organizationLogo}}" alt="{{this.organizationName}}" class="rounded" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--border);" onerror="this.onerror=null;this.src='/img/placeholders/business.svg'">
+                                        <span class="fw-bold text-dark">{{this.organizationName}}</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{this.membershipRole}}</span></td>
+                                <td>
+                                    {{#if this.isVerified}}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-check me-1"></i> Verified</span>
+                                    {{else}}
+                                    <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Pending</span>
+                                    {{/if}}
+                                </td>
+                                <td><small class="text-muted">{{formatDate this.joinedAt}}</small></td>
+                                <td class="text-end">
+                                    <a href="/admin/businesses/{{this.organizationId}}" class="btn btn-sm btn-outline-primary">
+                                        Inspect Org
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <div class="text-center py-4 text-muted bg-light rounded">
+                    <i class="fa-solid fa-building-circle-xmark fa-2x mb-2 opacity-50"></i>
+                    <p class="mb-0 small">No verified business affiliations or organizational memberships linked.</p>
+                </div>
+                {{/if}}
+            </div>
+
+            <!-- SECTION 4: NETWORK CONNECTIONS & MODERATION STANDING -->
             <div class="card p-4" style="border-radius: 16px; border: 1px solid var(--border);">
                 <h5 class="fw-bold mb-3" style="color:var(--brand);">
                     <i class="fa-solid fa-users-gear text-secondary me-2"></i> Network &amp; Platform Standing
@@ -750,8 +502,8 @@
         <!-- RIGHT COLUMN: ACCOUNT GOVERNANCE CONTROLS, SESSIONS, AUDIT -->
         <div class="col-lg-4">
 
-            <!-- CARD 1: ACCOUNT & MULTI-ROLE GOVERNANCE CONTROLS -->
-            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,0.03);">
+            <!-- CARD 1: ACCOUNT GOVERNANCE & STATUS CONTROLS -->
+            <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
                 <h6 class="fw-bold mb-3" style="color:var(--brand);">
                     <i class="fa-solid fa-sliders text-primary me-2"></i> Account Governance Controls
                 </h6>
@@ -780,20 +532,8 @@
 
                 <!-- ACTION BUTTONS -->
                 <div class="d-flex flex-column gap-2">
-                    <button type="button" class="btn btn-primary w-100 text-start" onclick="openPrimaryRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
-                        <i class="fa-solid fa-user-tag me-2 text-white"></i> Change Primary Role
-                    </button>
-
-                    <button type="button" class="btn btn-outline-primary w-100 text-start" onclick="openAddSecondaryRoleModal('{{user._id}}', '{{displayName}}')">
-                        <i class="fa-solid fa-user-plus me-2 text-primary"></i> Add Secondary Role
-                    </button>
-
-                    <button type="button" class="btn btn-outline-secondary w-100 text-start" onclick="openRoleHistoryModal('{{user._id}}')">
-                        <i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i> View Role History
-                    </button>
-
-                    <button type="button" class="btn btn-outline-info w-100 text-start" onclick="openContractPreviewModal('{{user._id}}')">
-                        <i class="fa-solid fa-code me-2 text-info"></i> View API Contract Preview
+                    <button type="button" class="btn btn-outline-primary w-100 text-start" onclick="openRoleModal('{{user._id}}', '{{displayName}}', '{{primaryRole}}')">
+                        <i class="fa-solid fa-user-tag me-2 text-primary"></i> Assign / Change Role
                     </button>
 
                     <button type="button" class="btn btn-outline-success w-100 text-start" onclick="openVerificationModal('{{user._id}}', '{{displayName}}', '{{#if user.account_Status.isVerified}}VERIFIED{{else}}UNVERIFIED{{/if}}')">
@@ -819,36 +559,6 @@
                     {{/if}}
                 </div>
             </div>
-
-            <!-- CARD 1.5: SEMANTIC CONSISTENCY DIAGNOSTIC -->
-            {{#if consistencyIssues.length}}
-            <div class="card p-3 mb-4 border-warning" style="border-radius: 16px; background-color: #fffdf5;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="fw-bold m-0 text-warning-emphasis" style="font-size: 13px;">
-                        <i class="fa-solid fa-triangle-exclamation me-1.5 text-warning"></i> Data Consistency Notice ({{consistencyIssues.length}})
-                    </h6>
-                    <span class="badge bg-warning text-dark" style="font-size: 10px;">Action Recommended</span>
-                </div>
-                <p class="small text-muted mb-2" style="font-size: 12px;">This account contains semantic role/capability inconsistencies detected by the governance audit engine:</p>
-                <div class="d-flex flex-column gap-2 mb-3">
-                    {{#each consistencyIssues}}
-                    <div class="p-2 rounded bg-white border border-warning-subtle" style="font-size: 11px;">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="badge bg-light text-dark border font-monospace">{{this.code}}</span>
-                            <span class="badge {{#ifEquals this.severity 'ERROR'}}bg-danger{{else}}bg-warning text-dark{{/ifEquals}}">{{this.severity}}</span>
-                        </div>
-                        <div class="text-dark">{{this.message}}</div>
-                        {{#if this.recommendedValue}}
-                        <div class="text-muted mt-1">Recommended: <code>{{this.recommendedValue}}</code></div>
-                        {{/if}}
-                    </div>
-                    {{/each}}
-                </div>
-                <a href="/admin/network/audit-roles" class="btn btn-sm btn-outline-warning text-dark w-100" style="font-size: 12px;">
-                    <i class="fa-solid fa-wrench me-1"></i> Open Full Diagnostic Audit
-                </a>
-            </div>
-            {{/if}}
 
             <!-- CARD 2: SESSION GOVERNANCE (SAFE METADATA) -->
             <div class="card p-4 mb-4" style="border-radius: 16px; border: 1px solid var(--border);">
@@ -942,23 +652,23 @@
 </div>
 
 <!-- ========================================== -->
-<!-- MODAL 1: CHANGE PRIMARY ECOSYSTEM ROLE -->
+<!-- MODAL: ASSIGN / CHANGE PROFILE ROLE -->
 <!-- ========================================== -->
-<div class="modal fade" id="primaryRoleModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-crown text-warning me-2"></i> Assign Primary Ecosystem Role</h5>
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-tag text-primary me-2"></i> Assign Profile Role</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="primaryRoleForm" onsubmit="submitPrimaryRoleChange(event)">
+            <form id="roleForm" onsubmit="submitRoleChange(event)">
                 <div class="modal-body py-3">
-                    <p class="text-muted small">Managing primary ecosystem identity for <strong id="modalPrimaryUserName" class="text-dark"></strong>.</p>
-                    <input type="hidden" id="modalPrimaryUserId" name="userId">
+                    <p class="text-muted small">Managing profile role for <strong id="modalUserName" class="text-dark"></strong>.</p>
+                    <input type="hidden" id="modalUserId" name="userId">
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Select New Primary Role</label>
-                        <select class="form-select" id="newPrimaryRoleSelect" name="role" onchange="checkEducatorWarningPrimary(this.value)" required>
+                        <label class="form-label fw-bold small">Select New Role</label>
+                        <select class="form-select" id="newRoleSelect" name="role" onchange="checkEducatorWarning(this.value)" required>
                             <option value="STUDENT">Student</option>
                             <option value="EDUCATOR">Educator (Admin Protected)</option>
                             <option value="PROFESSIONAL">Professional</option>
@@ -969,180 +679,21 @@
                     </div>
 
                     <!-- EDUCATOR GOVERNANCE NOTICE -->
-                    <div id="educatorNoticePrimary" class="alert alert-warning border-0 small mb-3" style="display: none; border-radius: 12px;">
+                    <div id="educatorNotice" class="alert alert-warning border-0 small mb-3" style="display: none; border-radius: 12px;">
                         <i class="fa-solid fa-shield-halved me-1 text-warning"></i>
                         <strong>Administrative Privilege:</strong> The <em>Educator</em> role can only be assigned by a Zeitnah Administrator with <code>assign_educator</code> capability. Normal users cannot self-assign or self-revoke this role. This action will be audited.
                     </div>
 
                     <div class="mb-2">
                         <label class="form-label fw-bold small">Governance Reason / Justification <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="reason" id="primaryRoleReason" rows="2" placeholder="e.g. Verified university faculty credentials submitted..." required></textarea>
+                        <textarea class="form-control" name="reason" id="roleReason" rows="2" placeholder="e.g. Verified university faculty credentials submitted..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="savePrimaryRoleBtn">Confirm &amp; Audit Primary Role</button>
+                    <button type="submit" class="btn btn-primary" id="saveRoleBtn">Confirm &amp; Audit Role</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- MODAL 2: ADD SECONDARY ECOSYSTEM ROLE -->
-<!-- ========================================== -->
-<div class="modal fade" id="addSecondaryRoleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-tags text-primary me-2"></i> Add Secondary Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="addSecondaryRoleForm" onsubmit="submitAddSecondaryRole(event)">
-                <div class="modal-body py-3">
-                    <p class="text-muted small">Granting additional legitimate identity to <strong id="modalAddSecondaryUserName" class="text-dark"></strong> without altering primary role or clearing data.</p>
-                    <input type="hidden" id="modalAddSecondaryUserId" name="userId">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">Select Secondary Role to Add</label>
-                        <select class="form-select" id="newSecondaryRoleSelect" name="role" onchange="checkEducatorWarningSecondary(this.value)" required>
-                            <option value="">-- Choose Role --</option>
-                            <option value="STUDENT">Student</option>
-                            <option value="EDUCATOR">Educator (Admin Protected)</option>
-                            <option value="PROFESSIONAL">Professional</option>
-                            <option value="MENTOR">Mentor</option>
-                            <option value="RECRUITER">Recruiter</option>
-                            <option value="FOUNDER">Founder</option>
-                        </select>
-                    </div>
-
-                    <!-- EDUCATOR GOVERNANCE NOTICE -->
-                    <div id="educatorNoticeSecondary" class="alert alert-warning border-0 small mb-3" style="display: none; border-radius: 12px;">
-                        <i class="fa-solid fa-shield-halved me-1 text-warning"></i>
-                        <strong>Administrative Privilege:</strong> The <em>Educator</em> role requires <code>assign_educator</code> capability.
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label fw-bold small">Governance Reason / Justification <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="reason" id="addSecondaryRoleReason" rows="2" placeholder="e.g. User also acts as enterprise recruiter..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="saveSecondaryRoleBtn">Add Secondary Role</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- MODAL 3: REMOVE SECONDARY ROLE -->
-<!-- ========================================== -->
-<div class="modal fade" id="removeSecondaryRoleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-trash me-2"></i> Remove Secondary Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="removeSecondaryRoleForm" onsubmit="submitRemoveSecondaryRole(event)">
-                <div class="modal-body py-3">
-                    <div class="alert alert-warning border-0 small mb-3" style="border-radius: 12px;">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                        You are about to remove secondary role <strong id="removeRoleDisplay" class="text-dark"></strong> from user. This will recompute capabilities without deleting profile data, course enrollments, or business memberships.
-                    </div>
-                    <input type="hidden" id="removeSecondaryUserId" name="userId">
-                    <input type="hidden" id="removeSecondaryRoleVal" name="role">
-
-                    <div class="mb-2">
-                        <label class="form-label fw-bold small">Reason for Role Removal <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="reason" id="removeSecondaryRoleReason" rows="2" placeholder="e.g. Recruiter affiliation concluded..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger" id="confirmRemoveSecondaryRoleBtn">Confirm Removal</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- MODAL 4: ROLE MUTATION HISTORY -->
-<!-- ========================================== -->
-<div class="modal fade" id="roleHistoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Role Mutation Audit Trail</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-3">
-                <div id="roleHistoryLoading" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading history...</span>
-                    </div>
-                </div>
-                <div id="roleHistoryTableContainer" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead class="table-light">
-                                <tr style="font-size: 11px; text-transform: uppercase;">
-                                    <th>Timestamp</th>
-                                    <th>Action</th>
-                                    <th>Actor</th>
-                                    <th>Previous State</th>
-                                    <th>New State</th>
-                                    <th>Governance Reason</th>
-                                </tr>
-                            </thead>
-                            <tbody id="roleHistoryTableBody" style="font-size: 12px;"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- MODAL 5: USER PANEL API CONTRACT PREVIEW -->
-<!-- ========================================== -->
-<div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px;">
-            <div class="modal-header border-0 pb-0">
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="modal-title fw-bold m-0"><i class="fa-solid fa-code text-info me-2"></i> User Panel Contract Preview</h5>
-                    <span class="badge bg-light text-muted border">Safe / No Secrets</span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-3">
-                <div class="alert alert-light border small text-muted py-2 px-3 mb-2" style="border-radius: 10px;">
-                    <i class="fa-solid fa-shield-check text-success me-1"></i>
-                    <strong>Privacy Guarantee:</strong> Strictly excludes hashed passwords, OTPs, session tokens, internal admin permissions, and private verification evidence.
-                </div>
-                <div id="contractLoading" class="text-center py-4">
-                    <div class="spinner-border text-info" role="status">
-                        <span class="visually-hidden">Loading contract...</span>
-                    </div>
-                </div>
-                <div id="contractBodyContainer" style="display: none;">
-                    <pre class="bg-dark text-light p-3 rounded mb-0" style="max-height: 380px; overflow-y: auto; font-size: 12px;"><code id="contractCode"></code></pre>
-                </div>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" onclick="copyContractJson()">
-                    <i class="fa-regular fa-copy me-1"></i> Copy JSON
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
         </div>
     </div>
 </div>
@@ -1345,25 +896,11 @@
 
 <!-- CLIENT LOGIC -->
 <script>
-let primaryRoleModalInstance, addSecondaryRoleModalInstance, removeSecondaryRoleModalInstance, roleHistoryModalInstance, contractModalInstance, suspendModalInstance, restoreModalInstance, usernameModalInstance, verificationModalInstance, restrictionsModalInstance;
+let roleModalInstance, suspendModalInstance, restoreModalInstance, usernameModalInstance, verificationModalInstance, restrictionsModalInstance;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.bootstrap) {
-        const prEl = document.getElementById('primaryRoleModal');
-        if (prEl) primaryRoleModalInstance = new bootstrap.Modal(prEl);
-
-        const asrEl = document.getElementById('addSecondaryRoleModal');
-        if (asrEl) addSecondaryRoleModalInstance = new bootstrap.Modal(asrEl);
-
-        const rsrEl = document.getElementById('removeSecondaryRoleModal');
-        if (rsrEl) removeSecondaryRoleModalInstance = new bootstrap.Modal(rsrEl);
-
-        const rhEl = document.getElementById('roleHistoryModal');
-        if (rhEl) roleHistoryModalInstance = new bootstrap.Modal(rhEl);
-
-        const cEl = document.getElementById('contractModal');
-        if (cEl) contractModalInstance = new bootstrap.Modal(cEl);
-
+        roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal'));
         suspendModalInstance = new bootstrap.Modal(document.getElementById('suspendModal'));
         restoreModalInstance = new bootstrap.Modal(document.getElementById('restoreModal'));
         usernameModalInstance = new bootstrap.Modal(document.getElementById('usernameModal'));
@@ -1372,41 +909,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function openPrimaryRoleModal(userId, name, currentRole) {
-    document.getElementById('modalPrimaryUserId').value = userId;
-    document.getElementById('modalPrimaryUserName').innerText = name;
-    const select = document.getElementById('newPrimaryRoleSelect');
-    select.value = (currentRole || 'STUDENT').toUpperCase();
-    if (document.getElementById('primaryRoleReason')) {
-        document.getElementById('primaryRoleReason').value = '';
-    }
-    checkEducatorWarningPrimary(select.value);
-    if (primaryRoleModalInstance) primaryRoleModalInstance.show();
-}
-
-// Backward compatibility alias
 function openRoleModal(userId, name, currentRole) {
-    openPrimaryRoleModal(userId, name, currentRole);
+    document.getElementById('modalUserId').value = userId;
+    document.getElementById('modalUserName').innerText = name;
+    const select = document.getElementById('newRoleSelect');
+    select.value = (currentRole || 'STUDENT').toUpperCase();
+    if (document.getElementById('roleReason')) {
+        document.getElementById('roleReason').value = '';
+    }
+    checkEducatorWarning(select.value);
+    roleModalInstance.show();
 }
 
-function checkEducatorWarningPrimary(role) {
-    const notice = document.getElementById('educatorNoticePrimary');
-    if (notice) {
-        notice.style.display = (role === 'EDUCATOR') ? 'block' : 'none';
+function checkEducatorWarning(role) {
+    const notice = document.getElementById('educatorNotice');
+    if (role === 'EDUCATOR') {
+        notice.style.display = 'block';
+    } else {
+        notice.style.display = 'none';
     }
 }
 
-async function submitPrimaryRoleChange(e) {
+async function submitRoleChange(e) {
     e.preventDefault();
-    const btn = document.getElementById('savePrimaryRoleBtn') || e.target.querySelector('button[type="submit"]');
-    const userId = document.getElementById('modalPrimaryUserId').value;
-    const role = document.getElementById('newPrimaryRoleSelect').value;
-    const reason = (document.getElementById('primaryRoleReason')?.value || '').trim();
+    const btn = document.getElementById('saveRoleBtn') || e.target.querySelector('button[type="submit"]');
+    const userId = document.getElementById('modalUserId').value;
+    const role = document.getElementById('newRoleSelect').value;
+    const reason = (document.getElementById('roleReason')?.value || '').trim();
 
     if (role === 'EDUCATOR') {
         const confirmRes = await Swal.fire({
             title: 'Assign Educator Role?',
-            text: 'You are about to assign the privileged Educator role. This requires assign_educator administrative capability and is audit logged.',
+            text: 'You are about to assign the privileged Educator role. This grants verified educator status and is audit logged.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#198754',
@@ -1418,202 +952,23 @@ async function submitPrimaryRoleChange(e) {
     if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Auditing...');
 
     try {
-        const res = await fetch(`/admin/network/users/${userId}/primary-role`, {
+        const res = await fetch(`/admin/network/users/${userId}/role`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ role, reason })
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Primary Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Role Updated', text: json.message, timer: 1500, showConfirmButton: false });
             setTimeout(() => window.location.reload(), 1500);
         } else {
             if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
-            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update primary role' });
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: json.message || 'Could not update role' });
         }
     } catch(err) {
         if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
         Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
     }
-}
-
-function openAddSecondaryRoleModal(userId, name) {
-    document.getElementById('modalAddSecondaryUserId').value = userId;
-    document.getElementById('modalAddSecondaryUserName').innerText = name;
-    document.getElementById('newSecondaryRoleSelect').value = '';
-    if (document.getElementById('addSecondaryRoleReason')) {
-        document.getElementById('addSecondaryRoleReason').value = '';
-    }
-    checkEducatorWarningSecondary('');
-    if (addSecondaryRoleModalInstance) addSecondaryRoleModalInstance.show();
-}
-
-function checkEducatorWarningSecondary(role) {
-    const notice = document.getElementById('educatorNoticeSecondary');
-    if (notice) {
-        notice.style.display = (role === 'EDUCATOR') ? 'block' : 'none';
-    }
-}
-
-async function submitAddSecondaryRole(e) {
-    e.preventDefault();
-    const btn = document.getElementById('saveSecondaryRoleBtn') || e.target.querySelector('button[type="submit"]');
-    const userId = document.getElementById('modalAddSecondaryUserId').value;
-    const role = document.getElementById('newSecondaryRoleSelect').value;
-    const reason = (document.getElementById('addSecondaryRoleReason')?.value || '').trim();
-
-    if (!role) {
-        Swal.fire({ icon: 'warning', title: 'Role Required', text: 'Please select a secondary role to add.' });
-        return;
-    }
-
-    if (role === 'EDUCATOR') {
-        const confirmRes = await Swal.fire({
-            title: 'Assign Secondary Educator?',
-            text: 'Adding EDUCATOR requires assign_educator administrative capability and is audit logged.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#198754',
-            confirmButtonText: 'Yes, Assign Educator'
-        });
-        if (!confirmRes.isConfirmed) return;
-    }
-
-    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Auditing...');
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/secondary-roles/add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ role, reason })
-        });
-        const json = await res.json();
-        if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Secondary Role Added', text: json.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
-            Swal.fire({ icon: 'error', title: 'Action Failed', text: json.message || 'Could not add secondary role' });
-        }
-    } catch(err) {
-        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
-        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
-    }
-}
-
-function openRemoveSecondaryRoleModal(userId, role) {
-    document.getElementById('removeSecondaryUserId').value = userId;
-    document.getElementById('removeSecondaryRoleVal').value = role;
-    document.getElementById('removeRoleDisplay').innerText = role;
-    if (document.getElementById('removeSecondaryRoleReason')) {
-        document.getElementById('removeSecondaryRoleReason').value = '';
-    }
-    if (removeSecondaryRoleModalInstance) removeSecondaryRoleModalInstance.show();
-}
-
-async function submitRemoveSecondaryRole(e) {
-    e.preventDefault();
-    const btn = document.getElementById('confirmRemoveSecondaryRoleBtn') || e.target.querySelector('button[type="submit"]');
-    const userId = document.getElementById('removeSecondaryUserId').value;
-    const role = document.getElementById('removeSecondaryRoleVal').value;
-    const reason = (document.getElementById('removeSecondaryRoleReason')?.value || '').trim();
-
-    if (window.zeitnahSetSubmitting) window.zeitnahSetSubmitting(btn, 'Removing...');
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/secondary-roles/remove`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ role, reason })
-        });
-        const json = await res.json();
-        if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Role Removed', text: json.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
-            Swal.fire({ icon: 'error', title: 'Action Failed', text: json.message || 'Could not remove secondary role' });
-        }
-    } catch(err) {
-        if (window.zeitnahResetSubmitting) window.zeitnahResetSubmitting(btn);
-        Swal.fire({ icon: 'error', title: 'Network Error', text: err.message });
-    }
-}
-
-async function openRoleHistoryModal(userId) {
-    if (roleHistoryModalInstance) roleHistoryModalInstance.show();
-    const loading = document.getElementById('roleHistoryLoading');
-    const container = document.getElementById('roleHistoryTableContainer');
-    const tbody = document.getElementById('roleHistoryTableBody');
-
-    loading.style.display = 'block';
-    container.style.display = 'none';
-    tbody.innerHTML = '';
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/role-history`);
-        const json = await res.json();
-        loading.style.display = 'none';
-
-        if (json.success && Array.isArray(json.history) && json.history.length) {
-            tbody.innerHTML = json.history.map(item => `
-                <tr>
-                    <td class="text-muted"><small>${new Date(item.timestamp).toLocaleString()}</small></td>
-                    <td><span class="badge bg-light text-dark border font-monospace" style="font-size:10px;">${item.action}</span></td>
-                    <td class="fw-semibold">${item.actor}</td>
-                    <td class="text-muted"><small>${item.previousState || '—'}</small></td>
-                    <td><span class="badge bg-primary-subtle text-primary border">${item.newState || '—'}</span></td>
-                    <td class="text-dark small">${item.reason || '—'}</td>
-                </tr>
-            `).join('');
-            container.style.display = 'block';
-        } else {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted fst-italic">No role mutations recorded in audit log.</td></tr>`;
-            container.style.display = 'block';
-        }
-    } catch(err) {
-        loading.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Error fetching audit trail: ${err.message}</td></tr>`;
-        container.style.display = 'block';
-    }
-}
-
-let lastContractData = null;
-async function openContractPreviewModal(userId) {
-    if (contractModalInstance) contractModalInstance.show();
-    const loading = document.getElementById('contractLoading');
-    const container = document.getElementById('contractBodyContainer');
-    const code = document.getElementById('contractCode');
-
-    loading.style.display = 'block';
-    container.style.display = 'none';
-    code.innerText = '';
-
-    try {
-        const res = await fetch(`/admin/network/users/${userId}/contract`);
-        const json = await res.json();
-        loading.style.display = 'none';
-
-        if (json.success && json.contract) {
-            lastContractData = json.contract;
-            code.innerText = JSON.stringify(json.contract, null, 2);
-            container.style.display = 'block';
-        } else {
-            code.innerText = `Error: ${json.message || 'Failed to retrieve contract'}`;
-            container.style.display = 'block';
-        }
-    } catch(err) {
-        loading.style.display = 'none';
-        code.innerText = `Error fetching contract: ${err.message}`;
-        container.style.display = 'block';
-    }
-}
-
-function copyContractJson() {
-    if (!lastContractData) return;
-    navigator.clipboard.writeText(JSON.stringify(lastContractData, null, 2)).then(() => {
-        Swal.fire({ icon: 'success', title: 'Copied', text: 'Contract JSON copied to clipboard', timer: 1200, showConfirmButton: false });
-    });
 }
 
 function openSuspendModal(userId, name) {

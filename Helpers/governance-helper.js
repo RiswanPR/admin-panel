@@ -57,351 +57,21 @@ const sanitizeUserForAdmin = (user) => {
 // 1. NETWORK USER & ROLE ADMINISTRATION
 // ─────────────────────────────────────────────────────────
 
-const CANONICAL_ROLES = ['STUDENT', 'EDUCATOR', 'PROFESSIONAL', 'MENTOR', 'RECRUITER', 'FOUNDER'];
-const ALLOWED_PROFILE_ROLES = CANONICAL_ROLES;
+const ALLOWED_PROFILE_ROLES = ['STUDENT', 'EDUCATOR', 'PROFESSIONAL', 'MENTOR', 'RECRUITER', 'FOUNDER'];
 
-const CANONICAL_CAPABILITIES = {
-  ACCESS_COURSES: 'ACCESS_COURSES',
-  ACCESS_JOBS: 'ACCESS_JOBS',
-  MANAGE_BUSINESS: 'MANAGE_BUSINESS',
-  POST_OPPORTUNITIES: 'POST_OPPORTUNITIES',
-  ACCESS_PORTFOLIO: 'ACCESS_PORTFOLIO',
-  ACCESS_CAREER_INTELLIGENCE: 'ACCESS_CAREER_INTELLIGENCE',
-  OFFER_MENTORSHIP: 'OFFER_MENTORSHIP',
-  CONDUCT_CLASSES: 'CONDUCT_CLASSES'
-};
-
-const CAPABILITY_METADATA = {
-  ACCESS_COURSES: {
-    id: 'ACCESS_COURSES',
-    name: 'Course Learning',
-    description: 'Access curriculum, lectures, coursework, and progress tracking',
-    category: 'Learning'
-  },
-  ACCESS_JOBS: {
-    id: 'ACCESS_JOBS',
-    name: 'Infrastructure Jobs',
-    description: 'Explore, search, and submit applications for infrastructure roles',
-    category: 'Opportunities'
-  },
-  MANAGE_BUSINESS: {
-    id: 'MANAGE_BUSINESS',
-    name: 'Business Management',
-    description: 'Manage verified company entity, team roster, and corporate branding',
-    category: 'Business',
-    requiresAuthorizedOrg: true
-  },
-  POST_OPPORTUNITIES: {
-    id: 'POST_OPPORTUNITIES',
-    name: 'Post Opportunities',
-    description: 'Create, publish, and manage hiring listings on behalf of an authorized business',
-    category: 'Recruitment',
-    requiresAuthorizedOrg: true
-  },
-  ACCESS_PORTFOLIO: {
-    id: 'ACCESS_PORTFOLIO',
-    name: 'Professional Portfolio',
-    description: 'Curate project deliverables, technical credentials, and public showcase',
-    category: 'Professional'
-  },
-  ACCESS_CAREER_INTELLIGENCE: {
-    id: 'ACCESS_CAREER_INTELLIGENCE',
-    name: 'Career Intelligence',
-    description: 'Inspect industry market trends, skill taxonomies, and salary progressions',
-    category: 'Intelligence'
-  },
-  OFFER_MENTORSHIP: {
-    id: 'OFFER_MENTORSHIP',
-    name: 'Mentorship',
-    description: 'Host mentorship slots and guide emerging engineering talent',
-    category: 'Community'
-  },
-  CONDUCT_CLASSES: {
-    id: 'CONDUCT_CLASSES',
-    name: 'Academic Instruction',
-    description: 'Conduct coursework, grade assignments, and author learning modules',
-    category: 'Education'
-  }
-};
-
-const ROLE_DEFAULT_CAPABILITIES = {
-  STUDENT: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE
-  ],
-  PROFESSIONAL: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_PORTFOLIO,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE
-  ],
-  MENTOR: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_PORTFOLIO,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE,
-    CANONICAL_CAPABILITIES.OFFER_MENTORSHIP
-  ],
-  FOUNDER: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_PORTFOLIO,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE,
-    CANONICAL_CAPABILITIES.MANAGE_BUSINESS,
-    CANONICAL_CAPABILITIES.POST_OPPORTUNITIES
-  ],
-  RECRUITER: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE,
-    CANONICAL_CAPABILITIES.MANAGE_BUSINESS,
-    CANONICAL_CAPABILITIES.POST_OPPORTUNITIES
-  ],
-  EDUCATOR: [
-    CANONICAL_CAPABILITIES.ACCESS_COURSES,
-    CANONICAL_CAPABILITIES.ACCESS_JOBS,
-    CANONICAL_CAPABILITIES.ACCESS_CAREER_INTELLIGENCE,
-    CANONICAL_CAPABILITIES.CONDUCT_CLASSES
-  ]
-};
-
-/**
- * Resolves a user's canonical multi-role identity without destructive mutations.
- */
-const resolveCanonicalUserRoles = (user) => {
-  if (!user) {
-    return {
-      primaryRole: 'STUDENT',
-      roles: ['STUDENT'],
-      secondaryRoles: [],
-      legacyRole: 'student',
-      malformedCapabilitiesDetected: []
-    };
+const assignUserRole = async (userId, newRole, actor, req, reason = '') => {
+  if (!isValidObjectId(userId)) {
+    throw new Error('Valid user ID is required.');
   }
 
-  // 1. Resolve Primary Role
-  let rawPrimary = user.primaryRole;
-  if (!rawPrimary && user.role) {
-    const roleUpper = String(user.role).trim().toUpperCase();
-    if (CANONICAL_ROLES.includes(roleUpper)) {
-      rawPrimary = roleUpper;
-    }
-  }
-  const primaryRole = (rawPrimary && CANONICAL_ROLES.includes(String(rawPrimary).trim().toUpperCase()))
-    ? String(rawPrimary).trim().toUpperCase()
-    : 'STUDENT';
-
-  // 2. Resolve Multi-Role Array
-  const rawRoles = Array.isArray(user.roles) ? user.roles : [];
-  const normalizedSet = new Set();
-  normalizedSet.add(primaryRole);
-
-  rawRoles.forEach(r => {
-    const clean = String(r || '').trim().toUpperCase();
-    if (CANONICAL_ROLES.includes(clean)) {
-      normalizedSet.add(clean);
-    }
-  });
-
-  const roles = Array.from(normalizedSet);
-  const secondaryRoles = roles.filter(r => r !== primaryRole);
-
-  // 3. Detect malformed capabilities that look like roles
-  const malformedCapabilitiesDetected = [];
-  if (Array.isArray(user.capabilities)) {
-    user.capabilities.forEach(cap => {
-      const capUpper = String(cap || '').trim().toUpperCase();
-      if (CANONICAL_ROLES.includes(capUpper)) {
-        malformedCapabilitiesDetected.push(capUpper);
-      }
-    });
-  }
-
-  return {
-    primaryRole,
-    roles,
-    secondaryRoles,
-    legacyRole: primaryRole.toLowerCase(),
-    malformedCapabilitiesDetected
-  };
-};
-
-/**
- * Strict server-side business authorization evaluation.
- * Does NOT equate FOUNDER or RECRUITER role alone with business management access.
- */
-const evaluateBusinessAuthorization = (user, memberships = [], organizations = []) => {
-  const userIdStr = user?._id ? String(user._id) : '';
-  const { roles } = resolveCanonicalUserRoles(user);
-  const hasBusinessRole = roles.includes('FOUNDER') || roles.includes('RECRUITER') || roles.includes('PROFESSIONAL');
-
-  const orgMap = {};
-  organizations.forEach(o => {
-    if (o && o._id) orgMap[String(o._id)] = o;
-  });
-
-  const authorizedOrganizations = [];
-  const validBusinessRoles = ['OWNER', 'ADMIN', 'RECRUITER', 'MANAGER'];
-
-  memberships.forEach(m => {
-    const orgId = m.organizationId ? String(m.organizationId) : '';
-    const org = orgMap[orgId];
-    if (org && org.status === 'APPROVED') {
-      const memRole = String(m.role || '').toUpperCase();
-      const isActive = m.status !== 'SUSPENDED';
-      if (isActive && (validBusinessRoles.includes(memRole) || memRole === 'OWNER')) {
-        authorizedOrganizations.push({
-          organizationId: orgId,
-          name: org.name,
-          slug: org.slug,
-          membershipRole: m.role || 'Member',
-          status: org.status,
-          verificationStatus: org.verificationStatus,
-          isOwner: Boolean(org.ownerId && String(org.ownerId) === userIdStr) || Boolean(org.createdBy && String(org.createdBy) === userIdStr)
-        });
-      }
-    }
-  });
-
-  // Check direct ownership of approved organizations
-  organizations.forEach(org => {
-    if (org && org.status === 'APPROVED') {
-      const orgId = String(org._id);
-      const isOwner = Boolean(org.ownerId && String(org.ownerId) === userIdStr) || Boolean(org.createdBy && String(org.createdBy) === userIdStr);
-      if (isOwner && !authorizedOrganizations.some(ao => ao.organizationId === orgId)) {
-        authorizedOrganizations.push({
-          organizationId: orgId,
-          name: org.name,
-          slug: org.slug,
-          membershipRole: 'Owner',
-          status: org.status,
-          verificationStatus: org.verificationStatus,
-          isOwner: true
-        });
-      }
-    }
-  });
-
-  // Students and Professionals without authorized business cannot manage businesses
-  const isAuthorized = hasBusinessRole && authorizedOrganizations.length > 0;
-  const unattachedRoles = [];
-  if (roles.includes('FOUNDER') && authorizedOrganizations.length === 0) unattachedRoles.push('FOUNDER');
-  if (roles.includes('RECRUITER') && authorizedOrganizations.length === 0) unattachedRoles.push('RECRUITER');
-
-  return {
-    isAuthorized,
-    canManageBusiness: isAuthorized,
-    canPostOpportunities: isAuthorized && (roles.includes('FOUNDER') || roles.includes('RECRUITER')),
-    authorizedOrganizations,
-    unattachedRoles,
-    hasBusinessRole,
-    reason: !hasBusinessRole
-      ? 'User does not hold a business-capable role (FOUNDER, RECRUITER, PROFESSIONAL).'
-      : (authorizedOrganizations.length === 0 ? 'No approved organization ownership or management membership found.' : 'Authorized business entity active.')
-  };
-};
-
-/**
- * Dynamically computes a user's functional capabilities based on held roles,
- * course enrollments, and business authorization gates.
- */
-const computeUserCapabilities = (user, { memberships = [], organizations = [] } = {}) => {
-  const { roles } = resolveCanonicalUserRoles(user);
-  const businessAuth = evaluateBusinessAuthorization(user, memberships, organizations);
-
-  const capabilitySet = new Set();
-  const capabilityDetails = [];
-
-  // 1. Gather base capabilities from all held roles
-  roles.forEach(role => {
-    const defaults = ROLE_DEFAULT_CAPABILITIES[role] || [];
-    defaults.forEach(cap => capabilitySet.add(cap));
-  });
-
-  // 2. Ensure course access if user has course enrollments (decoupled from role)
-  if (Array.isArray(user?.course) && user.course.length > 0) {
-    capabilitySet.add(CANONICAL_CAPABILITIES.ACCESS_COURSES);
-  }
-
-  // 3. Process capabilities against authorization gates
-  Object.values(CANONICAL_CAPABILITIES).forEach(capId => {
-    const meta = CAPABILITY_METADATA[capId] || { id: capId, name: capId, description: '', category: 'General' };
-    const isGrantedByRole = capabilitySet.has(capId);
-
-    let active = isGrantedByRole;
-    let gateReason = null;
-
-    if (meta.requiresAuthorizedOrg) {
-      if (!businessAuth.isAuthorized) {
-        active = false;
-        gateReason = businessAuth.reason;
-      }
-    }
-
-    if (active) {
-      capabilityDetails.push({
-        id: capId,
-        capability: capId,
-        name: meta.name,
-        label: meta.name,
-        description: meta.description,
-        category: meta.category,
-        active: true,
-        granted: true,
-        sourceRoles: roles.filter(r => (ROLE_DEFAULT_CAPABILITIES[r] || []).includes(capId)),
-        requiresAuthorizedOrg: Boolean(meta.requiresAuthorizedOrg),
-        requiresBusinessApproval: Boolean(meta.requiresAuthorizedOrg),
-        isGateSatisfied: true,
-        businessGated: false
-      });
-    } else if (isGrantedByRole) {
-      // Role assigned but gated due to lack of approved organization
-      capabilityDetails.push({
-        id: capId,
-        capability: capId,
-        name: meta.name,
-        label: meta.name,
-        description: meta.description,
-        category: meta.category,
-        active: false,
-        granted: false,
-        sourceRoles: roles.filter(r => (ROLE_DEFAULT_CAPABILITIES[r] || []).includes(capId)),
-        requiresAuthorizedOrg: Boolean(meta.requiresAuthorizedOrg),
-        requiresBusinessApproval: Boolean(meta.requiresAuthorizedOrg),
-        isGateSatisfied: false,
-        businessGated: Boolean(meta.requiresAuthorizedOrg),
-        gateReason
-      });
-    }
-  });
-
-  const activeCapabilities = capabilityDetails.filter(c => c.active).map(c => c.id);
-
-  return {
-    capabilities: activeCapabilities,
-    capabilityDetails,
-    businessAuthorization: businessAuth
-  };
-};
-
-/**
- * Changes a user's primary role while preserving all secondary roles and existing context.
- */
-const setPrimaryRole = async (userId, newPrimaryRole, actor, req, reason = '') => {
-  if (!isValidObjectId(userId)) throw new Error('Valid user ID is required.');
+  // Self-protection guard: Cannot change own role
   if (actor?._id && String(actor._id) === String(userId)) {
-    throw new Error('Action rejected: You cannot change your own roles.');
+    throw new Error('Action rejected: You cannot change your own role.');
   }
 
-  const normalized = String(newPrimaryRole || '').trim().toUpperCase();
-  if (!CANONICAL_ROLES.includes(normalized)) {
-    throw new Error(`Invalid role: ${newPrimaryRole}. Must be one of: ${CANONICAL_ROLES.join(', ')}.`);
-  }
-
-  const cleanReason = String(reason || '').trim();
-  if (!cleanReason) {
-    throw new Error('A governance reason is mandatory for primary role changes.');
+  const normalizedRole = String(newRole || '').toUpperCase();
+  if (!ALLOWED_PROFILE_ROLES.includes(normalizedRole)) {
+    throw new Error(`Invalid role: ${newRole}. Must be one of: ${ALLOWED_PROFILE_ROLES.join(', ')}.`);
   }
 
   const database = db.get();
@@ -415,46 +85,33 @@ const setPrimaryRole = async (userId, newPrimaryRole, actor, req, reason = '') =
   }
 
   const user = await database.collection(collection.STUDENTS_COLLECTION).findOne({ _id: new ObjectId(userId) });
-  if (!user) throw new Error('User not found.');
-
-  const resolved = resolveCanonicalUserRoles(user);
-  const previousPrimaryRole = resolved.primaryRole;
-  const previousRoles = [...resolved.roles];
-
-  if (previousPrimaryRole === normalized) {
-    return {
-      success: true,
-      message: `User already has role ${normalized}`,
-      previousRole: previousPrimaryRole,
-      previousPrimaryRole,
-      newRole: normalized,
-      newPrimaryRole: normalized,
-      role: normalized,
-      roles: previousRoles
-    };
+  if (!user) {
+    throw new Error('User not found.');
   }
 
-  // Guard Educator role modifications
-  const isEducatorChange = normalized === 'EDUCATOR' || previousPrimaryRole === 'EDUCATOR';
+  const previousRole = String(user.primaryRole || user.role || 'STUDENT').toUpperCase();
+  if (previousRole === normalizedRole) {
+    return { success: true, message: `User already has role ${normalizedRole}`, previousRole, newRole: normalizedRole, role: normalizedRole };
+  }
+
+  // Enforce server-side educator guard
+  const isEducatorChange = normalizedRole === 'EDUCATOR' || previousRole === 'EDUCATOR';
   if (isEducatorChange && !permissionsHelper.hasCapability(actor, 'assign_educator')) {
     throw new Error('Permission denied: assign_educator capability is required to modify the Educator role.');
   }
 
-  // Non-destructive: new roles array includes newPrimaryRole and retains secondary roles
-  const newRolesSet = new Set(previousRoles);
-  newRolesSet.add(normalized);
-  const updatedRoles = Array.from(newRolesSet);
+  const actionType = 'USER_ROLE_ASSIGNED';
 
   const updateDoc = {
     $set: {
-      primaryRole: normalized,
-      role: normalized.toLowerCase(),
-      roles: updatedRoles,
+      primaryRole: normalizedRole,
+      role: normalizedRole.toLowerCase(),
       updatedAt: new Date()
     }
   };
 
-  if (normalized === 'EDUCATOR') {
+  // If assigning educator, initialize educator context if missing and mark verified
+  if (normalizedRole === 'EDUCATOR') {
     if (!user.educatorContext) {
       updateDoc.$set.educatorContext = {
         assignedBy: actor?._id ? String(actor._id) : 'admin',
@@ -473,552 +130,36 @@ const setPrimaryRole = async (userId, newPrimaryRole, actor, req, reason = '') =
   // Synchronize community profile if exists
   await database.collection(collection.COMMUNITY_PROFILES_COLLECTION).updateOne(
     { userId: new ObjectId(userId) },
-    { $set: { primaryRole: normalized, role: normalized.toLowerCase(), roles: updatedRoles, updatedAt: new Date() } }
+    { $set: { primaryRole: normalizedRole, role: normalizedRole.toLowerCase(), updatedAt: new Date() } }
   ).catch(() => {});
 
-  // AUDIT LOG: PRIMARY_ROLE_CHANGED
+  const cleanReason = String(reason || (normalizedRole === 'EDUCATOR' ? 'Promoted to Educator' : 'Role updated via admin governance')).trim();
+
+  // AUDIT LOGGING (Strictly Required)
   await auditHelper.logAction({
     req,
-    action: 'PRIMARY_ROLE_CHANGED',
+    action: actionType,
     entityType: 'USER',
     entityId: String(userId),
     entityName: user.name || user.Name || user.username || 'User',
     status: 'success',
-    message: `Admin changed primary role to ${normalized} (previous: ${previousPrimaryRole}). Reason: ${cleanReason}`,
+    message: `Admin assigned role ${normalizedRole} to user (previous: ${previousRole}). Reason: ${cleanReason}`,
     metadata: {
       actor: actor?.Name || actor?.name || actor?.Email || 'Admin',
       actorId: actor?._id ? String(actor._id) : '',
       target: 'user',
       targetUserId: String(userId),
       targetUsername: user.username || '',
-      previousPrimaryRole,
-      newPrimaryRole: normalized,
-      previousRoles,
-      newRoles: updatedRoles,
+      role: normalizedRole,
+      previousRole,
+      newRole: normalizedRole,
       reason: cleanReason,
       isEducatorChange,
       timestamp: new Date()
     }
   });
 
-  // Also log legacy USER_ROLE_ASSIGNED for backwards compatibility
-  await auditHelper.logAction({
-    req,
-    action: 'USER_ROLE_ASSIGNED',
-    entityType: 'USER',
-    entityId: String(userId),
-    entityName: user.name || user.Name || user.username || 'User',
-    status: 'success',
-    message: `Admin assigned role ${normalized} to user (previous: ${previousPrimaryRole}). Reason: ${cleanReason}`,
-    metadata: {
-      actor: actor?.Name || actor?.name || actor?.Email || 'Admin',
-      actorId: actor?._id ? String(actor._id) : '',
-      target: 'user',
-      targetUserId: String(userId),
-      targetUsername: user.username || '',
-      role: normalized,
-      previousRole: previousPrimaryRole,
-      newRole: normalized,
-      reason: cleanReason,
-      isEducatorChange,
-      timestamp: new Date()
-    }
-  }).catch(() => {});
-
-  return {
-    success: true,
-    previousRole: previousPrimaryRole,
-    previousPrimaryRole,
-    newRole: normalized,
-    newPrimaryRole: normalized,
-    role: normalized,
-    roles: updatedRoles,
-    reason: cleanReason
-  };
-};
-
-/**
- * Adds a secondary ecosystem role to a user without modifying the primary role or wiping data.
- */
-const addSecondaryRole = async (userId, secondaryRole, actor, req, reason = '') => {
-  if (!isValidObjectId(userId)) throw new Error('Valid user ID is required.');
-  if (actor?._id && String(actor._id) === String(userId)) {
-    throw new Error('Action rejected: You cannot change your own roles.');
-  }
-
-  const normalized = String(secondaryRole || '').trim().toUpperCase();
-  if (!CANONICAL_ROLES.includes(normalized)) {
-    throw new Error(`Invalid role: ${secondaryRole}. Must be one of: ${CANONICAL_ROLES.join(', ')}.`);
-  }
-
-  // EDUCATOR protection
-  if (normalized === 'EDUCATOR' && !permissionsHelper.hasCapability(actor, 'assign_educator')) {
-    throw new Error('Permission denied: assign_educator capability is required to assign the Educator role.');
-  }
-
-  const database = db.get();
-  const user = await database.collection(collection.STUDENTS_COLLECTION).findOne({ _id: new ObjectId(userId) });
-  if (!user) throw new Error('User not found.');
-
-  const resolved = resolveCanonicalUserRoles(user);
-  if (resolved.roles.includes(normalized)) {
-    throw new Error(`User already holds role: ${normalized}`);
-  }
-
-  const cleanReason = String(reason || '').trim();
-  if (!cleanReason) {
-    throw new Error('A governance reason is mandatory for adding a secondary role.');
-  }
-
-  const updatedRoles = [...resolved.roles, normalized];
-
-  const updateDoc = {
-    $addToSet: { roles: normalized },
-    $set: { updatedAt: new Date() }
-  };
-
-  if (normalized === 'EDUCATOR') {
-    if (!user.educatorContext) {
-      updateDoc.$set.educatorContext = {
-        assignedBy: actor?._id ? String(actor._id) : 'admin',
-        assignedAt: new Date(),
-        verifiedByAdmin: true
-      };
-    }
-    updateDoc.$set['account_Status.isVerified'] = true;
-  }
-
-  await database.collection(collection.STUDENTS_COLLECTION).updateOne(
-    { _id: new ObjectId(userId) },
-    updateDoc
-  );
-
-  await database.collection(collection.COMMUNITY_PROFILES_COLLECTION).updateOne(
-    { userId: new ObjectId(userId) },
-    { $addToSet: { roles: normalized }, $set: { updatedAt: new Date() } }
-  ).catch(() => {});
-
-  // AUDIT LOG: ROLE_ADDED
-  await auditHelper.logAction({
-    req,
-    action: 'ROLE_ADDED',
-    entityType: 'USER',
-    entityId: String(userId),
-    entityName: user.name || user.Name || user.username || 'User',
-    status: 'success',
-    message: `Admin added secondary role ${normalized} to user. Reason: ${cleanReason}`,
-    metadata: {
-      actor: actor?.Name || actor?.name || actor?.Email || 'Admin',
-      actorId: actor?._id ? String(actor._id) : '',
-      target: 'user',
-      targetUserId: String(userId),
-      targetUsername: user.username || '',
-      roleAdded: normalized,
-      previousRoles: resolved.roles,
-      newRoles: updatedRoles,
-      reason: cleanReason,
-      timestamp: new Date()
-    }
-  });
-
-  return {
-    success: true,
-    roleAdded: normalized,
-    primaryRole: resolved.primaryRole,
-    roles: updatedRoles,
-    reason: cleanReason
-  };
-};
-
-/**
- * Removes an existing secondary role from a user.
- * Cannot remove the primary role via this method.
- */
-const removeSecondaryRole = async (userId, secondaryRole, actor, req, reason = '') => {
-  if (!isValidObjectId(userId)) throw new Error('Valid user ID is required.');
-  if (actor?._id && String(actor._id) === String(userId)) {
-    throw new Error('Action rejected: You cannot change your own roles.');
-  }
-
-  const normalized = String(secondaryRole || '').trim().toUpperCase();
-  const database = db.get();
-  const user = await database.collection(collection.STUDENTS_COLLECTION).findOne({ _id: new ObjectId(userId) });
-  if (!user) throw new Error('User not found.');
-
-  const resolved = resolveCanonicalUserRoles(user);
-
-  if (resolved.primaryRole === normalized) {
-    throw new Error(`Cannot remove primary role ${normalized}. Change the user's primary role first.`);
-  }
-
-  if (!resolved.secondaryRoles.includes(normalized)) {
-    throw new Error(`User does not have secondary role: ${normalized}`);
-  }
-
-  // EDUCATOR protection
-  if (normalized === 'EDUCATOR' && !permissionsHelper.hasCapability(actor, 'assign_educator')) {
-    throw new Error('Permission denied: assign_educator capability is required to remove the Educator role.');
-  }
-
-  const cleanReason = String(reason || '').trim();
-  if (!cleanReason) {
-    throw new Error('A governance reason is mandatory for removing a secondary role.');
-  }
-
-  const updatedRoles = resolved.roles.filter(r => r !== normalized);
-
-  await database.collection(collection.STUDENTS_COLLECTION).updateOne(
-    { _id: new ObjectId(userId) },
-    {
-      $pull: { roles: normalized },
-      $set: { updatedAt: new Date() }
-    }
-  );
-
-  await database.collection(collection.COMMUNITY_PROFILES_COLLECTION).updateOne(
-    { userId: new ObjectId(userId) },
-    { $pull: { roles: normalized }, $set: { updatedAt: new Date() } }
-  ).catch(() => {});
-
-  // AUDIT LOG: ROLE_REMOVED
-  await auditHelper.logAction({
-    req,
-    action: 'ROLE_REMOVED',
-    entityType: 'USER',
-    entityId: String(userId),
-    entityName: user.name || user.Name || user.username || 'User',
-    status: 'success',
-    message: `Admin removed secondary role ${normalized} from user. Reason: ${cleanReason}`,
-    metadata: {
-      actor: actor?.Name || actor?.name || actor?.Email || 'Admin',
-      actorId: actor?._id ? String(actor._id) : '',
-      target: 'user',
-      targetUserId: String(userId),
-      targetUsername: user.username || '',
-      roleRemoved: normalized,
-      previousRoles: resolved.roles,
-      newRoles: updatedRoles,
-      reason: cleanReason,
-      timestamp: new Date()
-    }
-  });
-
-  return {
-    success: true,
-    roleRemoved: normalized,
-    primaryRole: resolved.primaryRole,
-    roles: updatedRoles,
-    reason: cleanReason
-  };
-};
-
-/**
- * Backward-compatible role assignment (invokes setPrimaryRole).
- */
-const assignUserRole = async (userId, newRole, actor, req, reason = '') => {
-  return await setPrimaryRole(userId, newRole, actor, req, reason || 'Role assigned via administrative governance');
-};
-
-/**
- * Retrieves audit log history of role mutations for a user.
- */
-const getUserRoleHistory = async (userId) => {
-  if (!isValidObjectId(userId)) return [];
-  const database = db.get();
-  const idStr = String(userId);
-
-  const logs = await database.collection(collection.AUDIT_LOG_COLLECTION).find({
-    $or: [
-      { entityId: idStr, action: { $in: ['PRIMARY_ROLE_CHANGED', 'ROLE_ADDED', 'ROLE_REMOVED', 'USER_ROLE_ASSIGNED', 'CAPABILITIES_RECOMPUTED'] } },
-      { 'metadata.targetUserId': idStr, action: { $in: ['PRIMARY_ROLE_CHANGED', 'ROLE_ADDED', 'ROLE_REMOVED', 'USER_ROLE_ASSIGNED', 'CAPABILITIES_RECOMPUTED'] } }
-    ]
-  }).sort({ timestamp: -1 }).limit(30).toArray().catch(() => []);
-
-  return logs.map(l => ({
-    _id: l._id,
-    action: l.action,
-    message: l.message,
-    actor: l.metadata?.actor || 'Admin',
-    actorId: l.metadata?.actorId || '',
-    previousState: l.metadata?.previousPrimaryRole || l.metadata?.previousRole || (Array.isArray(l.metadata?.previousRoles) ? l.metadata.previousRoles.join(', ') : ''),
-    newState: l.metadata?.newPrimaryRole || l.metadata?.newRole || l.metadata?.roleAdded || l.metadata?.roleRemoved || (Array.isArray(l.metadata?.newRoles) ? l.metadata.newRoles.join(', ') : ''),
-    reason: l.metadata?.reason || '',
-    timestamp: l.timestamp || l.createdAt
-  }));
-};
-
-/**
- * Comprehensive diagnostic tool for detecting multi-role and capability semantic inconsistencies.
- */
-const auditUserRoleConsistency = async (targetUserId = null) => {
-  const database = db.get();
-
-  const userQuery = targetUserId ? { _id: new ObjectId(targetUserId) } : {};
-  const users = await database.collection(collection.STUDENTS_COLLECTION).find(userQuery).toArray().catch(() => []);
-
-  const allMemberships = await database.collection(collection.ORGANIZATION_MEMBERSHIPS_COLLECTION).find({}).toArray().catch(() => []);
-  const allOrgs = await database.collection(collection.ORGANIZATIONS_COLLECTION).find({}).toArray().catch(() => []);
-
-  const orgMap = {};
-  allOrgs.forEach(o => { orgMap[String(o._id)] = o; });
-
-  const membershipsByUser = {};
-  allMemberships.forEach(m => {
-    const uid = String(m.userId);
-    membershipsByUser[uid] = membershipsByUser[uid] || [];
-    membershipsByUser[uid].push(m);
-  });
-
-  const reports = users.map(user => {
-    const uid = String(user._id);
-    const userMems = membershipsByUser[uid] || [];
-    const inconsistencies = [];
-
-    // 1. Missing or invalid primaryRole
-    if (!user.primaryRole) {
-      inconsistencies.push({
-        code: 'PRIMARY_ROLE_MISSING',
-        severity: 'WARNING',
-        field: 'primaryRole',
-        message: 'User is missing an explicit primaryRole (defaulting canonically).',
-        currentValue: user.primaryRole,
-        recommendedValue: user.role ? String(user.role).toUpperCase() : 'STUDENT'
-      });
-    } else if (!CANONICAL_ROLES.includes(String(user.primaryRole).toUpperCase())) {
-      inconsistencies.push({
-        code: 'INVALID_PRIMARY_ROLE',
-        severity: 'ERROR',
-        field: 'primaryRole',
-        message: `Primary role '${user.primaryRole}' is not an authorized ecosystem role.`,
-        currentValue: user.primaryRole,
-        recommendedValue: 'STUDENT'
-      });
-    }
-
-    // 2. Invalid role in roles array & duplicates
-    if (Array.isArray(user.roles)) {
-      const invalidRoles = user.roles.filter(r => !CANONICAL_ROLES.includes(String(r).toUpperCase()));
-      if (invalidRoles.length > 0) {
-        inconsistencies.push({
-          code: 'INVALID_ROLE_IN_ROLES',
-          severity: 'ERROR',
-          field: 'roles',
-          message: `Roles array contains unrecognized role(s): ${invalidRoles.join(', ')}.`,
-          currentValue: user.roles,
-          recommendedValue: user.roles.filter(r => CANONICAL_ROLES.includes(String(r).toUpperCase()))
-        });
-      }
-
-      const roleCounts = {};
-      user.roles.forEach(r => {
-        const up = String(r).toUpperCase();
-        roleCounts[up] = (roleCounts[up] || 0) + 1;
-      });
-      const duplicates = Object.keys(roleCounts).filter(k => roleCounts[k] > 1);
-      if (duplicates.length > 0) {
-        inconsistencies.push({
-          code: 'DUPLICATE_ROLES',
-          severity: 'WARNING',
-          field: 'roles',
-          message: `Roles array contains duplicate entry for: ${duplicates.join(', ')}.`,
-          currentValue: user.roles,
-          recommendedValue: Array.from(new Set(user.roles.map(r => String(r).toUpperCase())))
-        });
-      }
-    }
-
-    // 3. Capabilities array containing role names
-    if (Array.isArray(user.capabilities)) {
-      const roleLikeCaps = user.capabilities.filter(c => CANONICAL_ROLES.includes(String(c).toUpperCase()));
-      if (roleLikeCaps.length > 0) {
-        inconsistencies.push({
-          code: 'CAPABILITY_CONTAINS_ROLE',
-          severity: 'ERROR',
-          field: 'capabilities',
-          message: `Capabilities array contains role name(s) [${roleLikeCaps.join(', ')}] instead of functional permission identifiers.`,
-          currentValue: user.capabilities,
-          recommendedValue: computeUserCapabilities(user, { memberships: userMems, organizations: allOrgs }).capabilities
-        });
-      }
-    }
-
-    // 4. Orphan organization membership
-    userMems.forEach(m => {
-      const orgId = String(m.organizationId);
-      if (!orgMap[orgId]) {
-        inconsistencies.push({
-          code: 'ORPHAN_MEMBERSHIP',
-          severity: 'ERROR',
-          field: 'organizationMemberships',
-          message: `Membership ${m._id} references non-existent organization ID: ${orgId}.`,
-          currentValue: orgId,
-          recommendedValue: null
-        });
-      }
-    });
-
-    // 5. Unattached business role
-    const resolved = resolveCanonicalUserRoles(user);
-    const hasFounderOrRecruiter = resolved.roles.includes('FOUNDER') || resolved.roles.includes('RECRUITER');
-    const hasOrg = userMems.some(m => orgMap[String(m.organizationId)] && orgMap[String(m.organizationId)].status === 'APPROVED');
-    const ownsOrg = allOrgs.some(o => o.status === 'APPROVED' && (String(o.ownerId) === uid || String(o.createdBy) === uid));
-    if (hasFounderOrRecruiter && !hasOrg && !ownsOrg) {
-      inconsistencies.push({
-        code: 'UNATTACHED_BUSINESS_ROLE',
-        severity: 'WARNING',
-        field: 'roles',
-        message: `User holds role [${resolved.roles.filter(r => ['FOUNDER', 'RECRUITER'].includes(r)).join(', ')}] but has no approved organization affiliation.`,
-        currentValue: resolved.roles,
-        recommendedValue: 'Attach to approved business or adjust role'
-      });
-    }
-
-    // 6. Educator without admin verification metadata
-    if (resolved.roles.includes('EDUCATOR')) {
-      const hasAdminMeta = Boolean(user.educatorContext?.verifiedByAdmin);
-      if (!hasAdminMeta) {
-        inconsistencies.push({
-          code: 'EDUCATOR_WITHOUT_ADMIN_METADATA',
-          severity: 'ERROR',
-          field: 'educatorContext',
-          message: 'User holds EDUCATOR role but is missing admin assignment/verification metadata.',
-          currentValue: user.educatorContext || null,
-          recommendedValue: { assignedBy: 'admin', verifiedByAdmin: true }
-        });
-      }
-    }
-
-    // 7. Role out of sync with primaryRole
-    if (user.role && user.primaryRole && String(user.role).toUpperCase() !== String(user.primaryRole).toUpperCase()) {
-      inconsistencies.push({
-        code: 'ROLE_FIELD_OUT_OF_SYNC',
-        severity: 'WARNING',
-        field: 'role',
-        message: `Legacy role '${user.role}' does not match primaryRole '${user.primaryRole}'.`,
-        currentValue: user.role,
-        recommendedValue: String(user.primaryRole).toLowerCase()
-      });
-    }
-
-    const normalized = {
-      primaryRole: resolved.primaryRole,
-      roles: resolved.roles,
-      capabilities: computeUserCapabilities(user, { memberships: userMems, organizations: allOrgs }).capabilities
-    };
-
-    return {
-      userId: uid,
-      username: user.username || 'user',
-      displayName: user.Name || user.name || user.email || 'User',
-      email: user.email || user.Email || '',
-      currentPrimaryRole: user.primaryRole || user.role || 'STUDENT',
-      currentRoles: user.roles || [user.primaryRole || user.role || 'STUDENT'],
-      currentCapabilities: user.capabilities || [],
-      isConsistent: inconsistencies.length === 0,
-      inconsistencies,
-      normalizedProposal: normalized,
-      confidence: inconsistencies.length === 0 ? 'HIGH' : (inconsistencies.some(i => i.severity === 'ERROR') ? 'MEDIUM' : 'HIGH'),
-      recommendedAction: inconsistencies.length === 0 ? 'NO_ACTION' : 'CANONICAL_NORMALIZATION'
-    };
-  });
-
-  return {
-    totalScanned: reports.length,
-    consistentCount: reports.filter(r => r.isConsistent).length,
-    inconsistentCount: reports.filter(r => !r.isConsistent).length,
-    reports
-  };
-};
-
-/**
- * Prepares the canonical contract for User Panel consumption (strictly excludes secrets/PII).
- */
-const getCanonicalUserContract = async (userId) => {
-  if (!isValidObjectId(userId)) return null;
-  const database = db.get();
-  const objId = new ObjectId(userId);
-  const idStr = String(userId);
-
-  const rawUser = await database.collection(collection.STUDENTS_COLLECTION).findOne({ _id: objId });
-  if (!rawUser) return null;
-
-  const user = sanitizeUserForAdmin(rawUser);
-
-  const memberships = await database.collection(collection.ORGANIZATION_MEMBERSHIPS_COLLECTION).find({
-    $or: [{ userId: objId }, { userId: idStr }]
-  }).toArray().catch(() => []);
-
-  const orgIds = memberships.map(m => m.organizationId).filter(id => id && ObjectId.isValid(id)).map(id => new ObjectId(id));
-  const orgs = orgIds.length ? await database.collection(collection.ORGANIZATIONS_COLLECTION).find({ _id: { $in: orgIds } }).toArray().catch(() => []) : [];
-
-  const commProfile = await database.collection(collection.COMMUNITY_PROFILES_COLLECTION).findOne({
-    $or: [{ userId: objId }, { userId: idStr }]
-  }).catch(() => null) || {};
-
-  const rolesResolution = resolveCanonicalUserRoles(user);
-  const capResolution = computeUserCapabilities(user, { memberships, organizations: orgs });
-
-  // Get enrolled courses
-  const courseIds = Array.isArray(user.course) ? user.course.map(c => (c && c.courseId ? c.courseId : c)).filter(Boolean) : [];
-  let enrolledCourses = [];
-  if (courseIds.length) {
-    const validCourseObjIds = courseIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
-    enrolledCourses = await database.collection(collection.COURSE_COLLECTION).find(
-      { _id: { $in: validCourseObjIds } },
-      { projection: { _id: 1, courseName: 1, title: 1, category: 1, duration: 1, image: 1 } }
-    ).toArray().catch(() => []);
-  }
-
-  // Safe businesses
-  const businesses = capResolution.businessAuthorization.authorizedOrganizations.map(o => ({
-    organizationId: o.organizationId,
-    name: o.name,
-    slug: o.slug,
-    membershipRole: o.membershipRole,
-    isOwner: o.isOwner
-  }));
-
-  // Sanitized contract
-  return {
-    userId: String(user._id),
-    username: user.username,
-    displayName: user.Name || user.name || 'User',
-    primaryRole: rolesResolution.primaryRole,
-    roles: rolesResolution.roles,
-    capabilities: capResolution.capabilities,
-    capabilityDetails: capResolution.capabilityDetails,
-    businessAccess: {
-      hasBusinessManagement: capResolution.businessAuthorization.canManageBusiness,
-      canPostOpportunities: capResolution.businessAuthorization.canPostOpportunities,
-      authorizedOrganizationsCount: businesses.length,
-      unattachedRoles: capResolution.businessAuthorization.unattachedRoles
-    },
-    businesses,
-    learningContext: {
-      isEnrolled: enrolledCourses.length > 0,
-      enrolledCoursesCount: enrolledCourses.length,
-      enrolledCourses: enrolledCourses.map(c => ({
-        id: String(c._id),
-        title: c.courseName || c.title || 'Course',
-        category: c.category || 'Engineering'
-      }))
-    },
-    professionalContext: {
-      headline: commProfile.headline || user.headline || '',
-      discipline: commProfile.discipline || user.discipline || '',
-      infrastructureSector: commProfile.infrastructureSector || user.infrastructureSector || '',
-      skills: commProfile.skills || user.skills || [],
-      software: commProfile.software || [],
-      experienceCount: (commProfile.experience || user.experience || []).length,
-      educationCount: (commProfile.education || user.education || []).length
-    },
-    verification: {
-      identity: user.account_Status?.isVerified ? 'VERIFIED' : 'UNVERIFIED',
-      professional: commProfile.verification?.professional || 'UNVERIFIED',
-      businessAffiliation: businesses.length > 0 ? 'VERIFIED' : 'UNVERIFIED',
-      educator: rolesResolution.roles.includes('EDUCATOR') && user.educatorContext?.verifiedByAdmin ? 'VERIFIED' : 'UNVERIFIED'
-    }
-  };
+  return { success: true, previousRole, newRole: normalizedRole, role: normalizedRole, reason: cleanReason };
 };
 
 const suspendUser = async (userId, { reason, restrictions = [] }, actor, req) => {
@@ -1558,64 +699,12 @@ const getUserGovernanceDossier = async (userId, actor, req = null) => {
   const isRestricted = Boolean(user.account_Status?.restrictions && user.account_Status.restrictions.length);
   const accountState = isSuspended ? 'suspended' : (isRestricted ? 'restricted' : (user.account_Status?.isActive === false ? 'inactive' : 'active'));
 
-  // Multi-Role & Capability Architecture Resolution
-  const roleResolution = resolveCanonicalUserRoles(user);
-  const capResolution = computeUserCapabilities(user, { memberships, organizations: orgs });
-  const roleHistory = await getUserRoleHistory(userId);
-  const availableRolesToAdd = CANONICAL_ROLES.filter(r => !roleResolution.roles.includes(r));
-
-  // Diagnostic consistency audit for this user
-  let consistencyIssues = [];
-  try {
-    const consistencyCheck = await auditUserRoleConsistency(userId);
-    consistencyIssues = consistencyCheck.reports?.[0]?.inconsistencies || [];
-  } catch (err) {
-    // Non-blocking diagnostic catch
-  }
-
-  // Course Participation (Independent of Role)
-  const courseIds = Array.isArray(user.course) ? user.course.map(c => (c && c.courseId ? c.courseId : c)).filter(Boolean) : [];
-  let enrolledCourses = [];
-  if (courseIds.length) {
-    const validCourseObjIds = courseIds.filter(id => isValidObjectId(id)).map(id => new ObjectId(id));
-    if (validCourseObjIds.length) {
-      enrolledCourses = await database.collection(collection.COURSE_COLLECTION).find(
-        { _id: { $in: validCourseObjIds } }
-      ).toArray().catch(() => []);
-    }
-  }
-
-  const learningContext = {
-    isEnrolled: enrolledCourses.length > 0,
-    coursesCount: enrolledCourses.length,
-    enrolledCourses: enrolledCourses.map(c => ({
-      _id: c._id,
-      courseName: c.courseName || c.title || 'Course',
-      title: c.courseName || c.title || 'Course',
-      category: c.category || 'General',
-      duration: c.duration || null,
-      image: c.image || '/img/placeholders/course-cover.svg',
-      detailUrl: `/admin/courses/${c._id}`
-    }))
-  };
-
   return {
     user,
     userType,
     displayName: user.Name || user.name || 'User',
     username: user.username || (user.email ? user.email.split('@')[0] : 'user'),
-    primaryRole: roleResolution.primaryRole,
-    roles: roleResolution.roles,
-    secondaryRoles: roleResolution.secondaryRoles,
-    availableRolesToAdd,
-    allCanonicalRoles: CANONICAL_ROLES,
-    capabilities: capResolution.capabilities,
-    capabilityDetails: capResolution.capabilityDetails,
-    businessAuthorization: capResolution.businessAuthorization,
-    learningContext,
-    roleHistory,
-    consistencyIssues,
-    consistencyCount: consistencyIssues.length,
+    primaryRole: String(user.primaryRole || user.role || 'STUDENT').toUpperCase(),
     discipline: communityProfile.discipline || user.discipline || null,
     infrastructureSector: communityProfile.infrastructureSector || user.infrastructureSector || null,
     specialization: communityProfile.specialization || null,
@@ -2992,20 +2081,7 @@ const flagJob = async (id, reason = '', actor, req) => {
 
 module.exports = {
   isValidObjectId,
-  CANONICAL_ROLES,
   ALLOWED_PROFILE_ROLES,
-  CANONICAL_CAPABILITIES,
-  CAPABILITY_METADATA,
-  ROLE_DEFAULT_CAPABILITIES,
-  resolveCanonicalUserRoles,
-  evaluateBusinessAuthorization,
-  computeUserCapabilities,
-  setPrimaryRole,
-  addSecondaryRole,
-  removeSecondaryRole,
-  getUserRoleHistory,
-  auditUserRoleConsistency,
-  getCanonicalUserContract,
   sanitizeUserForAdmin,
   assignUserRole,
   suspendUser,
