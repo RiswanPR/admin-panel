@@ -201,6 +201,200 @@ router.post('/network/users/:id/role', verifyLogin, validateObjectIds(['id']), a
   }
 });
 
+// Primary Role Change
+router.post('/network/users/:id/primary-role', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { role, reason } = req.body;
+    if (!role) {
+      return res.status(400).json({ success: false, message: 'Role parameter is required.' });
+    }
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ success: false, message: 'A justification reason is mandatory for primary role changes.' });
+    }
+
+    const admin = req.session.admin;
+    const normalizedRole = String(role).toUpperCase();
+
+    if (normalizedRole === 'EDUCATOR') {
+      if (!permissionsHelper.hasCapability(admin, 'assign_educator')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: assign_educator capability is required to assign Educator role.' });
+      }
+    } else {
+      if (!permissionsHelper.hasCapability(admin, 'manage_network')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: Insufficient privileges.' });
+      }
+    }
+
+    const result = await governanceHelper.setPrimaryRole(
+      req.params.id,
+      role,
+      admin,
+      req,
+      reason
+    );
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: `Primary role set to ${result.newPrimaryRole}`, ...result });
+    }
+    res.redirect(`/admin/network/users/${req.params.id}`);
+  } catch (err) {
+    logger.error('Primary Role Update Error:', err.message);
+    const status = err.message && err.message.includes('Permission denied') ? 403 : 400;
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(status).json({ success: false, message: err.message });
+    }
+    res.status(status).render('error', { message: err.message });
+  }
+});
+
+// Add Secondary Role
+router.post('/network/users/:id/secondary-roles/add', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { role, reason } = req.body;
+    if (!role) {
+      return res.status(400).json({ success: false, message: 'Role parameter is required.' });
+    }
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ success: false, message: 'A justification reason is mandatory for adding a role.' });
+    }
+
+    const admin = req.session.admin;
+    const normalizedRole = String(role).toUpperCase();
+
+    if (normalizedRole === 'EDUCATOR') {
+      if (!permissionsHelper.hasCapability(admin, 'assign_educator')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: assign_educator capability is required to assign Educator role.' });
+      }
+    } else {
+      if (!permissionsHelper.hasCapability(admin, 'manage_network')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: Insufficient privileges.' });
+      }
+    }
+
+    const result = await governanceHelper.addSecondaryRole(
+      req.params.id,
+      role,
+      admin,
+      req,
+      reason
+    );
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: `Secondary role ${result.roleAdded} added`, ...result });
+    }
+    res.redirect(`/admin/network/users/${req.params.id}`);
+  } catch (err) {
+    logger.error('Add Secondary Role Error:', err.message);
+    const status = err.message && err.message.includes('Permission denied') ? 403 : 400;
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(status).json({ success: false, message: err.message });
+    }
+    res.status(status).render('error', { message: err.message });
+  }
+});
+
+// Remove Secondary Role
+router.post('/network/users/:id/secondary-roles/remove', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+  try {
+    const { role, reason } = req.body;
+    if (!role) {
+      return res.status(400).json({ success: false, message: 'Role parameter is required.' });
+    }
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ success: false, message: 'A justification reason is mandatory for removing a role.' });
+    }
+
+    const admin = req.session.admin;
+    const normalizedRole = String(role).toUpperCase();
+
+    if (normalizedRole === 'EDUCATOR') {
+      if (!permissionsHelper.hasCapability(admin, 'assign_educator')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: assign_educator capability is required to remove Educator role.' });
+      }
+    } else {
+      if (!permissionsHelper.hasCapability(admin, 'manage_network')) {
+        return res.status(403).json({ success: false, message: 'Permission denied: Insufficient privileges.' });
+      }
+    }
+
+    const result = await governanceHelper.removeSecondaryRole(
+      req.params.id,
+      role,
+      admin,
+      req,
+      reason
+    );
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: `Secondary role ${result.roleRemoved} removed`, ...result });
+    }
+    res.redirect(`/admin/network/users/${req.params.id}`);
+  } catch (err) {
+    logger.error('Remove Secondary Role Error:', err.message);
+    const status = err.message && err.message.includes('Permission denied') ? 403 : 400;
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(status).json({ success: false, message: err.message });
+    }
+    res.status(status).render('error', { message: err.message });
+  }
+});
+
+// Role History Audit Feed
+router.get('/network/users/:id/role-history', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
+  try {
+    const history = await governanceHelper.getUserRoleHistory(req.params.id);
+    res.json({ success: true, history });
+  } catch (err) {
+    logger.error('Get Role History Error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// User Panel Canonical Contract Shape Preview (Requirement 16)
+router.get('/network/users/:id/contract', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
+  try {
+    const contract = await governanceHelper.getCanonicalUserContract(req.params.id);
+    if (!contract) return res.status(404).json({ success: false, message: 'User not found.' });
+    res.json({ success: true, contract });
+  } catch (err) {
+    logger.error('Get User Contract Error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Data Consistency Diagnostic Tool (Requirement 13)
+router.get('/network/audit-roles', verifyLogin, requireCapability('manage_network'), async (req, res) => {
+  try {
+    const auditReport = await governanceHelper.auditUserRoleConsistency();
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, ...auditReport });
+    }
+    res.render('admin/audit-roles', {
+      currentPage: 'network-users',
+      breadcrumb: [
+        { label: 'Dashboard', url: '/' },
+        { label: 'Network', url: '/admin/network/users' },
+        { label: 'Role Consistency Audit' }
+      ],
+      ...auditReport
+    });
+  } catch (err) {
+    logger.error('Audit Roles Error:', err.message);
+    res.status(500).render('error', { message: err.message });
+  }
+});
+
+// Single User Consistency Diagnostic
+router.get('/network/users/:id/audit-consistency', verifyLogin, requireCapability('manage_network'), validateObjectIds(['id']), async (req, res) => {
+  try {
+    const audit = await governanceHelper.auditUserRoleConsistency(req.params.id);
+    res.json({ success: true, userAudit: audit.reports?.[0] || null });
+  } catch (err) {
+    logger.error('Audit User Role Error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Account Status: Suspend User
 router.post('/network/users/:id/suspend', verifyLogin, requireCapability('manage_account_status'), validateObjectIds(['id']), async (req, res) => {
   try {

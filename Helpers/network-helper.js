@@ -2,6 +2,7 @@ const db = require('../config/connection');
 const collection = require('../config/collections');
 const { ObjectId } = require('mongodb');
 const auditHelper = require('./audit-helper');
+const governanceHelper = require('./governance-helper');
 const logger = require('./logger');
 const { decorateProfileImage } = require('./image-url-helper');
 
@@ -185,13 +186,14 @@ const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) =>
   if (['educator', 'professional', 'mentor', 'recruiter', 'founder'].includes(normalizedRole)) {
     userQuery.$or = [
       { primaryRole: normalizedRole.toUpperCase() },
+      { roles: normalizedRole.toUpperCase() },
       { role: normalizedRole }
     ];
   } else if (normalizedRole === 'student') {
     userQuery.$or = [
       { primaryRole: 'STUDENT' },
-      { role: 'student' },
-      { 'course.0': { $exists: true } }
+      { roles: 'STUDENT' },
+      { role: 'student' }
     ];
   } else if (normalizedRole === 'registered') {
     userQuery.$or = [
@@ -321,8 +323,11 @@ const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) =>
     const isRestricted = Boolean(u.account_Status?.restrictions && u.account_Status.restrictions.length);
     const commProfile = commProfileMap[String(u._id)] || {};
 
-    const rawRole = u.primaryRole || u.role || (isEnrolled ? 'STUDENT' : 'REGISTERED');
-    const primaryRole = String(rawRole).toUpperCase();
+    const roleResolution = governanceHelper.resolveCanonicalUserRoles(u);
+    const primaryRole = roleResolution.primaryRole;
+    const roles = roleResolution.roles;
+    const secondaryRoles = roleResolution.secondaryRoles;
+    const capabilities = governanceHelper.computeUserCapabilities(u).capabilities;
 
     return {
       _id: u._id,
@@ -331,6 +336,11 @@ const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) =>
       username: u.username || (u.email ? u.email.split('@')[0] : 'user'),
       usernameClaimed: Boolean(u.usernameClaimed),
       primaryRole,
+      roles,
+      secondaryRoles,
+      capabilities,
+      capabilitiesCount: capabilities.length,
+      isEnrolled,
       role: primaryRole.toLowerCase(),
       roleBadge: primaryRole === 'EDUCATOR' ? 'Educator (Protected)' : (primaryRole.charAt(0) + primaryRole.slice(1).toLowerCase()),
       discipline: u.discipline || commProfile.discipline || null,

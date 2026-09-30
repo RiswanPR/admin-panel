@@ -58,6 +58,8 @@ const mockDb = {
   users: new Map(),
   community_profiles: new Map(),
   organizations: new Map(),
+  organization_memberships: new Map(),
+  courses: new Map(),
   opportunities: new Map(),
   job_applications: new Map(),
   job_talent_matches: new Map(),
@@ -86,8 +88,19 @@ const createMockCollection = (mapOrArray) => {
       for (const item of mapOrArray.values()) {
         let match = true;
         for (const [k, v] of Object.entries(q)) {
-          if (k === '_id' && String(item._id) !== String(v)) match = false;
-          else if (k !== '_id' && item[k] !== v) match = false;
+          if (k === '$or' && Array.isArray(v)) {
+            const orMatch = v.some(subQ => {
+              for (const [subK, subV] of Object.entries(subQ)) {
+                if (String(item[subK]) === String(subV)) return true;
+              }
+              return false;
+            });
+            if (!orMatch) match = false;
+          } else if (k === '_id' && String(item._id) !== String(v)) {
+            match = false;
+          } else if (k !== '_id' && k !== '$or' && item[k] !== v) {
+            match = false;
+          }
         }
         if (match) return JSON.parse(JSON.stringify(item));
       }
@@ -97,7 +110,34 @@ const createMockCollection = (mapOrArray) => {
       const id = String(q._id);
       const existing = mapOrArray.get(id);
       if (existing) {
-        if (u.$set) Object.assign(existing, u.$set);
+        if (u.$set) {
+          for (const [k, v] of Object.entries(u.$set)) {
+            if (k.includes('.')) {
+              const parts = k.split('.');
+              let target = existing;
+              for (let i = 0; i < parts.length - 1; i++) {
+                target[parts[i]] = target[parts[i]] || {};
+                target = target[parts[i]];
+              }
+              target[parts[parts.length - 1]] = v;
+            } else {
+              existing[k] = v;
+            }
+          }
+        }
+        if (u.$addToSet) {
+          for (const [k, v] of Object.entries(u.$addToSet)) {
+            existing[k] = existing[k] || [];
+            if (!existing[k].includes(v)) existing[k].push(v);
+          }
+        }
+        if (u.$pull) {
+          for (const [k, v] of Object.entries(u.$pull)) {
+            if (Array.isArray(existing[k])) {
+              existing[k] = existing[k].filter(item => item !== v);
+            }
+          }
+        }
         if (u.$push) {
           for (const [k, v] of Object.entries(u.$push)) {
             existing[k] = existing[k] || [];
@@ -138,19 +178,43 @@ const createMockCollection = (mapOrArray) => {
     aggregate: (pipe) => ({
       toArray: async () => []
     }),
-    find: (q = {}) => ({
-      sort: () => ({
-        skip: () => ({
-          limit: () => ({
-            toArray: async () => Array.from(mapOrArray.values())
+    find: (q = {}) => {
+      let results = Array.from(mapOrArray.values());
+      if (q && Object.keys(q).length > 0) {
+        results = results.filter(item => {
+          if (q.$or && Array.isArray(q.$or)) {
+            return q.$or.some(subQ => {
+              for (const [subK, subV] of Object.entries(subQ)) {
+                if (String(item[subK]) === String(subV)) return true;
+              }
+              return false;
+            });
+          }
+          for (const [k, v] of Object.entries(q)) {
+            if (v && v.$in && Array.isArray(v.$in)) {
+              if (!v.$in.map(String).includes(String(item[k]))) return false;
+            } else if (k === '_id') {
+              if (String(item._id) !== String(v)) return false;
+            } else if (item[k] !== v) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+      return {
+        sort: () => ({
+          skip: () => ({
+            limit: (l) => ({ toArray: async () => results.slice(0, l) }),
+            toArray: async () => results
           }),
-          toArray: async () => Array.from(mapOrArray.values())
+          limit: (l) => ({ toArray: async () => results.slice(0, l) }),
+          toArray: async () => results
         }),
-        limit: () => ({ toArray: async () => Array.from(mapOrArray.values()) }),
-        toArray: async () => Array.from(mapOrArray.values())
-      }),
-      toArray: async () => Array.from(mapOrArray.values())
-    })
+        limit: (l) => ({ toArray: async () => results.slice(0, l) }),
+        toArray: async () => results
+      };
+    }
   };
 };
 
@@ -158,7 +222,10 @@ const setupMockEnvironment = () => {
   const mockGet = () => ({
     collection: (name) => {
       if (name === collection.STUDENTS_COLLECTION) return createMockCollection(mockDb.users);
+      if (name === collection.COMMUNITY_PROFILES_COLLECTION) return createMockCollection(mockDb.community_profiles);
       if (name === collection.ORGANIZATIONS_COLLECTION) return createMockCollection(mockDb.organizations);
+      if (name === collection.ORGANIZATION_MEMBERSHIPS_COLLECTION) return createMockCollection(mockDb.organization_memberships);
+      if (name === collection.COURSE_COLLECTION) return createMockCollection(mockDb.courses);
       if (name === collection.OPPORTUNITIES_COLLECTION) return createMockCollection(mockDb.opportunities);
       if (name === collection.JOB_APPLICATIONS_COLLECTION) return createMockCollection(mockDb.job_applications);
       if (name === collection.JOB_TALENT_MATCHES_COLLECTION) return createMockCollection(mockDb.job_talent_matches);
@@ -549,7 +616,274 @@ async function runTestSuite() {
     assert.ok(actions.includes('MATCHING_CONFIG_UPDATED'));
   });
 
-  console.log('\n================================================================');
+  console.log('\n\x1b[36m--- 8. Multi-Role Identity & Capability Permission Tests (Req 19) ---\x1b[0m');
+
+  await testAsync('✓ Student: holds learning & career capabilities, lacks business management', async () => {
+    const studentUser = { primaryRole: 'STUDENT', roles: ['STUDENT'], role: 'student' };
+    const res = governanceHelper.computeUserCapabilities(studentUser, { memberships: [], organizations: [] });
+    assert.ok(res.capabilities.includes('ACCESS_COURSES'));
+    assert.ok(res.capabilities.includes('ACCESS_JOBS'));
+    assert.ok(res.capabilities.includes('ACCESS_CAREER_INTELLIGENCE'));
+    assert.strictEqual(res.capabilities.includes('ACCESS_PORTFOLIO'), false);
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), false);
+    assert.strictEqual(res.capabilities.includes('POST_OPPORTUNITIES'), false);
+    assert.strictEqual(res.capabilities.includes('CONDUCT_CLASSES'), false);
+    assert.strictEqual(res.capabilities.includes('OFFER_MENTORSHIP'), false);
+  });
+
+  await testAsync('✓ Student + Recruiter (without approved business): core capabilities granted, opportunity posting gated', async () => {
+    const studentRecruiter = { primaryRole: 'STUDENT', roles: ['STUDENT', 'RECRUITER'], role: 'student' };
+    const res = governanceHelper.computeUserCapabilities(studentRecruiter, { memberships: [], organizations: [] });
+    assert.ok(res.capabilities.includes('ACCESS_COURSES'));
+    assert.ok(res.capabilities.includes('ACCESS_JOBS'));
+    assert.strictEqual(res.capabilities.includes('POST_OPPORTUNITIES'), false);
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), false);
+    assert.strictEqual(res.businessAuthorization.canPostOpportunities, false);
+    assert.strictEqual(res.businessAuthorization.canManageBusiness, false);
+    const postOppDetail = res.capabilityDetails.find(c => c.capability === 'POST_OPPORTUNITIES');
+    assert.ok(postOppDetail);
+    assert.strictEqual(postOppDetail.businessGated, true);
+  });
+
+  await testAsync('✓ Student + Recruiter (with approved business): opportunity posting & management granted', async () => {
+    const sId = new ObjectId();
+    const orgId = new ObjectId();
+    const approvedOrg = { _id: orgId, name: 'Acme Infra Corp', status: 'APPROVED' };
+    const membership = { _id: new ObjectId(), userId: sId, organizationId: orgId, role: 'RECRUITER', status: 'ACTIVE', verified: true };
+    const studentRecruiter = { _id: sId, primaryRole: 'STUDENT', roles: ['STUDENT', 'RECRUITER'], role: 'student' };
+
+    const res = governanceHelper.computeUserCapabilities(studentRecruiter, { memberships: [membership], organizations: [approvedOrg] });
+    assert.ok(res.capabilities.includes('POST_OPPORTUNITIES'));
+    assert.ok(res.capabilities.includes('MANAGE_BUSINESS'));
+    assert.ok(res.capabilities.includes('ACCESS_COURSES'));
+    assert.strictEqual(res.businessAuthorization.canPostOpportunities, true);
+  });
+
+  await testAsync('✓ Student + Founder (without approved business): business management strictly gated', async () => {
+    const studentFounder = { primaryRole: 'STUDENT', roles: ['STUDENT', 'FOUNDER'], role: 'student' };
+    const res = governanceHelper.computeUserCapabilities(studentFounder, { memberships: [], organizations: [] });
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), false);
+    assert.strictEqual(res.businessAuthorization.canManageBusiness, false);
+    const manageBizDetail = res.capabilityDetails.find(c => c.capability === 'MANAGE_BUSINESS');
+    assert.ok(manageBizDetail);
+    assert.strictEqual(manageBizDetail.businessGated, true);
+  });
+
+  await testAsync('✓ Student + Founder (with approved business owned by user): business management granted', async () => {
+    const sId = new ObjectId();
+    const orgId = new ObjectId();
+    const approvedOrg = { _id: orgId, name: 'Apex Engineering Ltd', status: 'APPROVED', ownerId: sId };
+    const membership = { _id: new ObjectId(), userId: sId, organizationId: orgId, role: 'OWNER', status: 'ACTIVE', verified: true };
+    const studentFounder = { _id: sId, primaryRole: 'STUDENT', roles: ['STUDENT', 'FOUNDER'], role: 'student' };
+
+    const res = governanceHelper.computeUserCapabilities(studentFounder, { memberships: [membership], organizations: [approvedOrg] });
+    assert.ok(res.capabilities.includes('MANAGE_BUSINESS'));
+    assert.ok(res.capabilities.includes('POST_OPPORTUNITIES'));
+    assert.ok(res.capabilities.includes('ACCESS_COURSES'));
+    assert.strictEqual(res.businessAuthorization.canManageBusiness, true);
+    assert.strictEqual(res.businessAuthorization.canPostOpportunities, true);
+  });
+
+  await testAsync('✓ Professional: career & portfolio capabilities granted, business management denied', async () => {
+    const proUser = { primaryRole: 'PROFESSIONAL', roles: ['PROFESSIONAL'], role: 'professional' };
+    const res = governanceHelper.computeUserCapabilities(proUser, { memberships: [], organizations: [] });
+    assert.ok(res.capabilities.includes('ACCESS_JOBS'));
+    assert.ok(res.capabilities.includes('ACCESS_PORTFOLIO'));
+    assert.ok(res.capabilities.includes('ACCESS_CAREER_INTELLIGENCE'));
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), false);
+  });
+
+  await testAsync('✓ Professional + Mentor: mentorship capability granted alongside professional features', async () => {
+    const proMentor = { primaryRole: 'PROFESSIONAL', roles: ['PROFESSIONAL', 'MENTOR'], role: 'professional' };
+    const res = governanceHelper.computeUserCapabilities(proMentor, { memberships: [], organizations: [] });
+    assert.ok(res.capabilities.includes('OFFER_MENTORSHIP'));
+    assert.ok(res.capabilities.includes('ACCESS_JOBS'));
+    assert.ok(res.capabilities.includes('ACCESS_PORTFOLIO'));
+  });
+
+  await testAsync('✓ Professional + Recruiter (with approved business): business management & job posting granted', async () => {
+    const pId = new ObjectId();
+    const orgId = new ObjectId();
+    const approvedOrg = { _id: orgId, name: 'Metro Buildcon', status: 'APPROVED' };
+    const membership = { _id: new ObjectId(), userId: pId, organizationId: orgId, role: 'RECRUITER', status: 'ACTIVE', verified: true };
+    const proRecruiter = { _id: pId, primaryRole: 'PROFESSIONAL', roles: ['PROFESSIONAL', 'RECRUITER'], role: 'professional' };
+
+    const res = governanceHelper.computeUserCapabilities(proRecruiter, { memberships: [membership], organizations: [approvedOrg] });
+    assert.ok(res.capabilities.includes('POST_OPPORTUNITIES'));
+    assert.ok(res.capabilities.includes('MANAGE_BUSINESS'));
+    assert.ok(res.capabilities.includes('ACCESS_PORTFOLIO'));
+  });
+
+  await testAsync('✓ Founder course independence: taking courses NEVER converts Founder to Student (Req 11)', async () => {
+    const founderWithCourses = {
+      _id: new ObjectId(),
+      primaryRole: 'FOUNDER',
+      role: 'founder',
+      course: [new ObjectId(), new ObjectId(), new ObjectId()]
+    };
+    const resolved = governanceHelper.resolveCanonicalUserRoles(founderWithCourses);
+    assert.strictEqual(resolved.primaryRole, 'FOUNDER');
+    assert.deepStrictEqual(resolved.roles, ['FOUNDER']);
+  });
+
+  await testAsync('✓ Founder + Student: legitimate multi-role preserves both identities', async () => {
+    const founderStudent = {
+      _id: new ObjectId(),
+      primaryRole: 'FOUNDER',
+      roles: ['FOUNDER', 'STUDENT'],
+      role: 'founder'
+    };
+    const resolved = governanceHelper.resolveCanonicalUserRoles(founderStudent);
+    assert.strictEqual(resolved.primaryRole, 'FOUNDER');
+    assert.ok(resolved.roles.includes('FOUNDER'));
+    assert.ok(resolved.roles.includes('STUDENT'));
+  });
+
+  await testAsync('✓ Educator: holds student and course governance capabilities', async () => {
+    const eduUser = { primaryRole: 'EDUCATOR', roles: ['EDUCATOR'], role: 'educator' };
+    const res = governanceHelper.computeUserCapabilities(eduUser, { memberships: [], organizations: [] });
+    assert.ok(res.capabilities.includes('CONDUCT_CLASSES'));
+    assert.ok(res.capabilities.includes('ACCESS_COURSES'));
+    assert.ok(res.capabilities.includes('ACCESS_JOBS'));
+  });
+
+  await testAsync('✓ Admin platform authority: handled via permissionsHelper, isolated from user multi-roles', async () => {
+    assert.strictEqual(governanceHelper.CANONICAL_ROLES.includes('ADMIN'), false);
+    assert.strictEqual(permissionsHelper.hasCapability(mockAdmin, 'assign_educator'), true);
+    assert.strictEqual(permissionsHelper.hasCapability(mockAdmin, 'manage_network'), true);
+  });
+
+  await testAsync('✓ Feature access not inferred only from primaryRole: secondary role grants full capabilities', async () => {
+    const sId = new ObjectId();
+    const orgId = new ObjectId();
+    const approvedOrg = { _id: orgId, name: 'Vanguard Infrastructure', status: 'APPROVED', ownerId: sId };
+    const membership = { _id: new ObjectId(), userId: sId, organizationId: orgId, role: 'OWNER', status: 'ACTIVE', verified: true };
+    const studentWithSecondaryFounder = {
+      _id: sId,
+      primaryRole: 'STUDENT',
+      roles: ['STUDENT', 'FOUNDER'],
+      role: 'student'
+    };
+    const res = governanceHelper.computeUserCapabilities(studentWithSecondaryFounder, { memberships: [membership], organizations: [approvedOrg] });
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), true);
+    assert.strictEqual(res.businessAuthorization.canManageBusiness, true);
+  });
+
+  console.log('\n\x1b[36m--- 9. Security & Safeguards Tests (Req 20) ---\x1b[0m');
+
+  await testAsync('✓ Self-escalation rejection: admin/user cannot modify their own roles', async () => {
+    const selfUserId = new ObjectId();
+    const selfAdmin = { ...mockAdmin, _id: selfUserId };
+    await assert.rejects(
+      async () => {
+        await governanceHelper.setPrimaryRole(selfUserId, 'FOUNDER', selfAdmin, mockReq, 'Self promotion');
+      },
+      /Action rejected: You cannot change your own roles/
+    );
+  });
+
+  await testAsync('✓ ADMIN injection rejection: cannot assign ADMIN into multi-role identity', async () => {
+    const targetUserId = new ObjectId();
+    mockDb.users.set(String(targetUserId), { _id: targetUserId, primaryRole: 'STUDENT', roles: ['STUDENT'], role: 'student' });
+    await assert.rejects(
+      async () => {
+        await governanceHelper.setPrimaryRole(targetUserId, 'ADMIN', mockAdmin, mockReq, 'Exploit attempt');
+      },
+      /Invalid role: ADMIN/
+    );
+    await assert.rejects(
+      async () => {
+        await governanceHelper.addSecondaryRole(targetUserId, 'ADMIN', mockAdmin, mockReq, 'Exploit attempt');
+      },
+      /Invalid role: ADMIN/
+    );
+  });
+
+  await testAsync('✓ EDUCATOR unauthorized assignment rejection: requires assign_educator capability', async () => {
+    const targetUserId = new ObjectId();
+    mockDb.users.set(String(targetUserId), { _id: targetUserId, primaryRole: 'STUDENT', roles: ['STUDENT'], role: 'student' });
+    const weakAdmin = { _id: new ObjectId(), Role: 'editor', capabilities: ['manage_network'] };
+    await assert.rejects(
+      async () => {
+        await governanceHelper.setPrimaryRole(targetUserId, 'EDUCATOR', weakAdmin, mockReq, 'Unauthorized educator assignment');
+      },
+      /assign_educator capability is required/
+    );
+  });
+
+  await testAsync('✓ Fake organization membership rejection: non-existent/unapproved org denies business access', async () => {
+    const founderId = new ObjectId();
+    const fakeOrgId = new ObjectId();
+    const fakeMembership = { _id: new ObjectId(), userId: founderId, organizationId: fakeOrgId, role: 'OWNER' };
+    const founderUser = { _id: founderId, primaryRole: 'FOUNDER', roles: ['FOUNDER'], role: 'founder' };
+    const res = governanceHelper.computeUserCapabilities(founderUser, { memberships: [fakeMembership], organizations: [] });
+    assert.strictEqual(res.capabilities.includes('MANAGE_BUSINESS'), false);
+    assert.strictEqual(res.businessAuthorization.canManageBusiness, false);
+  });
+
+  await testAsync('✓ Mandatory governance reason enforcement: empty reason is strictly rejected', async () => {
+    const targetUserId = new ObjectId();
+    mockDb.users.set(String(targetUserId), { _id: targetUserId, primaryRole: 'STUDENT', roles: ['STUDENT'], role: 'student' });
+    await assert.rejects(
+      async () => {
+        await governanceHelper.setPrimaryRole(targetUserId, 'PROFESSIONAL', mockAdmin, mockReq, '   ');
+      },
+      /A governance reason is mandatory/
+    );
+    await assert.rejects(
+      async () => {
+        await governanceHelper.addSecondaryRole(targetUserId, 'PROFESSIONAL', mockAdmin, mockReq, '');
+      },
+      /A governance reason is mandatory/
+    );
+  });
+
+  await testAsync('✓ Non-destructive role mutations: role updates preserve courses, profile, and memberships', async () => {
+    const targetUserId = new ObjectId();
+    const courseId = new ObjectId();
+    mockDb.users.set(String(targetUserId), {
+      _id: targetUserId,
+      primaryRole: 'STUDENT',
+      roles: ['STUDENT'],
+      role: 'student',
+      course: [courseId],
+      discipline: 'Civil Engineering'
+    });
+
+    await governanceHelper.setPrimaryRole(targetUserId, 'PROFESSIONAL', mockAdmin, mockReq, 'Graduated and working');
+    const updated = mockDb.users.get(String(targetUserId));
+    assert.strictEqual(updated.primaryRole, 'PROFESSIONAL');
+    assert.ok(updated.roles.includes('PROFESSIONAL'));
+    assert.ok(updated.course && updated.course.length === 1);
+    assert.strictEqual(updated.discipline, 'Civil Engineering');
+  });
+
+  await testAsync('✓ Safe User Panel API contract: excludes password hashes, OTPs, and private secrets (Req 16)', async () => {
+    const targetUserId = new ObjectId();
+    mockDb.users.set(String(targetUserId), {
+      _id: targetUserId,
+      username: 'safetarget',
+      name: 'Safe User',
+      Password: 'argon2_hashed_secret',
+      password: 'argon2_hashed_secret',
+      otp: '123456',
+      refreshToken: 'jwt_refresh_secret',
+      primaryRole: 'FOUNDER',
+      roles: ['FOUNDER'],
+      role: 'founder'
+    });
+
+    const contract = await governanceHelper.getCanonicalUserContract(targetUserId);
+    assert.ok(contract);
+    assert.strictEqual(contract.primaryRole, 'FOUNDER');
+    assert.strictEqual(contract.Password, undefined);
+    assert.strictEqual(contract.password, undefined);
+    assert.strictEqual(contract.otp, undefined);
+    assert.strictEqual(contract.refreshToken, undefined);
+    assert.ok(Array.isArray(contract.capabilities));
+    assert.ok(contract.businessAccess);
+    assert.ok(contract.learningContext);
+  });
   console.log(`TEST RUN COMPLETE: ${passedTests} passed, ${failedTests} failed (${totalTests} total)`);
   console.log('================================================================\n');
 
