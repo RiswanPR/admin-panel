@@ -98,7 +98,7 @@ const verifyLogin = (req, res, next) => {
 };
 
 const verifyAdminOrTeacherLogin = (req, res, next) => {
-  if (req.session.adminloggedIn || req.session.teacherLoggedIn) {
+  if (req.session.adminloggedIn || req.session.teacherloggedIn) {
     next();
   } else {
     if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.method === 'POST') {
@@ -262,15 +262,35 @@ router.get('/', async function (req, res, next) {
   }
 });
 router.get('/students', verifyLogin, function (req, res, next) {
-  studentHelpers.getStudents().then((students) => {
+  const filterType = req.query.view === 'enrolled'
+    ? { enrolledOnly: true }
+    : (req.query.view === 'canonical' ? { studentsOnly: true } : {});
+
+  studentHelpers.getStudents(filterType).then((students) => {
     res.render('admin/students', {
       admins: true,
       currentPage: 'students',
       students,
-      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Students' }]
+      activeView: req.query.view || 'all',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Academy' }, { label: 'Students & Learners' }]
     });
   }).catch((err) => {
     logger.info('Get Students Error:', err.message);
+    res.redirect('/');
+  });
+});
+
+router.get('/enrollments', verifyLogin, function (req, res, next) {
+  studentHelpers.getEnrolledLearners().then((students) => {
+    res.render('admin/students', {
+      admins: true,
+      currentPage: 'students',
+      students,
+      activeView: 'enrolled',
+      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Academy' }, { label: 'Course Enrollments' }]
+    });
+  }).catch((err) => {
+    logger.info('Get Enrollments Error:', err.message);
     res.redirect('/');
   });
 });
@@ -497,14 +517,14 @@ router.get('/registered-users', verifyLogin, async function (req, res) {
 });
 
 // ✅ ASSIGN COURSE TO USER
-router.post('/assign-course', verifyLogin, async function (req, res) {
+router.post('/assign-course', verifyLogin, requireCapability('manage_course_assignments'), async function (req, res) {
   try {
     let userId = req.body.userId;
     let packageIds = Array.isArray(req.body.package) ? req.body.package : [req.body.package].filter(Boolean);
     packageIds = [...new Set(packageIds.filter(id => ObjectId.isValid(id)).map(String))];
 
     if (!ObjectId.isValid(userId) || !packageIds.length) {
-      return res.status(400).json({ status: false, error: 'Invalid user or course selection.' });
+      return res.status(400).json({ success: false, status: false, error: 'Invalid user or course selection.', message: 'Invalid user or course selection.' });
     }
 
     let courses = await db.get()
@@ -595,10 +615,10 @@ router.post('/assign-course', verifyLogin, async function (req, res) {
       logger.error('Error sending course assigned email (async):', err);
     });
 
-    res.json({ status: true });
+    res.json({ success: true, status: true, message: 'Courses assigned successfully' });
   } catch (err) {
     logger.info('Assign Course Error:', err);
-    res.json({ status: false, error: err.message });
+    res.status(400).json({ success: false, status: false, error: err.message, message: err.message });
   }
 });
 
@@ -1422,12 +1442,20 @@ router.get(
 router.post(
   '/delete-class/:chapterCode/:classId',
   verifyLogin,
+  requireCapability('manage_classes'),
   validateObjectIds(['classId']),
   async (req, res) => {
     try {
+      const chapterCode = String(req.params.chapterCode || '').trim();
+      if (!chapterCode || !/^[a-zA-Z0-9_-]+$/.test(chapterCode)) {
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+          return res.status(400).json({ success: false, message: 'Invalid chapterCode parameter' });
+        }
+        return res.status(400).render('error', { message: 'Invalid chapter identifier.' });
+      }
 
       await classHelper.deleteClass(
-        req.params.chapterCode,
+        chapterCode,
         req.params.classId
       );
 
@@ -1437,13 +1465,17 @@ router.post(
         entityId: req.params.classId,
         message: 'Class deleted',
         metadata: {
-          chapterId: req.params.chapterCode
+          chapterId: chapterCode
         }
       });
 
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.json({ success: true, message: 'Class deleted successfully' });
+      }
+
       res.redirect(
         '/chapters/classes/' +
-        req.params.chapterCode
+        chapterCode
       );
 
     } catch (err) {
@@ -1451,6 +1483,10 @@ router.post(
         'Delete Class Route Error:',
         err.message
       );
+
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(500).json({ success: false, message: err.message || 'Failed to delete class' });
+      }
 
       res.redirect(
         '/chapters/classes/' +
@@ -1887,9 +1923,14 @@ router.get(
 router.post(
   '/add-courses',
   verifyLogin,
+  requireCapability('manage_courses'),
   uploadCourse.single('image'),
   async (req, res) => {
     try {
+      const name = String(req.body.name || '').trim();
+      if (!name) {
+        return res.status(400).json({ success: false, message: 'Course name is required.' });
+      }
 
       const id = await courseHelpers.addCourse(req.body);
 
@@ -1913,11 +1954,11 @@ router.post(
         message: 'Course added'
       });
 
-      res.json({ success: true });
+      res.json({ success: true, message: 'Course added successfully', data: { id } });
 
     } catch (err) {
       logger.info(err.message);
-      res.json({ success: false, message: 'Something went wrong' });
+      res.status(500).json({ success: false, message: err.message || 'Something went wrong' });
     }
   }
 );
@@ -1965,10 +2006,18 @@ router.get(
 router.post(
   '/edit-course/:id',
   verifyLogin,
+  requireCapability('manage_courses'),
   validateObjectIds(['id']),
   uploadCourse.single('image'),
   async (req, res) => {
     try {
+      const name = String(req.body.name || '').trim();
+      if (!name) {
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+          return res.status(400).json({ success: false, message: 'Course name is required.' });
+        }
+        return res.status(400).render('error', { message: 'Course name is required.' });
+      }
 
       await courseHelpers.updateCourse(req.params.id, req.body);
 
@@ -1992,11 +2041,18 @@ router.post(
         message: 'Course updated'
       });
 
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.json({ success: true, message: 'Course updated successfully' });
+      }
+
       res.redirect('/courses');
 
     } catch (err) {
       logger.info(err.message);
-      res.json({ success: false, message: err.message });
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(400).json({ success: false, message: err.message });
+      }
+      res.status(400).render('error', { message: err.message });
     }
   }
 );
@@ -2006,10 +2062,10 @@ router.post(
 router.post(
   '/delete-course/:id',
   verifyLogin,
+  requireCapability('manage_courses'),
   validateObjectIds(['id']),
   async (req, res) => {
     try {
-
       await courseHelpers.deleteCourse(
         req.params.id
       );
@@ -2022,7 +2078,8 @@ router.post(
       });
 
       res.json({
-        success: true
+        success: true,
+        message: 'Course deleted successfully'
       });
 
     } catch (err) {
@@ -2030,62 +2087,14 @@ router.post(
         err.message
       );
 
-      res.json({
+      res.status(500).json({
         success: false,
         message:
-          'Failed to delete course'
+          err.message || 'Failed to delete course'
       });
     }
   }
 );
-
-router.get('/audit-logs', verifyLogin, requireCapability('view_audit_logs'), async (req, res) => {
-  try {
-    const filters = {
-      search: req.query.search || '',
-      action: req.query.action || '',
-      entityType: req.query.entityType || '',
-      status: req.query.status || '',
-      page: req.query.page || 1,
-      limit: req.query.limit || 50
-    };
-
-    const logs = await auditHelper.getLogs(filters);
-
-    res.render('admin/audit-logs', {
-      admins: true,
-      currentPage: 'audit-logs',
-      breadcrumb: [{ label: 'Dashboard', url: '/' }, { label: 'Governance' }, { label: 'Audit Logs' }],
-      logs,
-      total: logs.total,
-      page: logs.page,
-      limit: logs.limit,
-      totalPages: logs.totalPages,
-      filters,
-      viewMode: req.query.view === 'table' ? 'table' : 'card'
-    });
-  } catch (err) {
-    logger.info('Audit Logs Route Error:', err.message);
-    res.redirect('/');
-  }
-});
-
-router.post('/audit-logs/clear', verifyLogin, verifySuperuser, async (req, res) => {
-  try {
-    await auditHelper.clearLogs();
-
-    logAudit(req, {
-      action: 'audit.clear',
-      entityType: 'audit',
-      message: 'Audit logs cleared'
-    });
-
-    res.json({ status: true });
-  } catch (err) {
-    logger.info('Clear Audit Logs Error:', err.message);
-    res.json({ status: false });
-  }
-});
 
 router.get('/:id/students', verifyLogin, validateObjectIds(['id']), async (req, res) => {
   try {
@@ -2560,6 +2569,40 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.redirect('/teacher/dashboard');
     }
 
+    // ── Try Educator login (canonical platform user with primaryRole: 'EDUCATOR') ──
+    const bcryptModule = require('bcrypt');
+    const educatorUser = await db.get().collection(collection.STUDENTS_COLLECTION).findOne({
+      email,
+      primaryRole: 'EDUCATOR'
+    });
+
+    if (educatorUser && (educatorUser.Password || educatorUser.password)) {
+      const match = await bcryptModule.compare(password, educatorUser.Password || educatorUser.password);
+      if (match) {
+        if (educatorUser.account_Status?.isBlocked) {
+          req.session.loginErr = 'Your account has been disabled. Please contact the administrator.';
+          return res.redirect('/login');
+        }
+
+        let bridgedTeacher = await teacherHelpers.getTeacherByEmail(email);
+        if (!bridgedTeacher) {
+          bridgedTeacher = await teacherHelpers.createTeacherBridgeForUser(educatorUser);
+        }
+
+        req.session.teacherloggedIn = true;
+        req.session.teacher = bridgedTeacher;
+        clearLoginMessages(req);
+        logAudit(req, {
+          action: 'educator.login.success',
+          entityType: 'teacher',
+          entityId: bridgedTeacher._id,
+          entityName: educatorUser.email,
+          message: 'Educator logged in to LMS'
+        });
+        return res.redirect('/teacher/dashboard');
+      }
+    }
+
     // ── Both failed ──
     clearPendingAdminOtp(req);
     req.session.loginErr = 'Invalid email or password.';
@@ -2717,7 +2760,7 @@ router.get('/teachers', verifyLogin, async (req, res) => {
 
 // ADD TEACHER — ALIAS & FORM
 router.get('/add-teacher', verifyLogin, (req, res) => res.redirect('/teachers/add'));
-router.get('/teachers/add', verifyLogin, async (req, res) => {
+router.get('/teachers/add', verifyLogin, requireCapability('manage_teachers'), async (req, res) => {
   const courses = await courseHelpers.getCourses();
   res.render('admin/add-teacher', {
     admins: true,
@@ -2727,14 +2770,25 @@ router.get('/teachers/add', verifyLogin, async (req, res) => {
 });
 
 // ADD TEACHER — POST
-router.post('/teachers/add', verifyLogin, uploadTeacher.single('profileImage'), async (req, res) => {
+router.post('/teachers/add', verifyLogin, requireCapability('manage_teachers'), uploadTeacher.single('profileImage'), async (req, res) => {
   try {
-    const existing = await teacherHelpers.getTeacherByEmail(req.body.email);
-    if (existing) {
-      return res.json({ success: false, message: 'A teacher with this email already exists.' });
+    const name = String(req.body.name || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+
+    if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'A valid name and email are required.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
     }
 
-    const data = { ...req.body };
+    const existing = await teacherHelpers.getTeacherByEmail(email);
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'A teacher with this email already exists.' });
+    }
+
+    const data = { ...req.body, name, email, password };
 
     const teacher = await teacherHelpers.createTeacher(data);
 
@@ -2758,15 +2812,15 @@ router.post('/teachers/add', verifyLogin, uploadTeacher.single('profileImage'), 
       message: 'Teacher created'
     });
 
-    res.json({ success: true });
+    res.json({ success: true, message: 'Teacher created successfully', data: { id: teacher._id } });
   } catch (err) {
     logger.info('Add Teacher Error:', err.message);
-    res.json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
 // EDIT TEACHER — FORM
-router.get('/teachers/:id/edit', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.get('/teachers/:id/edit', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), async (req, res) => {
   try {
     const [teacher, courses] = await Promise.all([
       teacherHelpers.getTeacherById(req.params.id),
@@ -2786,9 +2840,15 @@ router.get('/teachers/:id/edit', verifyLogin, validateObjectIds(['id']), async (
   }
 });
 
-// EDIT TEACHER — POST
-router.post('/teachers/:id/edit', verifyLogin, validateObjectIds(['id']), uploadTeacher.single('profileImage'), async (req, res) => {
+const handleEditTeacher = async (req, res) => {
   try {
+    if (req.body.email) {
+      const email = String(req.body.email).trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ success: false, message: 'A valid email is required.' });
+      }
+    }
+
     await teacherHelpers.updateTeacher(req.params.id, req.body);
 
     // Upload new teacher image to Firebase if provided
@@ -2811,17 +2871,23 @@ router.post('/teachers/:id/edit', verifyLogin, validateObjectIds(['id']), upload
       message: 'Teacher updated'
     });
 
-    res.json({ success: true });
+    res.json({ success: true, message: 'Teacher updated successfully' });
   } catch (err) {
     logger.info('Update Teacher Error:', err.message);
-    res.json({ success: false, message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
-});
+};
 
-// DELETE TEACHER
-router.post('/teachers/:id/delete', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+// EDIT TEACHER — POST (supports both /teachers/:id/edit and /teachers/edit/:id)
+router.post('/teachers/:id/edit', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), uploadTeacher.single('profileImage'), handleEditTeacher);
+router.post('/teachers/edit/:id', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), uploadTeacher.single('profileImage'), handleEditTeacher);
+
+const handleDeleteTeacher = async (req, res) => {
   try {
     const result = await teacherHelpers.deleteTeacher(req.params.id);
+    if (!result || result.status === false) {
+      return res.status(400).json({ success: false, status: false, message: result?.message || 'Failed to delete teacher' });
+    }
 
     logAudit(req, {
       action: 'teacher.delete',
@@ -2830,15 +2896,19 @@ router.post('/teachers/:id/delete', verifyLogin, validateObjectIds(['id']), asyn
       message: 'Teacher deleted'
     });
 
-    res.json(result);
+    res.json({ success: true, status: true, message: 'Teacher deleted successfully' });
   } catch (err) {
     logger.info('Delete Teacher Error:', err.message);
-    res.json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
-});
+};
+
+// DELETE TEACHER (supports both /teachers/:id/delete and /teachers/delete/:id)
+router.post('/teachers/:id/delete', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), handleDeleteTeacher);
+router.post('/teachers/delete/:id', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), handleDeleteTeacher);
 
 // DISABLE TEACHER
-router.post('/teachers/:id/disable', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/teachers/:id/disable', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), async (req, res) => {
   try {
     await teacherHelpers.setTeacherStatus(req.params.id, 'disabled');
     logAudit(req, { action: 'teacher.disable', entityType: 'teacher', entityId: req.params.id, message: 'Teacher disabled' });
@@ -2849,7 +2919,7 @@ router.post('/teachers/:id/disable', verifyLogin, validateObjectIds(['id']), asy
 });
 
 // ENABLE TEACHER
-router.post('/teachers/:id/enable', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/teachers/:id/enable', verifyLogin, requireCapability('manage_teachers'), validateObjectIds(['id']), async (req, res) => {
   try {
     await teacherHelpers.setTeacherStatus(req.params.id, 'active');
     logAudit(req, { action: 'teacher.enable', entityType: 'teacher', entityId: req.params.id, message: 'Teacher enabled' });
@@ -2860,7 +2930,7 @@ router.post('/teachers/:id/enable', verifyLogin, validateObjectIds(['id']), asyn
 });
 
 // ASSIGN COURSES — FORM
-router.get('/teachers/:id/assign-courses', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.get('/teachers/:id/assign-courses', verifyLogin, requireCapability('manage_course_assignments'), validateObjectIds(['id']), async (req, res) => {
   try {
     const [teacher, courses] = await Promise.all([
       teacherHelpers.getTeacherById(req.params.id),
@@ -2881,7 +2951,7 @@ router.get('/teachers/:id/assign-courses', verifyLogin, validateObjectIds(['id']
 });
 
 // ASSIGN COURSES — POST
-router.post('/teachers/:id/assign-courses', verifyLogin, validateObjectIds(['id']), async (req, res) => {
+router.post('/teachers/:id/assign-courses', verifyLogin, requireCapability('manage_course_assignments'), validateObjectIds(['id']), async (req, res) => {
   try {
     let courseIds = req.body.courseIds;
     if (!courseIds) courseIds = [];

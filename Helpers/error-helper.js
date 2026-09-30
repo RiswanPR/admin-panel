@@ -268,11 +268,27 @@ const updateErrorStatus = async (reportId, newStatus, admin, req) => {
   return { success: true, status: statusUpper };
 };
 
+const validateObjectIds = (paramNames) => {
+  return (req, res, next) => {
+    for (const name of paramNames) {
+      const value = req.params?.[name] || req.body?.[name] || req.query?.[name];
+      if (value && !ObjectId.isValid(value)) {
+        if (req.xhr || req.headers?.accept?.indexOf('json') > -1 || req.method === 'POST') {
+          return res.status(400).json({ success: false, message: `Invalid parameter: ${name}`, error: `Invalid ID format for ${name}` });
+        }
+        return res.status(400).render('error', { message: `Invalid identifier: ${name}` });
+      }
+    }
+    next();
+  };
+};
+
 module.exports = {
   classifyError,
   hashErrorSignature,
   recordError,
   getErrorReports,
   getErrorStats,
-  updateErrorStatus
+  updateErrorStatus,
+  validateObjectIds
 };

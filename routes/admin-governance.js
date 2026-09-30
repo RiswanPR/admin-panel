@@ -123,8 +123,17 @@ const handleUserDirectory = async (req, res) => {
   }
 };
 
-router.get('/network', verifyLogin, handleUserDirectory);
+// Network Users Directory is canonically mounted at /admin/network/users
 router.get('/network/users', verifyLogin, handleUserDirectory);
+
+// If /admin/network is requested, redirect to /admin/network/users.
+// If root /network is requested, pass through to usersRouter profiles directory without shadowing.
+router.get('/network', verifyLogin, (req, res, next) => {
+  if (req.baseUrl === '/admin') {
+    return res.redirect('/admin/network/users');
+  }
+  next();
+});
 
 // Enterprise User Governance Dossier
 router.get('/network/users/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {

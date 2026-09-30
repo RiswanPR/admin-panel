@@ -21,10 +21,19 @@ const getNetworkStats = async () => {
       database.collection(collection.ADMIN_COLLECTION).countDocuments({})
     ]);
 
-    const enrolledStudents = await database.collection(collection.STUDENTS_COLLECTION).countDocuments({
-      'account_Status.isDeleted': { $ne: true },
-      'course.0': { $exists: true }
-    });
+    const [enrolledStudents, totalStudents] = await Promise.all([
+      database.collection(collection.STUDENTS_COLLECTION).countDocuments({
+        'account_Status.isDeleted': { $ne: true },
+        'course.0': { $exists: true }
+      }),
+      database.collection(collection.STUDENTS_COLLECTION).countDocuments({
+        'account_Status.isDeleted': { $ne: true },
+        $or: [
+          { primaryRole: 'STUDENT' },
+          { primaryRole: { $exists: false }, role: 'student' }
+        ]
+      })
+    ]);
 
     const registeredOnly = totalUsers - enrolledStudents;
 
@@ -34,7 +43,10 @@ const getNetworkStats = async () => {
 
     return {
       totalPeople: totalUsers + totalTeachers + totalAdmins,
+      totalUsers,
+      totalStudents,
       enrolledStudents,
+      enrolledLearners: enrolledStudents,
       registeredOnly,
       totalTeachers,
       totalAdmins,
@@ -190,8 +202,7 @@ const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) =>
   } else if (normalizedRole === 'student') {
     userQuery.$or = [
       { primaryRole: 'STUDENT' },
-      { role: 'student' },
-      { 'course.0': { $exists: true } }
+      { role: 'student' }
     ];
   } else if (normalizedRole === 'registered') {
     userQuery.$or = [
@@ -321,7 +332,9 @@ const getNetworkUsers = async (filters = {}, pageArg = null, limitArg = null) =>
     const isRestricted = Boolean(u.account_Status?.restrictions && u.account_Status.restrictions.length);
     const commProfile = commProfileMap[String(u._id)] || {};
 
-    const rawRole = u.primaryRole || u.role || (isEnrolled ? 'STUDENT' : 'REGISTERED');
+    // Canonical platform identity: primaryRole -> legacy role fallback -> 'STUDENT'.
+    // Course enrollment NEVER implies or derives STUDENT identity.
+    const rawRole = u.primaryRole || u.role || 'STUDENT';
     const primaryRole = String(rawRole).toUpperCase();
 
     return {

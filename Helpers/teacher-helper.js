@@ -518,10 +518,171 @@ const updateTeacherImage = async (id, imageUrl) => {
   }
 };
 
+// ─────────────────────────────────────────────
+// EDUCATOR BRIDGE COMPATIBILITY
+// ─────────────────────────────────────────────
+
+/**
+ * Deterministic lookup: find the teacher record linked to a platform user.
+ * userId-based lookup is canonical; falls back to email only if userId not indexed.
+ */
+const getTeacherByUserId = async (userId) => {
+  if (!userId || !ObjectId.isValid(userId)) return null;
+  return await db.get()
+    .collection(collection.TEACHER_COLLECTION)
+    .findOne({ userId: new ObjectId(userId) });
+};
+
+/**
+ * Link an existing teacher record to a platform user.
+ * Records bridgedAt timestamp for audit trail.
+ */
+const linkTeacherToUser = async (teacherId, userId) => {
+  if (!ObjectId.isValid(teacherId) || !ObjectId.isValid(userId)) return false;
+  await db.get()
+    .collection(collection.TEACHER_COLLECTION)
+    .updateOne(
+      { _id: new ObjectId(teacherId) },
+      { $set: { userId: new ObjectId(userId), bridgedAt: new Date(), updatedAt: new Date() } }
+    );
+  return true;
+};
+
+/**
+ * Idempotent educator bridge creation.
+ * Resolution order:
+ *   1. Existing teacher with matching userId (most stable link) → reuse
+ *   2. Existing teacher with matching email → link if not yet linked, reuse
+ *   3. No match → create new bridged teacher record
+ * Repeated calls with the same user will always return the same teacher record.
+ */
+const createTeacherBridgeForUser = async (user) => {
+  if (!user || !user.email) return null;
+
+  // 1. Lookup by userId first (most deterministic)
+  if (user._id && ObjectId.isValid(user._id)) {
+    const byUserId = await getTeacherByUserId(user._id);
+    if (byUserId) {
+      // Already bridged — ensure status is active (educator re-assigned)
+      if (byUserId.status === 'disabled' || byUserId.status === 'revoked') {
+        await db.get()
+          .collection(collection.TEACHER_COLLECTION)
+          .updateOne(
+            { _id: byUserId._id },
+            { $set: { status: 'active', reactivatedAt: new Date(), updatedAt: new Date() } }
+          );
+        byUserId.status = 'active';
+      }
+      return byUserId;
+    }
+  }
+
+  // 2. Lookup by email
+  const byEmail = await getTeacherByEmail(user.email);
+  if (byEmail) {
+    // Only auto-link if teacher does not already have a different userId (safe identity rule)
+    if (user._id && !byEmail.userId) {
+      await linkTeacherToUser(byEmail._id, user._id);
+      byEmail.userId = new ObjectId(user._id);
+    }
+    // Reactivate if previously disabled via revocation
+    if (byEmail.status === 'disabled' || byEmail.status === 'revoked') {
+      await db.get()
+        .collection(collection.TEACHER_COLLECTION)
+        .updateOne(
+          { _id: byEmail._id },
+          { $set: { status: 'active', reactivatedAt: new Date(), updatedAt: new Date() } }
+        );
+      byEmail.status = 'active';
+    }
+    return byEmail;
+  }
+
+  // 3. Create new bridged teacher record
+  const teacherDoc = {
+    userId: user._id ? new ObjectId(user._id) : null,
+    name: user.name || user.Name || 'Educator',
+    email: user.email.toLowerCase().trim(),
+    mobile: user.Phone_Number || '',
+    // Bridge copies the hashed password from the platform account (same credentials)
+    password: user.Password || user.password || '',
+    profileImage: user.profileImage || '/img/placeholders/profile.svg',
+    designation: 'Educator',
+    bio: user.bio || '',
+    role: 'teacher',
+    assignedCourses: [],
+    status: 'active',
+    isBridged: true,
+    bridgedAt: new Date(),
+    createdAt: new Date()
+  };
+
+  const result = await db.get()
+    .collection(collection.TEACHER_COLLECTION)
+    .insertOne(teacherDoc);
+
+  return { ...teacherDoc, _id: result.insertedId };
+};
+
+/**
+ * Revoke educator bridge when platform role changes away from EDUCATOR.
+ * Sets teacher record status to 'disabled' (preserves historical data).
+ * Does NOT delete any teacher record, course assignment, or student data.
+ * Returns { revoked: true, teacherId } if a bridge was found and disabled,
+ * or { revoked: false } if no bridge existed.
+ */
+const revokeTeacherBridgeForUser = async (userId, revokedBy = 'admin') => {
+  if (!userId || !ObjectId.isValid(userId)) return { revoked: false };
+
+  try {
+    // Find bridge by userId (canonical)
+    let teacher = await getTeacherByUserId(userId);
+
+    if (!teacher) {
+      // Fallback: find by platform user email
+      const db_ = db.get();
+      const platformUser = await db_
+        .collection(collection.STUDENTS_COLLECTION)
+        .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1 } });
+      if (platformUser && platformUser.email) {
+        teacher = await getTeacherByEmail(platformUser.email);
+      }
+    }
+
+    if (!teacher) return { revoked: false };
+
+    // Preserve record but disable portal access
+    await db.get()
+      .collection(collection.TEACHER_COLLECTION)
+      .updateOne(
+        { _id: teacher._id },
+        {
+          $set: {
+            status: 'disabled',
+            revokedAt: new Date(),
+            revokedBy: String(revokedBy),
+            revokedReason: 'Educator role revoked by administrator',
+            updatedAt: new Date()
+          }
+        }
+      );
+
+    logger.info(`Teacher bridge disabled for userId=${userId}, teacherId=${teacher._id}`);
+    return { revoked: true, teacherId: String(teacher._id) };
+  } catch (err) {
+    logger.error('revokeTeacherBridgeForUser Error:', err.message);
+    return { revoked: false, error: err.message };
+  }
+};
+
 module.exports = {
   createTeacher,
   getTeacherByEmail,
   getTeacherById,
+  getTeacherByUserId,
+  linkTeacherToUser,
+  createTeacherBridgeForUser,
+  revokeTeacherBridgeForUser,
   verifyTeacherPassword,
   getAllTeachers,
   updateTeacher,

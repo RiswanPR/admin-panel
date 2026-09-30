@@ -11,6 +11,12 @@ const logger = require('./logger');
 const permissionsHelper = require('./permissions-helper');
 const usernameHelper = require('./username-helper');
 const verificationHelper = require('./verification-helper');
+// Lazy-load to avoid circular deps; call via getter
+let _teacherHelper = null;
+const teacherHelper = () => {
+  if (!_teacherHelper) _teacherHelper = require('./teacher-helper');
+  return _teacherHelper;
+};
 
 const escapeRegex = (str) => String(str).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -120,8 +126,85 @@ const assignUserRole = async (userId, newRole, actor, req, reason = '') => {
       };
     }
     updateDoc.$set['account_Status.isVerified'] = true;
+
+    // Bridge with TEACHER_COLLECTION: link or create instructor profile deterministically
+    try {
+      if (user.email) {
+        const existingTeacher = await database.collection(collection.TEACHER_COLLECTION).findOne({ email: user.email.toLowerCase().trim() });
+        if (existingTeacher) {
+          if (!existingTeacher.userId) {
+            await database.collection(collection.TEACHER_COLLECTION).updateOne(
+              { _id: existingTeacher._id },
+              { $set: { userId: new ObjectId(userId), updatedAt: new Date() } }
+            );
+          }
+          updateDoc.$set['educatorContext.teacherId'] = existingTeacher._id;
+        } else {
+          const newTeacher = {
+            userId: new ObjectId(userId),
+            name: user.name || user.Name || 'Educator',
+            email: user.email.toLowerCase().trim(),
+            mobile: user.Phone_Number || '',
+            password: user.Password || user.password || '',
+            profileImage: user.profileImage || '/img/placeholders/profile.svg',
+            designation: 'Educator',
+            bio: user.bio || '',
+            role: 'teacher',
+            assignedCourses: [],
+            status: 'active',
+            isBridged: true,
+            createdAt: new Date()
+          };
+          const ins = await database.collection(collection.TEACHER_COLLECTION).insertOne(newTeacher);
+          updateDoc.$set['educatorContext.teacherId'] = ins.insertedId;
+        }
+      }
+    } catch (bridgeErr) {
+      logger.warn('Educator teacher bridge warning:', bridgeErr.message);
+    }
   }
 
+  // If revoking educator role, disable the teacher bridge to prevent stale portal access
+  if (previousRole === 'EDUCATOR' && normalizedRole !== 'EDUCATOR') {
+    try {
+      const revokeResult = await teacherHelper().revokeTeacherBridgeForUser(
+        String(userId),
+        actor?._id ? String(actor._id) : 'admin'
+      );
+      if (revokeResult.revoked) {
+        updateDoc.$set['educatorContext.revokedAt'] = new Date();
+        updateDoc.$set['educatorContext.revokedBy'] = actor?._id ? String(actor._id) : 'admin';
+        logger.info(`Educator bridge revoked: userId=${userId}, teacherId=${revokeResult.teacherId}`);
+      }
+    } catch (revokeErr) {
+      logger.warn('Educator bridge revocation warning:', revokeErr.message);
+    }
+  }
+
+  // Also invalidate any active teacher sessions for this user when revoking educator
+  if (previousRole === 'EDUCATOR' && normalizedRole !== 'EDUCATOR') {
+    try {
+      // Teacher sessions have req.session.teacher set; find by teacherId reference
+      // Sessions are deleted based on pattern matching userId or teacher email
+      const platformUser = await database.collection(collection.STUDENTS_COLLECTION).findOne(
+        { _id: new ObjectId(userId) }, { projection: { email: 1 } }
+      );
+      if (platformUser && platformUser.email) {
+        const emailStr = String(platformUser.email);
+        await database.collection('sessions').deleteMany({
+          $or: [
+            { session: { $regex: emailStr } },
+            { 'session.teacher.email': emailStr },
+            { 'session.teacher.Email': emailStr }
+          ]
+        }).catch(() => {});
+      }
+    } catch (sessErr) {
+      logger.warn(`Could not clear teacher sessions on educator revocation for userId=${userId}: ${sessErr.message}`);
+    }
+  }
+
+  // Persist role change to platform user record
   await database.collection(collection.STUDENTS_COLLECTION).updateOne(
     { _id: new ObjectId(userId) },
     updateDoc

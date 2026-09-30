@@ -32,7 +32,11 @@ const ROLE_CAPABILITIES = {
     'manage_settings',
     'view_audit_logs',
     'view_system_errors',
-    'system_reconciliation'
+    'system_reconciliation',
+    'manage_courses',
+    'manage_classes',
+    'manage_teachers',
+    'manage_course_assignments'
   ],
   admin: [
     'manage_network',
@@ -55,7 +59,11 @@ const ROLE_CAPABILITIES = {
     'manage_taxonomy',
     'manage_settings',
     'view_audit_logs',
-    'view_system_errors'
+    'view_system_errors',
+    'manage_courses',
+    'manage_classes',
+    'manage_teachers',
+    'manage_course_assignments'
   ],
   network_admin: [
     'manage_network',

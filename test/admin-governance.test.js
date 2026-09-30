@@ -82,6 +82,12 @@ const createMockCollection = (mapOrArray) => {
   }
 
   return {
+    insertOne: async (doc) => {
+      const _id = doc._id || new ObjectId();
+      const stored = { ...doc, _id };
+      mapOrArray.set(String(_id), stored);
+      return { insertedId: _id, acknowledged: true };
+    },
     findOne: async (q) => {
       for (const item of mapOrArray.values()) {
         let match = true;

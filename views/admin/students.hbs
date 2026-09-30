@@ -130,10 +130,15 @@
                             {{#if this.Name}}{{this.Name}}{{else}}{{this.name}}{{/if}}
                         </h5>
 
-                        <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                             <span class="badge bg-dark border border-secondary font-monospace" style="font-size:11px;">
                                 {{#if this.username}}@{{this.username}}{{else}}<span class="text-danger">unassigned</span>{{/if}}
                             </span>
+                            {{#if this.canonicalRole}}
+                            <span class="badge {{#ifEquals this.canonicalRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals this.canonicalRole 'RECRUITER'}}bg-info text-dark{{else}}{{#ifEquals this.canonicalRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals this.canonicalRole 'PROFESSIONAL'}}bg-primary text-white{{else}}bg-secondary text-white{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}" style="font-size:10px;">
+                                {{this.canonicalRole}}
+                            </span>
+                            {{/if}}
                             {{#if this.isClaimed}}
                             <span class="badge bg-success" style="font-size:10px;">Claimed</span>
                             {{else}}
@@ -334,10 +339,15 @@
 
                         <td class="student-name">
                             <strong>{{#if this.Name}}{{this.Name}}{{else}}{{this.name}}{{/if}}</strong>
-                            <div class="d-flex align-items-center gap-1 my-1">
+                            <div class="d-flex align-items-center gap-1 my-1 flex-wrap">
                                 <span class="badge bg-dark border border-secondary font-monospace" style="font-size:11px;">
                                     {{#if this.username}}@{{this.username}}{{else}}<span class="text-danger">unassigned</span>{{/if}}
                                 </span>
+                                {{#if this.canonicalRole}}
+                                <span class="badge {{#ifEquals this.canonicalRole 'FOUNDER'}}bg-dark text-white{{else}}{{#ifEquals this.canonicalRole 'RECRUITER'}}bg-info text-dark{{else}}{{#ifEquals this.canonicalRole 'EDUCATOR'}}bg-warning text-dark{{else}}{{#ifEquals this.canonicalRole 'PROFESSIONAL'}}bg-primary text-white{{else}}bg-secondary text-white{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}" style="font-size:9px;">
+                                    {{this.canonicalRole}}
+                                </span>
+                                {{/if}}
                                 {{#if this.isClaimed}}
                                 <span class="badge bg-success" style="font-size:9px;">Claimed</span>
                                 {{else}}

@@ -169,6 +169,9 @@ module.exports = {
     },
     deleteCourse: async (courseId) => {
         try {
+            if (!ObjectId.isValid(courseId)) {
+                throw new Error("Invalid course id");
+            }
 
             let course = await db.get()
                 .collection(collection.COURSE_COLLECTION)

@@ -100,8 +100,12 @@ module.exports = {
 
             // Execute primary queries in parallel
             const [
+                totalUsers,
                 totalStudents,
+                totalLearners,
+                activeUsers,
                 activeStudents,
+                activeLearners,
                 expiredStudents,
                 newUsers7d,
                 pendingUsersVerification,
@@ -121,8 +125,29 @@ module.exports = {
                 unresolvedErrorsCount,
                 totalMatchesCount
             ] = await Promise.all([
+                // 1. Total platform registered users
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments().catch(() => 0),
+                // 2. Canonical Student platform identity users (primaryRole: 'STUDENT')
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({
+                    $or: [
+                        { primaryRole: 'STUDENT' },
+                        { primaryRole: { $exists: false }, role: 'student' }
+                    ]
+                }).catch(() => 0),
+                // 3. Enrolled learners (users with at least one course enrollment)
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ 'course.0': { $exists: true } }).catch(() => 0),
+                // 4. Active users
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ status: true }).catch(() => 0),
+                // 5. Active canonical students
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({
+                    $or: [
+                        { primaryRole: 'STUDENT' },
+                        { primaryRole: { $exists: false }, role: 'student' }
+                    ],
+                    status: true
+                }).catch(() => 0),
+                // 6. Active enrolled learners
+                dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ 'course.0': { $exists: true }, status: true }).catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ status: false }).catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ createdAt: { $gte: sevenDaysAgo } }).catch(() => 0),
                 dbConn.collection(collection.STUDENTS_COLLECTION).countDocuments({ verificationStatus: { $in: ['PENDING', 'UNDER_REVIEW'] } }).catch(() => 0),
@@ -298,9 +323,15 @@ module.exports = {
                 });
             }
 
-            const activePercentage = totalStudents > 0 
+            const activeLearnerPercentage = totalLearners > 0 
+                ? Math.round((activeLearners / totalLearners) * 100) 
+                : 0;
+
+            const activeStudentPercentage = totalStudents > 0 
                 ? Math.round((activeStudents / totalStudents) * 100) 
                 : 0;
+
+            const activePercentage = activeLearnerPercentage;
 
             const systemHealth = {
                 database: 'OPERATIONAL',
@@ -309,8 +340,13 @@ module.exports = {
             };
 
             return {
+                totalUsers,
                 totalStudents,
+                totalLearners,
+                totalEnrolledLearners: totalLearners,
+                activeUsers,
                 activeStudents,
+                activeLearners,
                 expiredStudents,
                 totalRevenue,
                 totalCourses,
@@ -320,6 +356,8 @@ module.exports = {
                 totalTeachers,
                 totalLearningSpaces,
                 activePercentage,
+                activeLearnerPercentage,
+                activeStudentPercentage,
                 courseDistribution: {
                     labels: courseDistLabels,
                     data: courseDistData
@@ -330,8 +368,12 @@ module.exports = {
                 alerts,
                 systemHealth,
                 governance: {
-                    totalUsers: totalStudents,
-                    activeUsers: activeStudents,
+                    totalUsers,
+                    totalStudents,
+                    totalEnrolledLearners: totalLearners,
+                    activeUsers,
+                    activeStudents,
+                    activeLearners,
                     newUsers7d,
                     pendingVerification: pendingVerificationCount,
                     pendingBusinesses: pendingBusinessesCount,

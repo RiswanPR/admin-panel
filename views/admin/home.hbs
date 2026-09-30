@@ -106,7 +106,7 @@
     <div class="real-content">
         <div class="row mb-4">
 
-            <!-- Total Students -->
+            <!-- Total Students / Learners -->
             <div class="col-xl-3 col-md-6 mb-3">
                 <div class="stat-card stat-card-students">
                     <div class="stat-card-header">
@@ -117,11 +117,11 @@
                     </div>
                     <div class="stat-card-body">
                         <h2 class="stat-value">
-                            <span class="counter" data-target="{{dashboard.totalStudents}}">0</span>
+                            <span class="counter" data-target="{{dashboard.totalLearners}}">0</span>
                         </h2>
                         <div class="stat-trend trend-neutral">
-                            <i class="fa-solid fa-users me-1"></i>
-                            <span>All registered learners</span>
+                            <i class="fa-solid fa-graduation-cap me-1"></i>
+                            <span>Enrolled learners ({{dashboard.totalStudents}} students)</span>
                         </div>
                     </div>
                     <div class="stat-card-footer">
@@ -132,7 +132,7 @@
                 </div>
             </div>
 
-            <!-- Active Students -->
+            <!-- Active Students / Learners -->
             <div class="col-xl-3 col-md-6 mb-3">
                 <div class="stat-card stat-card-active">
                     <div class="stat-card-header">
@@ -143,16 +143,16 @@
                     </div>
                     <div class="stat-card-body">
                         <h2 class="stat-value">
-                            <span class="counter" data-target="{{dashboard.activeStudents}}">0</span>
+                            <span class="counter" data-target="{{dashboard.activeLearners}}">0</span>
                         </h2>
                         <div class="stat-trend trend-positive">
                             <i class="fa-solid fa-arrow-trend-up me-1"></i>
-                            <span>{{dashboard.activePercentage}}% active ratio</span>
+                            <span>{{dashboard.activeLearnerPercentage}}% active ratio</span>
                         </div>
                     </div>
                     <div class="stat-card-footer">
                         <div class="stat-bar-track">
-                            <div class="stat-bar-fill fill-active" style="width: {{dashboard.activePercentage}}%;"></div>
+                            <div class="stat-bar-fill fill-active" style="width: {{dashboard.activeLearnerPercentage}}%;"></div>
                         </div>
                     </div>
                 </div>

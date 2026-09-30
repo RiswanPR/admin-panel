@@ -152,6 +152,9 @@ module.exports = {
     deleteClass: async (chapterCode, classId) => {
         try {
             if (!ObjectId.isValid(classId)) return false;
+            if (!chapterCode || typeof chapterCode !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(chapterCode.trim())) {
+                return false;
+            }
 
             const course = await db.get()
                 .collection(collection.COURSE_COLLECTION)

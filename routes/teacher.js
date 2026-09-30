@@ -32,14 +32,67 @@ const gamificationHelper = require('../Helpers/gamification-helper');
 // GUARDS
 // ═══════════════════════════════════════════════════
 
-const verifyTeacherLogin = (req, res, next) => {
-  if (req.session.teacherloggedIn && req.session.teacher) {
+const verifyTeacherLogin = async (req, res, next) => {
+  if (!req.session.teacherloggedIn || !req.session.teacher) {
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(401).json({ success: false, message: 'Unauthorized.' });
+    }
+    return res.redirect('/login');
+  }
+
+  try {
+    const sessionTeacher = req.session.teacher;
+
+    // Re-validate teacher record is still active (catches role revocations)
+    if (sessionTeacher._id && ObjectId.isValid(sessionTeacher._id)) {
+      const liveTeacher = await db.get()
+        .collection(collection.TEACHER_COLLECTION)
+        .findOne(
+          { _id: new ObjectId(sessionTeacher._id) },
+          { projection: { status: 1, userId: 1, email: 1 } }
+        );
+
+      if (!liveTeacher || liveTeacher.status === 'disabled' || liveTeacher.status === 'revoked') {
+        // Teacher record disabled — educator role was revoked or account was disabled
+        req.session.teacherloggedIn = false;
+        delete req.session.teacher;
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+          return res.status(403).json({ success: false, message: 'Your educator account has been disabled. Contact an administrator.' });
+        }
+        req.session.loginErr = 'Your educator account has been disabled. Please contact the administrator.';
+        return res.redirect('/login');
+      }
+
+      // For bridged educators: also check platform account is not blocked/suspended
+      if (liveTeacher.userId) {
+        const platformUser = await db.get()
+          .collection(collection.STUDENTS_COLLECTION)
+          .findOne(
+            { _id: liveTeacher.userId },
+            { projection: { account_Status: 1, primaryRole: 1 } }
+          );
+
+        if (platformUser) {
+          const blocked = platformUser.account_Status?.isBlocked || platformUser.account_Status?.isSuspended;
+          if (blocked) {
+            req.session.teacherloggedIn = false;
+            delete req.session.teacher;
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+              return res.status(403).json({ success: false, message: 'Your account has been suspended. Contact an administrator.' });
+            }
+            req.session.loginErr = 'Your account has been suspended. Please contact the administrator.';
+            return res.redirect('/login');
+          }
+        }
+      }
+    }
+
+    return next();
+  } catch (err) {
+    logger.error('verifyTeacherLogin state check error:', err.message);
+    // On unexpected errors, fail open (let session through) to avoid DoS
     return next();
   }
-  if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-    return res.status(401).json({ success: false, message: 'Unauthorized.' });
-  }
-  res.redirect('/login');
 };
 
 const checkTeacherCourseOwnership = async (req, res, next) => {

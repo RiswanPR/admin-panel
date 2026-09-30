@@ -22,8 +22,9 @@ module.exports = {
                 logger.error('RESEND_API_KEY is not configured in production.');
                 throw new Error('Email service is not configured. Please contact administrator.');
             }
-            logger.info(`🔑 [DEV MODE] Admin OTP for ${email}: ${otp}`);
-            return; // skip email, OTP is still stored in session
+            // Do NOT log plaintext authentication secrets
+            logger.info(`[DEV MODE] Admin OTP generated for ${email} (dispatch suppressed: RESEND_API_KEY unconfigured)`);
+            return; // skip email, OTP is still securely stored in session
         }
 
         // Send via Resend API

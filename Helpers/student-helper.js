@@ -132,6 +132,11 @@ module.exports = {
             }
 
             if (existing) {
+                // IMPORTANT: Preserve existing user canonical platform role (FOUNDER, RECRUITER, etc.)
+                if (!existing.primaryRole) {
+                    update.primaryRole = existing.role ? existing.role.toUpperCase() : 'STUDENT';
+                    update.role = (existing.role || 'student').toLowerCase();
+                }
                 await users.updateOne({ _id: existing._id }, { $set: update });
                 return callback(existing._id, false); // isNew = false
             }
@@ -150,6 +155,8 @@ module.exports = {
 
             const result = await users.insertOne({
                 ...update,
+                primaryRole: 'STUDENT',
+                role: 'student',
                 username: finalUsername,
                 usernameClaimed: false,
                 usernameChangedAt: new Date(),
@@ -161,22 +168,54 @@ module.exports = {
         }
     },
 
-    // ✅ GET STUDENTS (only users who have courses assigned)
-    getStudents: () => {
+    // ✅ GET STUDENTS (canonical students or enrolled learners based on options)
+    getStudents: (options = {}) => {
         return new Promise(async (resolve, reject) => {
-            let students = await db.get()
-                .collection(collection.STUDENTS_COLLECTION)
-                .find({
-                    course: { $exists: true, $not: { $size: 0 } }
-                })
-                .toArray();
-            await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
-            students.forEach(student => {
-                student.displayUsername = student.username ? `@${student.username}` : '';
-                student.isClaimed = Boolean(student.usernameClaimed);
-            });
-            resolve(students);
+            try {
+                let query = {};
+                if (options && options.enrolledOnly) {
+                    query = { course: { $exists: true, $not: { $size: 0 } } };
+                } else if (options && options.studentsOnly) {
+                    query = {
+                        $or: [
+                            { primaryRole: 'STUDENT' },
+                            { primaryRole: { $exists: false }, role: 'student' }
+                        ]
+                    };
+                } else {
+                    // Default: return users with courses or student identity
+                    query = {
+                        $or: [
+                            { primaryRole: 'STUDENT' },
+                            { course: { $exists: true, $not: { $size: 0 } } }
+                        ]
+                    };
+                }
+
+                let students = await db.get()
+                    .collection(collection.STUDENTS_COLLECTION)
+                    .find(query)
+                    .toArray();
+                await Promise.all(students.map(student => decorateProfileImage(student, 'image')));
+                students.forEach(student => {
+                    student.displayUsername = student.username ? `@${student.username}` : '';
+                    student.isClaimed = Boolean(student.usernameClaimed);
+                    // Canonical platform identity
+                    const rawRole = student.primaryRole || student.role || 'STUDENT';
+                    student.canonicalRole = String(rawRole).toUpperCase();
+                    student.isCanonicalStudent = student.canonicalRole === 'STUDENT';
+                    student.hasEnrollments = Array.isArray(student.course) && student.course.length > 0;
+                });
+                resolve(students);
+            } catch (err) {
+                reject(err);
+            }
         });
+    },
+
+    // ✅ GET ENROLLED LEARNERS (users with active course enrollments across all roles)
+    getEnrolledLearners: () => {
+        return module.exports.getStudents({ enrolledOnly: true });
     },
 
     // ✅ GET REGISTERED USERS (accounts without courses — from user panel)
