@@ -59,6 +59,7 @@ router.use((req, res, next) => {
   res.locals.canManageVerification = permissionsHelper.hasCapability(admin, 'manage_verification');
   res.locals.canViewVerificationEvidence = permissionsHelper.hasCapability(admin, 'view_verification_evidence');
   res.locals.canReviewBusinesses = permissionsHelper.hasCapability(admin, 'review_businesses');
+  res.locals.canDeleteBusinesses = permissionsHelper.hasCapability(admin, 'delete_businesses');
   res.locals.canManageJobs = permissionsHelper.hasCapability(admin, 'manage_jobs');
   res.locals.canModerateContent = permissionsHelper.hasCapability(admin, 'moderate_content');
   res.locals.canManageAI = permissionsHelper.hasCapability(admin, 'manage_ai_config');
@@ -450,8 +451,11 @@ router.get('/businesses', verifyLogin, async (req, res) => {
 router.get('/businesses/:id', verifyLogin, validateObjectIds(['id']), async (req, res) => {
   try {
     const details = await governanceHelper.getBusinessById(req.params.id, req.session.admin);
-    if (!details) {
-      return res.status(404).render('error', { message: 'Business not found.' });
+    if (!details || details.business?.isDeleted || details.business?.status === 'DELETED') {
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(404).json({ success: false, message: 'Business not found or has been deleted.' });
+      }
+      return res.status(404).render('error', { message: 'Business not found or has been deleted.' });
     }
 
     res.render('admin/business-detail', {
@@ -542,6 +546,34 @@ router.post('/businesses/:id/restore', verifyLogin, requireCapability('restore_b
     res.status(400).render('error', { message: err.message });
   }
 });
+
+// Delete Business Handler (supports both DELETE and POST)
+const handleDeleteBusiness = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reason = req.body?.reason || req.query?.reason || '';
+    const result = await governanceHelper.deleteBusiness(id, reason, req.session.admin, req);
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.method === 'DELETE') {
+      return res.status(200).json(result);
+    }
+    res.redirect('/admin/businesses');
+  } catch (err) {
+    logger.error('Delete Business Error:', err.message);
+    let statusCode = 400;
+    const msg = String(err.message || '').toLowerCase();
+    if (msg.includes('not found')) statusCode = 404;
+    else if (msg.includes('protected') || msg.includes('permission') || msg.includes('denied') || msg.includes('access denied')) statusCode = 403;
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.method === 'DELETE') {
+      return res.status(statusCode).json({ success: false, message: err.message });
+    }
+    res.status(statusCode).render('error', { message: err.message });
+  }
+};
+
+router.delete('/businesses/:id', verifyLogin, requireCapability('delete_businesses'), validateObjectIds(['id']), handleDeleteBusiness);
+router.post('/businesses/:id/delete', verifyLogin, requireCapability('delete_businesses'), validateObjectIds(['id']), handleDeleteBusiness);
 
 // Transfer Business Ownership
 router.post('/businesses/:id/transfer-ownership', verifyLogin, requireCapability('transfer_business_ownership'), validateObjectIds(['id']), async (req, res) => {

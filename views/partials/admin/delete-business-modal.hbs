@@ -1,0 +1,267 @@
+<!-- DELETE BUSINESS CONFIRMATION MODAL -->
+<div class="modal fade" id="deleteBusinessModal" tabindex="-1" aria-labelledby="deleteBusinessModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden; background: var(--surface, #1e293b); color: var(--text, #f8fafc); border: 1px solid var(--border, rgba(255,255,255,0.1));">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: rgba(239, 68, 68, 0.15); color: #ef4444; flex-shrink: 0;">
+                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" id="deleteBusinessModalLabel" style="font-size: 18px; letter-spacing: -0.3px; color: var(--text, #f8fafc);">Delete Business Organization</h5>
+                        <small class="text-muted" style="font-size: 12px;">High-risk administrative governance action</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="deleteBusinessForm" onsubmit="submitDeleteBusinessModal(event)">
+                <div class="modal-body px-4 py-3">
+                    <!-- Business Info Dossier Card -->
+                    <div class="p-3 rounded-3 mb-3 border" style="background: var(--surface-2, rgba(255,255,255,0.03)); border-color: var(--border, rgba(255,255,255,0.08)) !important;">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="overflow-hidden">
+                                <div class="fw-bold text-truncate" id="deleteModalBusinessName" style="font-size: 15px; color: var(--text, #f8fafc);"></div>
+                                <div class="text-muted small text-truncate" id="deleteModalBusinessSlug"></div>
+                            </div>
+                            <span id="deleteModalBusinessStatus" class="badge"></span>
+                        </div>
+                        <div class="text-muted" style="font-size: 11px;">
+                            Entity ID: <code id="deleteModalBusinessId" class="text-secondary user-select-all" style="font-size: 11px;"></code>
+                        </div>
+                    </div>
+
+                    <!-- Clear Consequences Box -->
+                    <div class="alert alert-danger d-flex gap-2 p-3 rounded-3 mb-3 border-0" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5; font-size: 12.5px; line-height: 1.5;">
+                        <i class="fa-solid fa-circle-exclamation mt-1 flex-shrink-0" style="color: #ef4444;"></i>
+                        <div>
+                            <strong style="color: #f87171;">Consequences of deleting this business:</strong>
+                            <ul class="m-0 ps-3 mt-1" style="font-size: 12px; color: #fecaca;">
+                                <li>The organization is removed from public and administrative directories.</li>
+                                <li>All active and pending jobs posted by this business are closed.</li>
+                                <li>Member and recruiter administrative associations are detached.</li>
+                                <li>Legal, verification, and compliance audit trail records are retained.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Deletion Reason (Optional / Recommended for Audit) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small mb-1" for="deleteBusinessReasonInput" style="color: var(--text, #e2e8f0); font-size: 12px;">
+                            Deletion Reason <span class="text-muted fw-normal">(Recorded in Audit Trail)</span>
+                        </label>
+                        <textarea class="form-control form-control-sm" id="deleteBusinessReasonInput" rows="2" placeholder="State governance reason (e.g. Dissolved legal entity, corporate request, duplicate)..." style="font-size: 13px;"></textarea>
+                    </div>
+
+                    <!-- Explicit Typing Confirmation Safeguard -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small mb-1" for="deleteBusinessConfirmInput" style="color: var(--text, #e2e8f0); font-size: 12px;">
+                            Type <span class="text-danger fw-bold text-uppercase" id="deleteConfirmTargetText"></span> to confirm:
+                        </label>
+                        <input type="text" class="form-control" id="deleteBusinessConfirmInput" autocomplete="off" placeholder="Type business name exactly to unlock" required style="font-size: 13px;">
+                        <div class="form-text text-muted" style="font-size: 11px;">
+                            <i class="fa-solid fa-shield-halved me-1 text-secondary"></i> Case-insensitive match required before deletion can be initiated.
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="deleteModalBusinessIdHidden">
+                </div>
+
+                <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" id="deleteBusinessCancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-3 d-flex align-items-center gap-2" id="deleteBusinessConfirmBtn" disabled>
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span id="deleteBusinessConfirmBtnText">Delete Business</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let deleteModalInstance = null;
+    let requiredTargetName = '';
+
+    function initDeleteModal() {
+        const modalEl = document.getElementById('deleteBusinessModal');
+        if (modalEl && window.bootstrap && !deleteModalInstance) {
+            deleteModalInstance = new bootstrap.Modal(modalEl);
+
+            modalEl.addEventListener('shown.bs.modal', function () {
+                const input = document.getElementById('deleteBusinessConfirmInput');
+                if (input) input.focus();
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                resetDeleteModal();
+            });
+
+            const confirmInput = document.getElementById('deleteBusinessConfirmInput');
+            if (confirmInput) {
+                confirmInput.addEventListener('input', function() {
+                    const typed = this.value.trim().toUpperCase();
+                    const target = requiredTargetName.trim().toUpperCase();
+                    const submitBtn = document.getElementById('deleteBusinessConfirmBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !(target.length > 0 && typed === target);
+                    }
+                });
+            }
+        }
+    }
+
+    function resetDeleteModal() {
+        const confirmInput = document.getElementById('deleteBusinessConfirmInput');
+        const reasonInput = document.getElementById('deleteBusinessReasonInput');
+        const submitBtn = document.getElementById('deleteBusinessConfirmBtn');
+        const submitText = document.getElementById('deleteBusinessConfirmBtnText');
+        const cancelBtn = document.getElementById('deleteBusinessCancelBtn');
+
+        if (confirmInput) confirmInput.value = '';
+        if (reasonInput) reasonInput.value = '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            delete submitBtn.dataset.submitting;
+        }
+        if (cancelBtn) cancelBtn.disabled = false;
+        if (submitText) submitText.innerHTML = 'Delete Business';
+        requiredTargetName = '';
+    }
+
+    // Expose openDeleteBusinessModal to global window scope
+    window.openDeleteBusinessModal = function(id, name, slug, status) {
+        initDeleteModal();
+
+        requiredTargetName = String(name || '').trim();
+
+        const idHidden = document.getElementById('deleteModalBusinessIdHidden');
+        const idText = document.getElementById('deleteModalBusinessId');
+        const nameText = document.getElementById('deleteModalBusinessName');
+        const slugText = document.getElementById('deleteModalBusinessSlug');
+        const targetSpan = document.getElementById('deleteConfirmTargetText');
+
+        if (idHidden) idHidden.value = id;
+        if (idText) idText.innerText = id;
+        if (nameText) nameText.innerText = name || 'Unnamed Business';
+        if (slugText) slugText.innerText = slug ? `@${slug}` : '';
+        if (targetSpan) targetSpan.innerText = requiredTargetName.toUpperCase();
+
+        const statusBadge = document.getElementById('deleteModalBusinessStatus');
+        if (statusBadge) {
+            const normStatus = String(status || 'PENDING').toUpperCase();
+            statusBadge.innerText = normStatus;
+            statusBadge.className = 'badge';
+            if (normStatus === 'APPROVED') statusBadge.classList.add('bg-success');
+            else if (normStatus === 'PENDING' || normStatus === 'PENDING_REVIEW') statusBadge.classList.add('bg-warning', 'text-dark');
+            else if (normStatus === 'SUSPENDED') statusBadge.classList.add('bg-danger');
+            else if (normStatus === 'REJECTED') statusBadge.classList.add('bg-secondary');
+            else statusBadge.classList.add('bg-dark');
+        }
+
+        resetDeleteModal();
+        requiredTargetName = String(name || '').trim();
+
+        if (deleteModalInstance) {
+            deleteModalInstance.show();
+        }
+    };
+
+    window.submitDeleteBusinessModal = async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('deleteModalBusinessIdHidden')?.value;
+        const reason = (document.getElementById('deleteBusinessReasonInput')?.value || '').trim();
+        const submitBtn = document.getElementById('deleteBusinessConfirmBtn');
+        const submitText = document.getElementById('deleteBusinessConfirmBtnText');
+        const cancelBtn = document.getElementById('deleteBusinessCancelBtn');
+
+        if (!id || (submitBtn && submitBtn.disabled && !submitBtn.dataset.submitting)) {
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.dataset.submitting = 'true';
+        }
+        if (cancelBtn) cancelBtn.disabled = true;
+        if (submitText) {
+            submitText.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...';
+        }
+
+        try {
+            const res = await fetch(`/admin/businesses/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                if (deleteModalInstance) {
+                    deleteModalInstance.hide();
+                }
+
+                // Call page-specific deletion callback if defined
+                if (typeof window.onBusinessDeletedSuccess === 'function') {
+                    window.onBusinessDeletedSuccess(id, data);
+                } else {
+                    if (window.Swal) {
+                        window.Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted',
+                            text: data.message || 'Business deleted successfully.',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    }
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            } else {
+                resetSubmitBtn();
+                if (window.Swal) {
+                    window.Swal.fire({
+                        icon: 'error',
+                        title: 'Deletion Failed',
+                        text: data.message || 'Failed to delete business entity.'
+                    });
+                } else {
+                    alert(data.message || 'Failed to delete business.');
+                }
+            }
+        } catch (err) {
+            resetSubmitBtn();
+            if (window.Swal) {
+                window.Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: err.message || 'Network communication error.'
+                });
+            } else {
+                alert('Network communication error: ' + err.message);
+            }
+        }
+
+        function resetSubmitBtn() {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                delete submitBtn.dataset.submitting;
+            }
+            if (cancelBtn) cancelBtn.disabled = false;
+            if (submitText) submitText.innerHTML = 'Delete Business';
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDeleteModal);
+    } else {
+        initDeleteModal();
+    }
+})();
+</script>

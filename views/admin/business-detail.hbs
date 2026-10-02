@@ -50,6 +50,11 @@
             <button class="btn btn-outline-primary px-3" onclick="openTransferOwnershipModal('{{business._id}}', '{{business.name}}', '{{business.createdBy}}')">
                 <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Transfer Ownership
             </button>
+            {{#if @root.canDeleteBusinesses}}
+            <button class="btn btn-outline-danger px-3" onclick="openDeleteBusinessModal('{{business._id}}', '{{business.name}}', '{{business.slug}}', '{{business.statusNormalized}}')">
+                <i class="fa-solid fa-trash-can me-1"></i> Delete Business
+            </button>
+            {{/if}}
         </div>
     </div>
 
@@ -525,6 +530,12 @@
                     <button class="btn btn-outline-secondary w-100 text-start" onclick="openTransferOwnershipModal('{{business._id}}', '{{business.name}}', '{{business.createdBy}}')">
                         <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Transfer Ownership
                     </button>
+                    {{#if @root.canDeleteBusinesses}}
+                    <hr class="my-2 opacity-25">
+                    <button class="btn btn-outline-danger w-100 text-start" onclick="openDeleteBusinessModal('{{business._id}}', '{{business.name}}', '{{business.slug}}', '{{business.statusNormalized}}')">
+                        <i class="fa-solid fa-trash-can me-2"></i> Delete Business
+                    </button>
+                    {{/if}}
                 </div>
             </div>
 
@@ -866,4 +877,22 @@ async function submitChangeMemberRole(e) {
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
+
+// Deletion redirect handler for dossier view
+window.onBusinessDeletedSuccess = function(id, data) {
+    if (window.Swal) {
+        window.Swal.fire({
+            icon: 'success',
+            title: 'Business Deleted',
+            text: 'Business deleted successfully. Redirecting to directory...',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+    setTimeout(() => {
+        window.location.href = '/admin/businesses';
+    }, 1500);
+};
 </script>
+
+{{> admin/delete-business-modal}}

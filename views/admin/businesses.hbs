@@ -25,7 +25,7 @@
             <div class="stat-card stat-dark">
                 <div>
                     <small>Total Businesses</small>
-                    <h2>{{stats.total}}</h2>
+                    <h2 id="statTotalBusinesses">{{stats.total}}</h2>
                 </div>
                 <i class="fa-solid fa-building stat-icon"></i>
             </div>
@@ -35,7 +35,7 @@
             <div class="stat-card stat-yellow">
                 <div>
                     <small>Pending Review</small>
-                    <h2>{{stats.pending}}</h2>
+                    <h2 id="statPendingBusinesses">{{stats.pending}}</h2>
                 </div>
                 <i class="fa-solid fa-hourglass-half stat-icon"></i>
             </div>
@@ -45,7 +45,7 @@
             <div class="stat-card stat-green">
                 <div>
                     <small>Approved</small>
-                    <h2>{{stats.approved}}</h2>
+                    <h2 id="statApprovedBusinesses">{{stats.approved}}</h2>
                 </div>
                 <i class="fa-solid fa-circle-check stat-icon"></i>
             </div>
@@ -55,7 +55,7 @@
             <div class="stat-card stat-red">
                 <div>
                     <small>Rejected</small>
-                    <h2>{{stats.rejected}}</h2>
+                    <h2 id="statRejectedBusinesses">{{stats.rejected}}</h2>
                 </div>
                 <i class="fa-solid fa-circle-xmark stat-icon"></i>
             </div>
@@ -65,7 +65,7 @@
             <div class="stat-card stat-dark">
                 <div>
                     <small>Suspended</small>
-                    <h2>{{stats.suspended}}</h2>
+                    <h2 id="statSuspendedBusinesses">{{stats.suspended}}</h2>
                 </div>
                 <i class="fa-solid fa-ban stat-icon"></i>
             </div>
@@ -76,27 +76,27 @@
     <ul class="nav nav-tabs mb-4 border-bottom" style="font-size: 14px; font-weight: 600;">
         <li class="nav-item">
             <a class="nav-link {{#ifEquals tab 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=all&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
-                All ({{stats.total}})
+                All <span id="tabCountAll">({{stats.total}})</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{#ifEquals tab 'pending'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=pending&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
-                Pending Review ({{stats.pending}})
+                Pending Review <span id="tabCountPending">({{stats.pending}})</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{#ifEquals tab 'approved'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=approved&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
-                Approved ({{stats.approved}})
+                Approved <span id="tabCountApproved">({{stats.approved}})</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{#ifEquals tab 'rejected'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=rejected&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
-                Rejected ({{stats.rejected}})
+                Rejected <span id="tabCountRejected">({{stats.rejected}})</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{#ifEquals tab 'suspended'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/businesses?tab=suspended&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
-                Suspended ({{stats.suspended}})
+                Suspended <span id="tabCountSuspended">({{stats.suspended}})</span>
             </a>
         </li>
     </ul>
@@ -138,7 +138,7 @@
         <div class="row g-4 mb-4">
             {{#if records.length}}
             {{#each records}}
-            <div class="col-xl-4 col-md-6">
+            <div class="col-xl-4 col-md-6 business-card-item" id="business-card-{{_id}}" data-business-id="{{_id}}" data-status="{{statusNormalized}}">
                 <div class="admin-governance-card">
                     <div class="admin-card-header">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -248,6 +248,20 @@
                             <i class="fa-solid fa-rotate-left me-1"></i> Restore
                         </button>
                         {{/ifEquals}}
+                        {{#if @root.canDeleteBusinesses}}
+                        <div class="dropdown d-inline-block ms-auto">
+                            <button class="btn btn-sm btn-outline-secondary px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Actions">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li>
+                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2" type="button" onclick="openDeleteBusinessModal('{{_id}}', '{{name}}', '{{slug}}', '{{statusNormalized}}')">
+                                        <i class="fa-solid fa-trash-can"></i> Delete Business
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        {{/if}}
                     </div>
                 </div>
             </div>
@@ -287,7 +301,7 @@
                     <tbody>
                         {{#if records.length}}
                         {{#each records}}
-                        <tr>
+                        <tr class="business-table-row" id="business-row-{{_id}}" data-business-id="{{_id}}" data-status="{{statusNormalized}}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="rounded p-2 d-flex align-items-center justify-content-center border shadow-xs" style="width: 44px; height: 44px; background: var(--surface);">
@@ -364,6 +378,20 @@
                                         <i class="fa-solid fa-rotate-left"></i>
                                     </button>
                                     {{/ifEquals}}
+                                    {{#if @root.canDeleteBusinesses}}
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-sm btn-outline-secondary px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Actions">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                            <li>
+                                                <button class="dropdown-item text-danger d-flex align-items-center gap-2" type="button" onclick="openDeleteBusinessModal('{{_id}}', '{{name}}', '{{slug}}', '{{statusNormalized}}')">
+                                                    <i class="fa-solid fa-trash-can"></i> Delete Business
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {{/if}}
                                 </div>
                             </td>
                         </tr>
@@ -597,4 +625,90 @@ async function submitSuspendBusiness(e) {
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 }
+
+// Seamless dynamic UI update on successful business deletion
+window.onBusinessDeletedSuccess = function(id, data) {
+    const card = document.getElementById('business-card-' + id);
+    if (card) {
+        card.style.transition = 'all 0.35s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.92)';
+        setTimeout(() => {
+            card.remove();
+            checkEmptyLists();
+        }, 350);
+    }
+
+    const row = document.getElementById('business-row-' + id);
+    if (row) {
+        row.style.transition = 'all 0.35s ease';
+        row.style.opacity = '0';
+        setTimeout(() => {
+            row.remove();
+            checkEmptyLists();
+        }, 350);
+    }
+
+    if (data && data.stats) {
+        const s = data.stats;
+        const setTxt = (elemId, val) => {
+            const el = document.getElementById(elemId);
+            if (el) el.textContent = val;
+        };
+        setTxt('statTotalBusinesses', s.total);
+        setTxt('statPendingBusinesses', s.pending);
+        setTxt('statApprovedBusinesses', s.approved);
+        setTxt('statRejectedBusinesses', s.rejected);
+        setTxt('statSuspendedBusinesses', s.suspended);
+
+        setTxt('tabCountAll', `(${s.total})`);
+        setTxt('tabCountPending', `(${s.pending})`);
+        setTxt('tabCountApproved', `(${s.approved})`);
+        setTxt('tabCountRejected', `(${s.rejected})`);
+        setTxt('tabCountSuspended', `(${s.suspended})`);
+    }
+
+    if (window.Swal) {
+        window.Swal.fire({
+            icon: 'success',
+            title: 'Business Deleted',
+            text: data.message || 'Business deleted successfully.',
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }
+};
+
+function checkEmptyLists() {
+    const cardContainer = document.querySelector('#businessesCardView .row');
+    if (cardContainer && cardContainer.querySelectorAll('.business-card-item').length === 0) {
+        if (!cardContainer.querySelector('.admin-empty-state')) {
+            cardContainer.innerHTML = `
+                <div class="col-12">
+                    <div class="admin-empty-state">
+                        <div class="admin-empty-state-icon">
+                            <i class="fa-solid fa-building-circle-check"></i>
+                        </div>
+                        <div class="admin-empty-state-title">No Businesses In This Queue</div>
+                        <p class="admin-empty-state-desc">There are currently no infrastructure business entities matching the selected criteria.</p>
+                    </div>
+                </div>`;
+        }
+    }
+
+    const tableBody = document.querySelector('#businessesTableView tbody');
+    if (tableBody && tableBody.querySelectorAll('.business-table-row').length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-building-circle-check fa-3x mb-3 text-secondary opacity-50"></i>
+                    <p class="m-0">No business entities found in this status view.</p>
+                </td>
+            </tr>`;
+    }
+}
 </script>
+
+{{> admin/delete-business-modal}}

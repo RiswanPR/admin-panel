@@ -11,6 +11,7 @@ const logger = require('./logger');
 const permissionsHelper = require('./permissions-helper');
 const usernameHelper = require('./username-helper');
 const verificationHelper = require('./verification-helper');
+const { deleteFromS3 } = require('../config/s3-storage');
 // Lazy-load to avoid circular deps; call via getter
 let _teacherHelper = null;
 const teacherHelper = () => {
@@ -885,7 +886,9 @@ const getBusinesses = async (filters = {}) => {
   const tab = (filters.tab || 'all').toLowerCase();
   const search = (filters.search || '').trim();
 
-  const query = {};
+  const query = {
+    isDeleted: { $ne: true }
+  };
 
   if (tab === 'pending') {
     query.status = { $in: ['PENDING', 'pending', 'PENDING_REVIEW'] };
@@ -895,6 +898,8 @@ const getBusinesses = async (filters = {}) => {
     query.status = { $in: ['REJECTED', 'rejected'] };
   } else if (tab === 'suspended') {
     query.status = { $in: ['SUSPENDED', 'suspended'] };
+  } else {
+    query.status = { $nin: ['DELETED', 'deleted'] };
   }
 
   if (filters.verification && filters.verification !== 'all') {
@@ -1041,12 +1046,13 @@ const getBusinesses = async (filters = {}) => {
 const getBusinessStats = async () => {
   const database = db.get();
   try {
+    const notDeletedQuery = { isDeleted: { $ne: true }, status: { $nin: ['DELETED', 'deleted'] } };
     const [total, pending, approved, rejected, suspended] = await Promise.all([
-      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({}),
-      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['PENDING', 'pending', 'PENDING_REVIEW'] } }),
-      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['APPROVED', 'approved'] } }),
-      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['REJECTED', 'rejected'] } }),
-      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ status: { $in: ['SUSPENDED', 'suspended'] } })
+      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments(notDeletedQuery),
+      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ ...notDeletedQuery, status: { $in: ['PENDING', 'pending', 'PENDING_REVIEW'] } }),
+      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ ...notDeletedQuery, status: { $in: ['APPROVED', 'approved'] } }),
+      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ ...notDeletedQuery, status: { $in: ['REJECTED', 'rejected'] } }),
+      database.collection(collection.ORGANIZATIONS_COLLECTION).countDocuments({ ...notDeletedQuery, status: { $in: ['SUSPENDED', 'suspended'] } })
     ]);
     return { total, pending, approved, rejected, suspended };
   } catch (e) {
@@ -1054,13 +1060,16 @@ const getBusinessStats = async () => {
   }
 };
 
-const getBusinessById = async (id, admin = null) => {
+const getBusinessById = async (id, admin = null, options = {}) => {
   if (!isValidObjectId(id)) return null;
   const database = db.get();
   const objId = new ObjectId(id);
 
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
   if (!business) return null;
+  if (!options.includeDeleted && (business.isDeleted || business.status === 'DELETED')) {
+    return null;
+  }
 
   // 1. Fetch Owner details
   let owner = null;
@@ -1247,6 +1256,9 @@ const approveBusiness = async (id, actor, req) => {
 
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
   if (!business) throw new Error('Business not found.');
+  if (business.isDeleted || business.status === 'DELETED') {
+    throw new Error('Cannot perform this operation on a deleted business.');
+  }
 
   await database.collection(collection.ORGANIZATIONS_COLLECTION).updateOne(
     { _id: objId },
@@ -1290,6 +1302,9 @@ const rejectBusiness = async (id, reason, actor, req) => {
   const objId = new ObjectId(id);
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
   if (!business) throw new Error('Business not found.');
+  if (business.isDeleted || business.status === 'DELETED') {
+    throw new Error('Cannot perform this operation on a deleted business.');
+  }
 
   await database.collection(collection.ORGANIZATIONS_COLLECTION).updateOne(
     { _id: objId },
@@ -1342,6 +1357,9 @@ const suspendBusiness = async (id, reason, actor, req) => {
   const objId = new ObjectId(id);
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
   if (!business) throw new Error('Business not found.');
+  if (business.isDeleted || business.status === 'DELETED') {
+    throw new Error('Cannot perform this operation on a deleted business.');
+  }
 
   await database.collection(collection.ORGANIZATIONS_COLLECTION).updateOne(
     { _id: objId },
@@ -1396,6 +1414,9 @@ const restoreBusiness = async (id, actor, req) => {
 
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
   if (!business) throw new Error('Business not found.');
+  if (business.isDeleted || business.status === 'DELETED') {
+    throw new Error('Cannot perform this operation on a deleted business.');
+  }
 
   await database.collection(collection.ORGANIZATIONS_COLLECTION).updateOne(
     { _id: objId },
@@ -1444,6 +1465,184 @@ const restoreBusiness = async (id, actor, req) => {
   return { success: true, status: 'APPROVED', restoredJobsCount: restoreJobsResult.modifiedCount || 0 };
 };
 
+const deleteBusiness = async (id, reason, actor, req) => {
+  if (!isValidObjectId(id)) throw new Error('Invalid business ID.');
+  const database = db.get();
+  const objId = new ObjectId(id);
+
+  const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: objId });
+  if (!business) throw new Error('Business not found.');
+
+  // Idempotency: if already deleted, return success with current stats
+  if (business.isDeleted || business.status === 'DELETED') {
+    const stats = await getBusinessStats();
+    return {
+      success: true,
+      message: 'Business was already deleted.',
+      alreadyDeleted: true,
+      businessId: String(id),
+      businessName: business.name,
+      previousStatus: business.status,
+      stats
+    };
+  }
+
+  // Protected / system-owned business protection
+  const isProtectedOrg = Boolean(
+    business.isProtected ||
+    business.isSystem ||
+    ['zeitnah', 'zeitnah-official', 'system'].includes(String(business.slug || '').toLowerCase())
+  );
+  if (isProtectedOrg) {
+    throw new Error('Cannot delete protected or system-owned organization.');
+  }
+
+  const previousStatus = business.status;
+  const deletionReason = reason && typeof reason === 'string' && reason.trim()
+    ? reason.trim()
+    : 'Administrative deletion';
+
+  const deletedBy = actor?._id ? {
+    _id: new ObjectId(actor._id),
+    name: actor.name || actor.Name || 'Admin',
+    email: actor.email || actor.Email || '',
+    role: actor.role || 'admin'
+  } : {
+    name: 'Admin',
+    role: 'admin'
+  };
+
+  // 1. Soft delete the business organization document
+  await database.collection(collection.ORGANIZATIONS_COLLECTION).updateOne(
+    { _id: objId },
+    {
+      $set: {
+        status: 'DELETED',
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy,
+        deletionReason,
+        verificationStatus: 'REVOKED',
+        updatedAt: new Date()
+      }
+    }
+  );
+
+  // 2. Cascade safely to memberships: Detach/inactivate all memberships so access is revoked
+  // Note: Global user accounts in STUDENTS_COLLECTION are NEVER deleted!
+  const membershipUpdateRes = await database.collection(collection.ORGANIZATION_MEMBERSHIPS_COLLECTION).updateMany(
+    { $or: [{ organizationId: objId }, { organizationId: String(id) }] },
+    {
+      $set: {
+        status: 'REMOVED',
+        removedReason: 'Parent organization deleted by administration',
+        updatedAt: new Date()
+      }
+    }
+  ).catch(err => {
+    logger.warn('Error updating memberships on business deletion:', err.message);
+    return { modifiedCount: 0 };
+  });
+
+  // 3. Cascade safely to opportunities (Jobs): Close active/pending/draft jobs
+  const jobUpdateRes = await database.collection(collection.OPPORTUNITIES_COLLECTION).updateMany(
+    {
+      $or: [{ organizationId: objId }, { organizationId: String(id) }],
+      status: { $ne: 'CLOSED' }
+    },
+    {
+      $set: {
+        status: 'CLOSED',
+        closedReason: 'Parent organization deleted by administration',
+        closedAt: new Date(),
+        updatedAt: new Date()
+      }
+    }
+  ).catch(err => {
+    logger.warn('Error updating opportunities on business deletion:', err.message);
+    return { modifiedCount: 0 };
+  });
+
+  // 4. Update pending verification requests
+  await database.collection(collection.VERIFICATION_REQUESTS_COLLECTION).updateMany(
+    {
+      $or: [{ targetId: String(id) }, { targetId: objId }],
+      status: { $in: ['PENDING', 'pending', 'UNDER_REVIEW', 'under_review'] }
+    },
+    {
+      $set: {
+        status: 'CANCELLED',
+        cancellationReason: 'Business deleted by administration',
+        updatedAt: new Date()
+      }
+    }
+  ).catch(err => {
+    logger.warn('Error updating verification requests on business deletion:', err.message);
+  });
+
+  // 5. Resolve open moderation reports
+  await database.collection(collection.MODERATION_REPORTS_COLLECTION).updateMany(
+    {
+      targetType: { $in: ['BUSINESS', 'ORGANIZATION', 'business', 'organization'] },
+      $or: [{ targetId: String(id) }, { targetId: objId }],
+      status: { $in: ['OPEN', 'open', 'PENDING', 'pending', 'UNDER_REVIEW', 'under_review'] }
+    },
+    {
+      $set: {
+        status: 'RESOLVED',
+        resolutionNote: 'Business deleted by administration',
+        resolvedAt: new Date(),
+        updatedAt: new Date()
+      }
+    }
+  ).catch(err => {
+    logger.warn('Error resolving moderation reports on business deletion:', err.message);
+  });
+
+  // 6. Safe external storage / logo cleanup using project storage abstraction
+  if (business.logo) {
+    try {
+      await deleteFromS3(business.logo);
+    } catch (s3Err) {
+      logger.warn('S3 logo cleanup warning during business deletion:', s3Err.message);
+    }
+  }
+
+  // 7. Audit log creation with complete metadata and secret scrubbing
+  await auditHelper.logAction({
+    actor,
+    req,
+    action: 'BUSINESS_DELETED',
+    entityType: 'BUSINESS',
+    entityId: String(id),
+    entityName: business.name,
+    status: 'success',
+    message: `Business "${business.name}" deleted by administrator. Reason: ${deletionReason}`,
+    metadata: {
+      actor: actor?.Name || actor?.name || actor?.Email || 'Admin',
+      businessId: String(id),
+      businessName: business.name,
+      businessSlug: business.slug,
+      previousStatus,
+      newStatus: 'DELETED',
+      reason: deletionReason,
+      membershipsAffected: membershipUpdateRes?.modifiedCount || 0,
+      jobsClosed: jobUpdateRes?.modifiedCount || 0
+    }
+  });
+
+  const updatedStats = await getBusinessStats();
+
+  return {
+    success: true,
+    message: 'Business deleted successfully.',
+    businessId: String(id),
+    businessName: business.name,
+    previousStatus,
+    stats: updatedStats
+  };
+};
+
 const transferBusinessOwnership = async (businessId, newOwnerId, reason, actor, req) => {
   if (!isValidObjectId(businessId)) throw new Error('Invalid business ID.');
   if (!isValidObjectId(newOwnerId)) throw new Error('Invalid new owner user ID.');
@@ -1455,6 +1654,9 @@ const transferBusinessOwnership = async (businessId, newOwnerId, reason, actor, 
 
   const business = await database.collection(collection.ORGANIZATIONS_COLLECTION).findOne({ _id: bObjId });
   if (!business) throw new Error('Business not found.');
+  if (business.isDeleted || business.status === 'DELETED') {
+    throw new Error('Cannot perform this operation on a deleted business.');
+  }
 
   const newOwner = await database.collection(collection.STUDENTS_COLLECTION).findOne({ _id: uObjId });
   if (!newOwner) throw new Error('Designated new owner account not found.');
@@ -2184,6 +2386,7 @@ module.exports = {
   rejectBusiness,
   suspendBusiness,
   restoreBusiness,
+  deleteBusiness,
   transferBusinessOwnership,
   updateBusinessMemberRole,
   getJobs,
