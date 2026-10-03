@@ -1,0 +1,665 @@
+<div class="admin-content-container">
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 fw-bold mb-1"><i class="fa-solid fa-flag text-danger me-2"></i>Community Reports Center</h1>
+            <p class="text-muted mb-0">Triage user reports, review violations against community guidelines, and apply safety actions.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/community/posts" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-signs-post me-1"></i> Posts</a>
+            <a href="/admin/community/comments" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-comments me-1"></i> Comments</a>
+            <a href="/admin/community/stories" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-circle-play me-1"></i> Stories</a>
+        </div>
+    </div>
+
+    <!-- STATS OVERVIEW -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="admin-stat-card border-start border-4 border-primary">
+                <div class="admin-stat-title">Total Reports</div>
+                <div class="admin-stat-value text-primary">{{stats.totalReports}}</div>
+                <div class="admin-stat-sub">Lifetime submitted reports</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="admin-stat-card border-start border-4 border-warning">
+                <div class="admin-stat-title">Pending Review</div>
+                <div class="admin-stat-value text-warning">{{stats.pendingReports}}</div>
+                <div class="admin-stat-sub">Requires moderator triage</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="admin-stat-card border-start border-4 border-success">
+                <div class="admin-stat-title">Active Posts Monitored</div>
+                <div class="admin-stat-value text-success">{{stats.activePosts}}</div>
+                <div class="admin-stat-sub">Across student & batch feeds</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="admin-stat-card border-start border-4 border-info">
+                <div class="admin-stat-title">Active Stories</div>
+                <div class="admin-stat-value text-info">{{stats.activeStories}}</div>
+                <div class="admin-stat-sub">Ephemeral 24h content</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <form method="GET" action="/admin/community/reports" class="admin-filter-card mb-4" id="communityReportsFilterForm">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-3 col-md-6 col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search ID, reporter, description...">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="status" onchange="this.form.submit()">
+                    <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+                    <option value="pending" {{#ifEquals filters.status 'pending'}}selected{{/ifEquals}}>Pending</option>
+                    <option value="reviewed" {{#ifEquals filters.status 'reviewed'}}selected{{/ifEquals}}>Reviewed</option>
+                    <option value="resolved" {{#ifEquals filters.status 'resolved'}}selected{{/ifEquals}}>Resolved</option>
+                    <option value="dismissed" {{#ifEquals filters.status 'dismissed'}}selected{{/ifEquals}}>Dismissed</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="entityType" onchange="this.form.submit()">
+                    <option value="all" {{#ifEquals filters.entityType 'all'}}selected{{/ifEquals}}>All Targets</option>
+                    <option value="post" {{#ifEquals filters.entityType 'post'}}selected{{/ifEquals}}>Posts</option>
+                    <option value="comment" {{#ifEquals filters.entityType 'comment'}}selected{{/ifEquals}}>Comments</option>
+                    <option value="story" {{#ifEquals filters.entityType 'story'}}selected{{/ifEquals}}>Stories</option>
+                    <option value="user" {{#ifEquals filters.entityType 'user'}}selected{{/ifEquals}}>Users</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="reason" onchange="this.form.submit()">
+                    <option value="ALL" {{#ifEquals filters.reason 'ALL'}}selected{{/ifEquals}}>All Reasons</option>
+                    <option value="spam" {{#ifEquals filters.reason 'spam'}}selected{{/ifEquals}}>Spam</option>
+                    <option value="harassment" {{#ifEquals filters.reason 'harassment'}}selected{{/ifEquals}}>Harassment</option>
+                    <option value="inappropriate" {{#ifEquals filters.reason 'inappropriate'}}selected{{/ifEquals}}>Inappropriate</option>
+                    <option value="hate_speech" {{#ifEquals filters.reason 'hate_speech'}}selected{{/ifEquals}}>Hate Speech</option>
+                    <option value="misinformation" {{#ifEquals filters.reason 'misinformation'}}selected{{/ifEquals}}>Misinformation</option>
+                    <option value="copyright" {{#ifEquals filters.reason 'copyright'}}selected{{/ifEquals}}>Copyright</option>
+                    <option value="other" {{#ifEquals filters.reason 'other'}}selected{{/ifEquals}}>Other</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="sort" onchange="this.form.submit()">
+                    <option value="newest" {{#ifEquals filters.sort 'newest'}}selected{{/ifEquals}}>Newest Reports</option>
+                    <option value="oldest" {{#ifEquals filters.sort 'oldest'}}selected{{/ifEquals}}>Oldest Reports</option>
+                </select>
+            </div>
+            <div class="col-lg-1 col-md-2 col-6 text-end">
+                <a href="/admin/community/reports" class="btn btn-outline-secondary w-100" title="Reset Filters"><i class="fa-solid fa-rotate"></i></a>
+            </div>
+        </div>
+
+        <div class="row g-2 align-items-center mt-2 pt-2 border-top">
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">From</span>
+                    <input type="date" class="form-control" name="startDate" value="{{filters.startDate}}" onchange="this.form.submit()">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">To</span>
+                    <input type="date" class="form-control" name="endDate" value="{{filters.endDate}}" onchange="this.form.submit()">
+                </div>
+            </div>
+            {{#if hasActiveFilters}}
+            <div class="col-lg-6 col-md-4 col-sm-12 text-lg-end">
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-2 px-3 small">
+                    <i class="fa-solid fa-filter me-1"></i> Active Filters Applied
+                </span>
+            </div>
+            {{/if}}
+        </div>
+    </form>
+
+    <!-- BULK ACTIONS TOOLBAR -->
+    <div id="reportsBulkToolbar" class="card shadow-lg border-0 mb-3 d-none" style="border-radius: 14px; background: #1e293b; color: white;">
+        <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary" id="selectedReportsCount">0</span>
+                <span class="small fw-semibold">Reports selected (Max 50)</span>
+                <button type="button" class="btn btn-link text-light btn-sm text-decoration-none p-0 ms-2" onclick="clearReportsSelection()">Clear</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-success" onclick="executeReportsBulk('resolve')">
+                    <i class="fa-solid fa-check me-1"></i> Resolve Selected
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="executeReportsBulk('dismiss')">
+                    <i class="fa-solid fa-ban me-1"></i> Dismiss Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="community-reports" total=total itemLabel="reports" viewMode=viewMode}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="community-reportsCardView" data-section="community-reports">
+        <div class="row g-3">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card h-100 d-flex flex-column">
+                    <div class="admin-card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" class="form-check-input report-bulk-checkbox m-0" value="{{_id}}" onchange="updateReportsBulkState()">
+                            <span class="badge bg-secondary text-uppercase" style="font-size: 11px;">{{entityType}}</span>
+                            {{#if (gt entityReportsTotal 1)}}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 11px;">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>{{entityReportsTotal}} Reports
+                            </span>
+                            {{/if}}
+                        </div>
+                        <div>
+                            {{#if isPending}}
+                            <span class="badge bg-warning text-dark"><i class="fa-regular fa-clock me-1"></i>Pending</span>
+                            {{else}}
+                            {{#if isResolved}}
+                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Resolved</span>
+                            {{else}}
+                            {{#if isDismissed}}
+                            <span class="badge bg-secondary"><i class="fa-solid fa-ban me-1"></i>Dismissed</span>
+                            {{else}}
+                            <span class="badge bg-info text-dark"><i class="fa-solid fa-magnifying-glass me-1"></i>Reviewed</span>
+                            {{/if}}
+                            {{/if}}
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="admin-card-body flex-grow-1">
+                        <!-- REPORT REASON -->
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark border px-2 py-1 text-uppercase fw-semibold" style="font-size: 11px;">
+                                <i class="fa-solid fa-shield-halved text-danger me-1"></i>Reason: {{reason}}
+                            </span>
+                        </div>
+
+                        <!-- USER DESCRIPTION -->
+                        {{#if description}}
+                        <p class="mb-3 text-dark small fst-italic bg-light p-2 rounded border">
+                            "{{description}}"
+                        </p>
+                        {{/if}}
+
+                        <!-- TARGET CONTENT PREVIEW -->
+                        <div class="p-2 rounded bg-light-subtle border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 10px;">Reported Target Content</span>
+                                <span class="badge {{#ifEquals targetStatus 'ACTIVE'}}bg-success-subtle text-success{{else}}bg-danger-subtle text-danger{{/ifEquals}}" style="font-size: 10px;">
+                                    {{targetStatus}}
+                                </span>
+                            </div>
+                            <div class="small text-truncate text-secondary">
+                                {{targetSnippet}}
+                            </div>
+                        </div>
+
+                        <!-- REPORTER & TIMESTAMPS -->
+                        <div class="d-flex justify-content-between align-items-center small text-muted pt-2 border-top">
+                            <div>
+                                <i class="fa-solid fa-user me-1"></i>{{reporter.name}}
+                            </div>
+                            <div title="{{createdAt}}">
+                                <i class="fa-regular fa-calendar me-1"></i>{{createdAt}}
+                            </div>
+                        </div>
+
+                        {{#if moderatorNotes}}
+                        <div class="mt-2 small text-muted bg-warning-subtle p-2 rounded border border-warning-subtle">
+                            <span class="fw-semibold text-dark"><i class="fa-solid fa-user-shield me-1"></i>Mod Note:</span> {{moderatorNotes}}
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="admin-card-footer d-flex justify-content-between align-items-center mt-auto">
+                        <a href="/admin/community/reports/{{_id}}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-file-shield me-1"></i> Dossier
+                        </a>
+
+                        <div class="btn-group btn-group-sm">
+                            {{#if (eq targetStatus 'UNAVAILABLE')}}
+                            <button type="button" class="btn btn-outline-secondary" disabled title="Content unavailable">
+                                <i class="fa-solid fa-link-slash"></i>
+                            </button>
+                            {{else}}
+                            <a href="{{targetUrl}}" class="btn btn-outline-secondary" title="View affected content" target="_blank" rel="noopener noreferrer">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Content
+                            </a>
+                            {{/if}}
+
+                            {{#if isPending}}
+                            {{#if ../canModerateContent}}
+                            <button type="button" class="btn btn-outline-success" onclick="openResolveReportModal('{{_id}}', '{{entityType}}', '{{entityId}}')" title="Resolve Report">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="openDismissReportModal('{{_id}}')" title="Dismiss Report">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            {{/if}}
+                            {{/if}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon"><i class="fa-solid fa-shield-cat"></i></div>
+                    <div class="admin-empty-state-title">No Community Reports Found</div>
+                    <p class="admin-empty-state-desc">
+                        {{#if hasActiveFilters}}
+                        No reports match your current filter criteria. Try resetting filters.
+                        {{else}}
+                        There are currently no community reports awaiting review. The community feed is healthy!
+                        {{/if}}
+                    </p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'card'}}d-none{{/ifEquals}}" id="community-reportsTableView" data-section="community-reports">
+        <div class="table-responsive">
+            <table class="table admin-governance-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="ps-3" style="width: 40px;">
+                            <input type="checkbox" id="selectAllReports" class="form-check-input" onchange="toggleSelectAllReports(this)">
+                        </th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Reason</th>
+                        <th>Target Snippet</th>
+                        <th>Reporter</th>
+                        <th>Reports on Target</th>
+                        <th>Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#if records.length}}
+                    {{#each records}}
+                    <tr>
+                        <td class="ps-3">
+                            <input type="checkbox" class="form-check-input report-bulk-checkbox" value="{{_id}}" onchange="updateReportsBulkState()">
+                        </td>
+                        <td>
+                            {{#if isPending}}
+                            <span class="badge bg-warning text-dark"><i class="fa-regular fa-clock me-1"></i>Pending</span>
+                            {{else}}
+                            {{#if isResolved}}
+                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Resolved</span>
+                            {{else}}
+                            {{#if isDismissed}}
+                            <span class="badge bg-secondary"><i class="fa-solid fa-ban me-1"></i>Dismissed</span>
+                            {{else}}
+                            <span class="badge bg-info text-dark"><i class="fa-solid fa-magnifying-glass me-1"></i>Reviewed</span>
+                            {{/if}}
+                            {{/if}}
+                            {{/if}}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary text-uppercase">{{entityType}}</span>
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-danger">{{reason}}</span>
+                        </td>
+                        <td class="text-truncate" style="max-width: 200px;">
+                            <span class="badge {{#ifEquals targetStatus 'ACTIVE'}}bg-success-subtle text-success{{else}}bg-danger-subtle text-danger{{/ifEquals}} me-1" style="font-size: 10px;">
+                                {{targetStatus}}
+                            </span>
+                            {{targetSnippet}}
+                        </td>
+                        <td>
+                            {{reporter.name}}
+                        </td>
+                        <td>
+                            {{#if (gt entityReportsTotal 1)}}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{entityReportsTotal}} reports</span>
+                            {{else}}
+                            <span class="badge bg-light text-muted border">1 report</span>
+                            {{/if}}
+                        </td>
+                        <td class="text-muted small" title="{{createdAt}}">
+                            {{createdAt}}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="/admin/community/reports/{{_id}}" class="btn btn-outline-primary" title="View Dossier">
+                                    <i class="fa-solid fa-file-shield"></i>
+                                </a>
+                                {{#if isPending}}
+                                {{#if ../canModerateContent}}
+                                <button type="button" class="btn btn-outline-success" onclick="openResolveReportModal('{{_id}}', '{{entityType}}', '{{entityId}}')" title="Resolve Report">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="openDismissReportModal('{{_id}}')" title="Dismiss Report">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                {{/if}}
+                                {{/if}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-shield-cat fs-3 mb-2 d-block opacity-50"></i>
+                            {{#if hasActiveFilters}}
+                            No community reports match the selected criteria.
+                            {{else}}
+                            No community reports submitted yet.
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/if}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    {{#if (gt totalPages 1)}}
+    <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+        <div class="text-muted small">
+            Showing page {{page}} of {{totalPages}} ({{total}} total reports)
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/admin/community/reports?page={{inc (inc (inc page -1) -1)}}&status={{filters.status}}&entityType={{filters.entityType}}&reason={{filters.reason}}&search={{filters.search}}&sort={{filters.sort}}&startDate={{filters.startDate}}&endDate={{filters.endDate}}&view={{viewMode}}">Previous</a>
+                </li>
+                <li class="page-item active"><span class="page-link">{{page}}</span></li>
+                <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                    <a class="page-link" href="/admin/community/reports?page={{inc page}}&status={{filters.status}}&entityType={{filters.entityType}}&reason={{filters.reason}}&search={{filters.search}}&sort={{filters.sort}}&startDate={{filters.startDate}}&endDate={{filters.endDate}}&view={{viewMode}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {{/if}}
+</div>
+
+<!-- DISMISS REPORT MODAL -->
+<div class="modal fade" id="dismissReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-ban text-secondary me-2"></i>Dismiss Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to dismiss this report? The reported content will remain untouched, and the report will be marked as dismissed without penalty.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Moderator Note / Rationale</label>
+                    <textarea class="form-control" id="dismissReportNotes" rows="3" placeholder="Explain why this report was dismissed (e.g. False report, content does not violate guidelines)..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDismissReportBtn" onclick="submitDismissReport()">Dismiss Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RESOLVE REPORT MODAL -->
+<div class="modal fade" id="resolveReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-check text-success me-2"></i>Resolve Community Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Mark this community report as resolved. Specify the action taken and any moderator notes for audit records.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Action Taken</label>
+                    <select class="form-select" id="resolveActionTaken">
+                        <option value="content_moderated">Content Moderated / Hidden</option>
+                        <option value="user_warned">User Warned</option>
+                        <option value="resolved_no_action">Resolved — No Further Action Needed</option>
+                        <option value="duplicate_addressed">Duplicate of Already Resolved Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Moderator Notes</label>
+                    <textarea class="form-control" id="resolveReportNotes" rows="3" placeholder="Document the resolution rationale for audit logs..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmResolveReportBtn" onclick="submitResolveReport()">Mark Resolved</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTargetReportId = null;
+
+function openDismissReportModal(reportId) {
+    currentTargetReportId = reportId;
+    document.getElementById('dismissReportNotes').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('dismissReportModal'));
+    modal.show();
+}
+
+function submitDismissReport() {
+    if (!currentTargetReportId) return;
+    const btn = document.getElementById('confirmDismissReportBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Dismissing...';
+
+    const notes = document.getElementById('dismissReportNotes').value.trim();
+
+    fetch(`/admin/community/reports/${currentTargetReportId}/dismiss`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ notes })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to dismiss report.');
+            btn.disabled = false;
+            btn.innerText = 'Dismiss Report';
+        }
+    })
+    .catch(err => {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerText = 'Dismiss Report';
+    });
+}
+
+function openResolveReportModal(reportId) {
+    currentTargetReportId = reportId;
+    document.getElementById('resolveReportNotes').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('resolveReportModal'));
+    modal.show();
+}
+
+function submitResolveReport() {
+    if (!currentTargetReportId) return;
+    const btn = document.getElementById('confirmResolveReportBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Resolving...';
+
+    const actionTaken = document.getElementById('resolveActionTaken').value;
+    const notes = document.getElementById('resolveReportNotes').value.trim();
+
+    fetch(`/admin/community/reports/${currentTargetReportId}/resolve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ actionTaken, notes })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to resolve report.');
+            btn.disabled = false;
+            btn.innerText = 'Mark Resolved';
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerText = 'Mark Resolved';
+    }
+}
+
+// Bulk Actions Logic for Reports
+let selectedReportIds = new Set();
+
+function updateReportsBulkState() {
+    const checkboxes = document.querySelectorAll('.report-bulk-checkbox');
+    selectedReportIds.clear();
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedReportIds.add(cb.value);
+    });
+
+    const count = selectedReportIds.size;
+    const toolbar = document.getElementById('reportsBulkToolbar');
+    const countEl = document.getElementById('selectedReportsCount');
+    const selectAllCb = document.getElementById('selectAllReports');
+
+    if (countEl) countEl.textContent = count;
+    if (toolbar) {
+        if (count > 0) toolbar.classList.remove('d-none');
+        else toolbar.classList.add('d-none');
+    }
+    if (selectAllCb) {
+        selectAllCb.checked = checkboxes.length > 0 && count === checkboxes.length;
+        selectAllCb.indeterminate = count > 0 && count < checkboxes.length;
+    }
+}
+
+function toggleSelectAllReports(masterCb) {
+    const checkboxes = document.querySelectorAll('.report-bulk-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = masterCb.checked;
+    });
+    updateReportsBulkState();
+}
+
+function clearReportsSelection() {
+    const checkboxes = document.querySelectorAll('.report-bulk-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const selectAllCb = document.getElementById('selectAllReports');
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        selectAllCb.indeterminate = false;
+    }
+    updateReportsBulkState();
+}
+
+async function executeReportsBulk(action) {
+    const ids = Array.from(selectedReportIds);
+    if (!ids.length) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select at least one report.' });
+        } else {
+            alert('Please select at least one report.');
+        }
+        return;
+    }
+    if (ids.length > 50) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Batch Limit Exceeded', text: 'Maximum 50 reports can be processed in a single bulk action.' });
+        } else {
+            alert('Maximum 50 reports can be processed in a single bulk action.');
+        }
+        return;
+    }
+
+    let notes = '';
+    let actionTaken = action === 'resolve' ? 'resolved' : 'dismissed';
+
+    if (typeof Swal !== 'undefined') {
+        const result = await Swal.fire({
+            title: `Confirm Bulk ${action === 'resolve' ? 'Resolution' : 'Dismissal'}`,
+            html: `Are you sure you want to <strong>${action.toUpperCase()}</strong> <strong>${ids.length}</strong> selected safety reports?<br><small class="text-muted">Note: Resolving/dismissing reports updates their review status and does not mutate underlying content.</small><br><br>
+                   <input id="swalBulkNotes" class="swal2-input" placeholder="Moderator notes (optional)">`,
+            icon: action === 'resolve' ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonColor: action === 'resolve' ? '#16a34a' : '#64748b',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: `Yes, ${action} ${ids.length} reports`,
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                return document.getElementById('swalBulkNotes')?.value || '';
+            }
+        });
+
+        if (!result.isConfirmed) return;
+        notes = result.value || '';
+    } else {
+        if (!confirm(`Are you sure you want to execute ${action} on ${ids.length} reports?`)) return;
+        notes = prompt('Enter moderator notes (optional):') || '';
+    }
+
+    try {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Processing Bulk Action...',
+                text: `Executing ${action} on ${ids.length} reports. Please wait.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+        }
+
+        const res = await fetch('/admin/community/reports/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ action, ids, notes, actionTaken })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Bulk Action Completed',
+                    html: `<strong>${data.succeeded}</strong> succeeded, <strong>${data.skipped}</strong> skipped, <strong>${data.failed}</strong> failed.<br><small class="text-muted">Operation ID: ${data.bulkOperationId}</small>`,
+                    timer: 2000,
+                    showConfirmButton: true
+                });
+            } else {
+                alert(`Bulk action completed: ${data.succeeded} succeeded, ${data.skipped} skipped, ${data.failed} failed.`);
+            }
+            window.location.reload();
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Action Failed', text: data.message || 'Bulk operation failed.' });
+            } else {
+                alert(data.message || 'Bulk operation failed.');
+            }
+        }
+    } catch (err) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Failed to communicate with server.' });
+        } else {
+            alert('Network error while processing bulk action.');
+        }
+    }
+}
+</script>

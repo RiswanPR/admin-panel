@@ -230,35 +230,56 @@ router.use((req, res, next) => {
 
 /* GET users listing. */
 
-router.get('/', async function (req, res, next) {
+router.get('/', (req, res, next) => {
+  // Redirect teacher to their dashboard
+  if (req.session?.teacherloggedIn) {
+    return res.redirect('/teacher/dashboard');
+  }
+  next();
+}, verifyLogin, async function (req, res, next) {
+  const admin = req.session.admin;
+  const isSuperuser = admin && admin.role === 'superuser';
+  const canViewRevenue = isSuperuser || permissionsHelper.hasCapability(admin, 'manage_settings');
+  const canViewErrors = isSuperuser || permissionsHelper.hasCapability(admin, 'view_system_errors');
+  const canModerateContent = isSuperuser || permissionsHelper.hasCapability(admin, 'moderate_content');
+  const canManageNetwork = isSuperuser || permissionsHelper.hasCapability(admin, 'manage_network');
+  const canReviewBusinesses = isSuperuser || permissionsHelper.hasCapability(admin, 'review_businesses') || permissionsHelper.hasCapability(admin, 'manage_businesses');
+
   try {
-    // Redirect teacher to their dashboard
-    if (req.session.teacherloggedIn) {
-      return res.redirect('/teacher/dashboard');
-    }
-
-    if (!req.session.adminloggedIn) {
-      return res.redirect('/login');
-    }
-
-    const admin = req.session.admin;
-    const isSuperuser = admin && admin.role === 'superuser';
-
-    const dashboard =
-      await dashboardHelper.getDashboardData();
+    const dashboard = await dashboardHelper.getDashboardData(admin);
 
     res.render('admin/home', {
       admin: admin ? (admin.Name || admin.Email) : 'Admin',
       adminData: admin,
       isSuperuser,
+      canViewRevenue,
+      canViewErrors,
+      canModerateContent,
+      canManageNetwork,
+      canReviewBusinesses,
       admins: true,
       currentPage: 'dashboard',
       dashboard
     });
 
   } catch (err) {
-    logger.info(err);
-    res.redirect('/login');
+    logger.error('Dashboard Error:', err.message);
+    const safeFallback = dashboardHelper.getSafeFallbackData(admin);
+
+    res.render('admin/home', {
+      admin: admin ? (admin.Name || admin.Email) : 'Admin',
+      adminData: admin,
+      isSuperuser,
+      canViewRevenue,
+      canViewErrors,
+      canModerateContent,
+      canManageNetwork,
+      canReviewBusinesses,
+      admins: true,
+      currentPage: 'dashboard',
+      dashboardError: true,
+      dashboard: safeFallback
+    });
   }
 });
 router.get('/students', verifyLogin, function (req, res, next) {
@@ -4222,7 +4243,7 @@ router.get('/api/search', verifyLogin, async (req, res) => {
     const regex = new RegExp(escaped, 'i');
     const dbConn = db.get();
 
-    const [students, courses, teachers, spaces] = await Promise.all([
+    const [students, courses, teachers, spaces, posts, reports] = await Promise.all([
       dbConn.collection(collection.STUDENTS_COLLECTION).find(
         { $or: [{ Name: regex }, { Email: regex }, { username: regex }] },
         { projection: { Name: 1, Email: 1, username: 1, course: 1 } }
@@ -4241,7 +4262,17 @@ router.get('/api/search', verifyLogin, async (req, res) => {
       dbConn.collection(collection.LEARNING_SPACES_COLLECTION).find(
         { name: regex },
         { projection: { name: 1, spaceType: 1 } }
-      ).limit(4).toArray().catch(() => [])
+      ).limit(4).toArray().catch(() => []),
+
+      dbConn.collection(collection.COMMUNITY_POSTS_COLLECTION).find(
+        { $or: [{ _id: regex }, { content: regex }, { title: regex }] },
+        { projection: { content: 1, title: 1, authorId: 1, createdAt: 1 } }
+      ).limit(3).toArray().catch(() => []),
+
+      dbConn.collection(collection.COMMUNITY_REPORTS_COLLECTION).find(
+        { $or: [{ _id: regex }, { entityId: regex }, { reason: regex }] },
+        { projection: { reason: 1, entityType: 1, status: 1, entityId: 1 } }
+      ).limit(3).toArray().catch(() => [])
     ]);
 
     const results = [];
@@ -4291,6 +4322,31 @@ router.get('/api/search', verifyLogin, async (req, res) => {
         url: `/learning-spaces/${sp._id}`,
         icon: 'fa-solid fa-shapes',
         badge: 'Space'
+      });
+    });
+
+    // Add community posts
+    posts.forEach(p => {
+      const snippet = String(p.content || p.title || 'Community Post').trim().slice(0, 60);
+      results.push({
+        type: 'Community Post',
+        title: snippet || 'Community Post',
+        subtitle: `Post ID: ${String(p._id).slice(0, 8)}...`,
+        url: `/admin/community/posts/${p._id}`,
+        icon: 'fa-solid fa-comments',
+        badge: 'Post'
+      });
+    });
+
+    // Add community reports
+    reports.forEach(r => {
+      results.push({
+        type: 'Community Report',
+        title: `Report: ${String(r.reason || 'Flagged Content').slice(0, 50)}`,
+        subtitle: `${r.entityType ? r.entityType.toUpperCase() : 'ITEM'} • Status: ${r.status || 'pending'}`,
+        url: `/admin/community/reports/${r._id}`,
+        icon: 'fa-solid fa-shield-halved',
+        badge: 'Report'
       });
     });
 

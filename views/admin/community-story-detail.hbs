@@ -1,0 +1,285 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <a href="/admin/community/stories" class="text-light opacity-75 text-decoration-none small mb-2 d-inline-block">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Stories
+                </a>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-secondary">{{story.type}}</span>
+                    {{#ifEquals story.lifecycleStatus 'ACTIVE'}}
+                    <span class="badge bg-success">Live (Active)</span>
+                    {{/ifEquals}}
+                    {{#ifEquals story.lifecycleStatus 'EXPIRED'}}
+                    <span class="badge bg-secondary">Expired</span>
+                    {{/ifEquals}}
+                    {{#ifEquals story.lifecycleStatus 'REMOVED'}}
+                    <span class="badge bg-danger">Removed</span>
+                    {{/ifEquals}}
+                </div>
+                <h2 class="text-white fw-bold m-0" style="font-size: 26px; letter-spacing: -0.5px;">Story Dossier: #{{story._id}}</h2>
+                <p class="text-light opacity-75 mt-1 mb-0" style="font-size: 14px;">Published by <strong>{{story.author.name}}</strong> (@{{story.author.username}}) on {{formatDateTime story.createdAt}}</p>
+            </div>
+
+            <!-- MODERATION CONTROLS -->
+            <div>
+                {{#if story.isDeleted}}
+                <button type="button" class="btn btn-success px-3 py-2" onclick="openRestoreStoryModal('{{story._id}}')">
+                    <i class="fa-solid fa-trash-arrow-up me-1"></i> Restore Story
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-danger px-3 py-2" onclick="openRemoveStoryModal('{{story._id}}')">
+                    <i class="fa-solid fa-ban me-1"></i> Remove Story
+                </button>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Total Views</small>
+                <h3 class="m-0">{{story.viewsCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Reactions</small>
+                <h3 class="m-0">{{story.reactionsCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Replies</small>
+                <h3 class="m-0">{{story.repliesCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card {{#if story.reportCount}}stat-red{{else}}stat-dark{{/if}} p-3">
+                <small>Reports</small>
+                <h3 class="m-0">{{story.reportCount}}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT: VISUAL STORY DISPLAY -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-mobile-screen me-2"></i> Story Content Frame</h5>
+
+                <!-- Story Mock Frame -->
+                <div class="story-phone-mock mx-auto p-4 rounded-4 shadow d-flex flex-column justify-content-between" style="max-width: 320px; height: 520px; background-color: {{#if story.backgroundColor}}{{story.backgroundColor}}{{else}}#12314c{{/if}}; color: #fff; position: relative;">
+                    <!-- Top header inside frame -->
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 13px; font-weight: bold;">
+                            {{#if story.author.avatar}}
+                            <img src="{{story.author.avatar}}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                            {{else}}
+                            <i class="fa-solid fa-user"></i>
+                            {{/if}}
+                        </div>
+                        <div>
+                            <div class="fw-bold small">{{story.author.name}}</div>
+                            <small class="opacity-75" style="font-size: 10px;">{{formatDateTime story.createdAt}}</small>
+                        </div>
+                    </div>
+
+                    <!-- Center Body -->
+                    <div class="text-center my-auto">
+                        {{#if story.text}}
+                        <h4 class="fw-bold" style="white-space: pre-wrap;">{{story.text}}</h4>
+                        {{else}}
+                        <div class="opacity-75">
+                            <i class="fa-solid fa-photo-film fs-1 mb-2"></i>
+                            <div>Media Story Content</div>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- Bottom link / swipe up if present -->
+                    {{#if story.link}}
+                    <div class="text-center">
+                        <span class="badge bg-light text-dark py-2 px-3 rounded-pill">
+                            <i class="fa-solid fa-arrow-up me-1"></i> {{story.link}}
+                        </span>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+
+            <!-- MEDIA ATTACHMENTS IF ANY -->
+            {{#if story.mediaList.length}}
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-paperclip me-1"></i> Attached Media ({{story.mediaList.length}})</h6>
+                <div class="list-group list-group-flush">
+                    {{#each story.mediaList}}
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-secondary me-2">{{this.type}}</span>
+                            <span class="font-monospace small">{{this.url}}</span>
+                        </div>
+                        <a href="{{this.url}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open
+                        </a>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- RIGHT: METADATA & MODERATION -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-circle-info me-1"></i> Story Details</h6>
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Story ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 160px;">{{story._id}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Author ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 160px;">{{story.authorId}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Course Tag</span>
+                        <span>{{#if story.courseTag}}{{story.courseTag}}{{else}}None{{/if}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Status</span>
+                        <span class="fw-bold">{{story.lifecycleStatus}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Created</span>
+                        <span>{{formatDateTime story.createdAt}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Expires</span>
+                        <span class="{{#if story.isExpired}}text-danger{{else}}text-success{{/if}}">{{formatDateTime story.expiresAt}}</span>
+                    </li>
+                    {{#if story.deletedAt}}
+                    <li class="d-flex justify-content-between py-2 border-bottom text-danger">
+                        <span>Deleted At</span>
+                        <span>{{formatDateTime story.deletedAt}}</span>
+                    </li>
+                    {{/if}}
+                </ul>
+            </div>
+
+            <!-- REPORTS FILED -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-flag text-danger me-1"></i> Reports Filed ({{story.reportCount}})</h6>
+                {{#if story.reports.length}}
+                <div class="list-group list-group-flush">
+                    {{#each story.reports}}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <strong class="small text-danger">{{this.reason}}</strong>
+                        <div class="small text-muted">{{this.description}}</div>
+                        <small class="text-muted d-block mt-1">Status: {{this.status}}</small>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="small text-muted mb-0">No policy violation reports filed for this story.</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal fade" id="removeStoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-ban me-2"></i> Remove Story</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action will soft-delete the story. Media files in storage remain preserved as evidence.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="removeStoryReason" rows="3" placeholder="Provide removal justification..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitRemoveStory()">Confirm Removal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="restoreStoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-trash-arrow-up me-2"></i> Restore Story</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Restore this story record.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Restoration</label>
+                    <textarea class="form-control" id="restoreStoryReason" rows="2" placeholder="e.g. Cleared after review"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitRestoreStory()">Confirm Restore</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const storyId = '{{story._id}}';
+
+function openRemoveStoryModal() {
+    document.getElementById('removeStoryReason').value = '';
+    new bootstrap.Modal(document.getElementById('removeStoryModal')).show();
+}
+
+function openRestoreStoryModal() {
+    document.getElementById('restoreStoryReason').value = '';
+    new bootstrap.Modal(document.getElementById('restoreStoryModal')).show();
+}
+
+async function submitRemoveStory() {
+    const reason = document.getElementById('removeStoryReason').value.trim() || 'Violated community guidelines';
+    try {
+        const res = await fetch(`/admin/community/stories/${storyId}/remove`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Error removing story.');
+    } catch(e) {
+        alert('Network error.');
+    }
+}
+
+async function submitRestoreStory() {
+    const reason = document.getElementById('restoreStoryReason').value.trim() || 'Restored by admin';
+    try {
+        const res = await fetch(`/admin/community/stories/${storyId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Error restoring story.');
+    } catch(e) {
+        alert('Network error.');
+    }
+}
+</script>

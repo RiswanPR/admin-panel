@@ -27,6 +27,7 @@ const ensureIndexes = async (db) => {
     [collection.STUDENTS_COLLECTION, { email: 1 }, { unique: true, sparse: true }],
     [collection.STUDENTS_COLLECTION, { username: 1 }, { unique: true, sparse: true }],
     [collection.STUDENTS_COLLECTION, { 'course.courseId': 1 }],
+    [collection.STUDENTS_COLLECTION, { createdAt: -1 }],
     [collection.STUDENTS_COLLECTION, { End_Date: 1, status: 1 }],
     [collection.STUDENTS_COLLECTION, { 'gamification.totalPoints': -1, 'gamification.level': -1, 'gamification.completedClasses': -1, createdAt: 1 }],
     [collection.POINT_TRANSACTIONS_COLLECTION, { studentId: 1, createdAt: -1 }],
@@ -96,6 +97,9 @@ const ensureIndexes = async (db) => {
     [collection.INFRASTRUCTURE_MARKET_SNAPSHOTS_COLLECTION, { snapshotDate: -1 }],
     [collection.MODERATION_REPORTS_COLLECTION, { status: 1, targetType: 1, createdAt: -1 }],
     [collection.MODERATION_REPORTS_COLLECTION, { reporterId: 1 }],
+    [collection.ERROR_REPORTS_COLLECTION, { status: 1, createdAt: -1 }],
+    [collection.VERIFICATION_REQUESTS_COLLECTION, { status: 1, createdAt: -1 }],
+    [collection.COMMUNITY_REPORTS_COLLECTION, { status: 1, createdAt: -1 }],
   ];
 
   await Promise.allSettled(

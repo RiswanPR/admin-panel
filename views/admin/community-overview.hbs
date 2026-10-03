@@ -1,0 +1,808 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-chart-pie me-1"></i> Community Operations &amp; Analytics
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Community Operations</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Operational overview of community activity, engagement health, moderation workload, and content trends.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/admin/community/posts" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-signs-post me-1"></i> Posts
+                </a>
+                <a href="/admin/community/comments" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-comments me-1"></i> Comments
+                </a>
+                <a href="/admin/community/stories" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-circle-play me-1"></i> Stories
+                </a>
+                <a href="/admin/community/reports" class="btn btn-light px-3 py-2">
+                    <i class="fa-solid fa-flag me-1"></i> Reports Center
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- VALIDATION / ERROR ALERT (IF APPLICABLE) -->
+    {{#if validationError}}
+    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-3 p-3 rounded-3 shadow-xs mb-4" role="alert">
+        <i class="fa-solid fa-circle-exclamation fs-5 text-warning"></i>
+        <div class="flex-grow-1">
+            <strong>Date Range Notice:</strong> {{validationError}}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    <!-- DATE RANGE FILTER TOOLBAR -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 p-3" style="background: var(--surface); border: 1px solid var(--border) !important;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <!-- Preset Buttons -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small fw-semibold me-1">
+                    <i class="fa-regular fa-calendar me-1"></i> Period:
+                </span>
+                <a href="/admin/community?range=today" class="btn btn-sm {{#ifEquals dateRange.rangeKey 'today'}}btn-primary text-white shadow-xs{{else}}btn-outline-secondary{{/ifEquals}} px-3 py-1.5 rounded-pill" style="font-size: 12.5px; font-weight: 600;">
+                    Today
+                </a>
+                <a href="/admin/community?range=7d" class="btn btn-sm {{#ifEquals dateRange.rangeKey '7d'}}btn-primary text-white shadow-xs{{else}}btn-outline-secondary{{/ifEquals}} px-3 py-1.5 rounded-pill" style="font-size: 12.5px; font-weight: 600;">
+                    Last 7 Days
+                </a>
+                <a href="/admin/community?range=30d" class="btn btn-sm {{#ifEquals dateRange.rangeKey '30d'}}btn-primary text-white shadow-xs{{else}}btn-outline-secondary{{/ifEquals}} px-3 py-1.5 rounded-pill" style="font-size: 12.5px; font-weight: 600;">
+                    Last 30 Days
+                </a>
+                <a href="/admin/community?range=90d" class="btn btn-sm {{#ifEquals dateRange.rangeKey '90d'}}btn-primary text-white shadow-xs{{else}}btn-outline-secondary{{/ifEquals}} px-3 py-1.5 rounded-pill" style="font-size: 12.5px; font-weight: 600;">
+                    Last 90 Days
+                </a>
+            </div>
+
+            <!-- Custom Date Range Form -->
+            <form action="/admin/community" method="GET" class="d-flex align-items-center gap-2 flex-wrap m-0">
+                <input type="hidden" name="range" value="custom">
+                <div class="d-flex align-items-center gap-1.5">
+                    <label for="startDateInput" class="text-muted small mb-0">From:</label>
+                    <input type="date" id="startDateInput" name="startDate" value="{{dateRange.startDateStr}}" class="form-control form-control-sm px-2.5 py-1 rounded-3" style="width: 140px; font-size: 12px; background: var(--card-solid); color: var(--text); border-color: var(--border);">
+                </div>
+                <div class="d-flex align-items-center gap-1.5">
+                    <label for="endDateInput" class="text-muted small mb-0">To:</label>
+                    <input type="date" id="endDateInput" name="endDate" value="{{dateRange.endDateStr}}" class="form-control form-control-sm px-2.5 py-1 rounded-3" style="width: 140px; font-size: 12px; background: var(--card-solid); color: var(--text); border-color: var(--border);">
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-primary px-3 py-1 rounded-3 d-flex align-items-center gap-1" style="font-size: 12.5px; font-weight: 600;">
+                    <i class="fa-solid fa-filter"></i> Apply
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small" style="border-color: var(--border-subtle) !important; font-size: 12px;">
+            <div>
+                <span>Selected Window: <strong>{{dateRange.startDateStr}}</strong> to <strong>{{dateRange.endDateStr}}</strong> ({{dateRange.daysDiff}} day{{#ifGt dateRange.daysDiff 1}}s{{/ifGt}})</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-surface-2 text-muted border px-2.5 py-1 rounded-pill">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Live Operational Metrics
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION A: COMMUNITY SNAPSHOT STAT CARDS -->
+    <div class="row g-3 mb-4">
+        <!-- Posts Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Posts</small>
+                    <div class="stat-icon-wrap" style="color: #3b82f6;">
+                        <i class="fa-solid fa-signs-post"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: var(--text);">{{snapshot.posts.total}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-primary-subtle text-primary px-1.5 py-0.5 rounded-pill">+{{snapshot.posts.newInPeriod}}</span>
+                    <span>new in period</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-green h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Comments</small>
+                    <div class="stat-icon-wrap" style="color: #10b981;">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: var(--text);">{{snapshot.comments.total}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-success-subtle text-success px-1.5 py-0.5 rounded-pill">+{{snapshot.comments.newInPeriod}}</span>
+                    <span>new in period</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stories Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-blue h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Stories</small>
+                    <div class="stat-icon-wrap" style="color: #06b6d4;">
+                        <i class="fa-solid fa-circle-play"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: var(--text);">{{snapshot.stories.active}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-info-subtle text-info px-1.5 py-0.5 rounded-pill">+{{snapshot.stories.newInPeriod}}</span>
+                    <span>active now</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Pending Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-yellow h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Pending Reports</small>
+                    <div class="stat-icon-wrap" style="color: #f59e0b;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: {{#ifGt snapshot.reports.pending 0}}#ef4444{{else}}var(--text){{/ifGt}};">{{snapshot.reports.pending}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-warning-subtle text-warning px-1.5 py-0.5 rounded-pill">{{snapshot.reports.newInPeriod}} new</span>
+                    <span>of {{snapshot.reports.total}} total</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Resolved Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-purple h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Resolved</small>
+                    <div class="stat-icon-wrap" style="color: #8b5cf6;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: var(--text);">{{snapshot.reports.resolved}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-purple-subtle text-purple px-1.5 py-0.5 rounded-pill" style="background: rgba(139, 92, 246, 0.12); color: #8b5cf6;">{{moderation.resolutionRate}}%</span>
+                    <span>resolution rate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderation Actions Card -->
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark h-100 p-3 rounded-4 shadow-xs">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Mod Actions</small>
+                    <div class="stat-icon-wrap" style="color: #ec4899;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 24px; color: var(--text);">{{snapshot.moderation.totalActions}}</h3>
+                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 11.5px;">
+                    <span class="badge bg-danger-subtle text-danger px-1.5 py-0.5 rounded-pill">+{{snapshot.moderation.actionsInPeriod}}</span>
+                    <span>in period</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION B: ACTIVITY TRENDS (CHART.JS) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--surface); border: 1px solid var(--border) !important;">
+        <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold m-0" style="color: var(--text);">
+                    <i class="fa-solid fa-chart-line text-primary me-2"></i> Activity Trend
+                </h5>
+                <p class="text-muted small m-0">Volume of Posts, Comments, Stories, and Reports created over time.</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Chart mode">
+                    <button type="button" class="btn btn-sm btn-outline-secondary active" id="btnChartModeAll" onclick="setChartMode('all')">All Activity</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnChartModeContent" onclick="setChartMode('content')">Content (Posts &amp; Comments)</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnChartModeSafety" onclick="setChartMode('safety')">Safety (Reports &amp; Actions)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body px-4 pb-4 pt-2">
+            <div style="position: relative; height: 320px; width: 100%;">
+                <canvas id="communityTrendsChart"></canvas>
+            </div>
+
+            <!-- Zero Activity Notice if chart has no data points -->
+            {{#unless trends.hasData}}
+            <div class="text-center py-2 text-muted small mt-2" style="background: var(--surface-2); border-radius: 8px;">
+                <i class="fa-solid fa-info-circle me-1"></i> No community content activity recorded during this selected date range. Charts are tracking live zero baselines.
+            </div>
+            {{/unless}}
+
+            <!-- Legend summary bar -->
+            <div class="d-flex justify-content-around align-items-center flex-wrap gap-3 mt-3 pt-3 border-top" style="border-color: var(--border-subtle) !important; font-size: 12.5px;">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#3b82f6;"></span>
+                    <span class="text-muted">Posts: <strong>{{trends.totals.posts}}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#10b981;"></span>
+                    <span class="text-muted">Comments: <strong>{{trends.totals.comments}}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#06b6d4;"></span>
+                    <span class="text-muted">Stories: <strong>{{trends.totals.stories}}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#ef4444;"></span>
+                    <span class="text-muted">Reports: <strong>{{trends.totals.reports}}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#8b5cf6;"></span>
+                    <span class="text-muted">Mod Actions: <strong>{{trends.totals.actions}}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTIONS C & E: ENGAGEMENT & CONTENT STATUS -->
+    <div class="row g-4 mb-4">
+        <!-- SECTION C: ENGAGEMENT -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--surface); border: 1px solid var(--border) !important;">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--text);">
+                            <i class="fa-solid fa-heart-pulse text-danger me-2"></i> Verified Engagement
+                        </h5>
+                        <p class="text-muted small m-0">Direct interaction data from community reaction and comment collections.</p>
+                    </div>
+                </div>
+
+                <div class="card-body px-4 pb-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-surface-2 border" style="border-color: var(--border) !important;">
+                                <div class="text-muted small text-uppercase fw-semibold" style="font-size: 11px;">Reactions Logged</div>
+                                <div class="fs-4 fw-bold text-dark mt-1" style="color: var(--text) !important;">{{engagement.reactions.total}}</div>
+                                <div class="text-muted small" style="font-size: 11.5px;">+{{engagement.reactions.inPeriod}} in period</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-surface-2 border" style="border-color: var(--border) !important;">
+                                <div class="text-muted small text-uppercase fw-semibold" style="font-size: 11px;">Comments Per Post</div>
+                                <div class="fs-4 fw-bold text-dark mt-1" style="color: var(--text) !important;">{{engagement.commentsRatio.commentsPerPost}}</div>
+                                <div class="text-muted small" style="font-size: 11.5px;">{{snapshot.comments.total}} total comments</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-surface-2 border" style="border-color: var(--border) !important;">
+                                <div class="text-muted small text-uppercase fw-semibold" style="font-size: 11px;">Reactions Per Post</div>
+                                <div class="fs-4 fw-bold text-dark mt-1" style="color: var(--text) !important;">{{engagement.reactions.reactionsPerPost}}</div>
+                                <div class="text-muted small" style="font-size: 11.5px;">Reaction interaction depth</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-surface-2 border" style="border-color: var(--border) !important;">
+                                <div class="text-muted small text-uppercase fw-semibold" style="font-size: 11px;">Community Polls</div>
+                                <div class="fs-4 fw-bold text-dark mt-1" style="color: var(--text) !important;">{{engagement.polls.total}}</div>
+                                <div class="text-muted small" style="font-size: 11.5px;">{{engagement.polls.totalVotes}} recorded votes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schema Integrity & Transparency Note -->
+                    <div class="p-2.5 rounded-3 border mt-3" style="background: rgba(18, 49, 76, 0.03); border-color: var(--border) !important;">
+                        <div class="fw-semibold small mb-1" style="color: var(--text); font-size: 12px;">
+                            <i class="fa-solid fa-database text-primary me-1"></i> Data Schema Integrity Audit:
+                        </div>
+                        <div class="text-muted" style="font-size: 11.5px; line-height: 1.5;">
+                            Verified supported metrics: <strong>Reactions, Comments, Polls</strong>.
+                            Unmodeled metrics (Direct Shares, Saves, Graph Traversal) are omitted to prevent metric fabrication.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION E: CONTENT STATUS -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--surface); border: 1px solid var(--border) !important;">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--text);">
+                            <i class="fa-solid fa-boxes-stacked text-success me-2"></i> Content Status Lifecycle
+                        </h5>
+                        <p class="text-muted small m-0">Live operational state of community posts, comments, and stories.</p>
+                    </div>
+                </div>
+
+                <div class="card-body px-4 pb-4">
+                    <!-- Posts Lifecycle -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                            <span class="fw-semibold small" style="color: var(--text);">
+                                <i class="fa-solid fa-signs-post text-primary me-1"></i> Posts Status
+                            </span>
+                            <span class="small text-muted">{{contentStatus.posts.total}} total records</span>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap text-muted small mb-2" style="font-size: 12px;">
+                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Active: {{contentStatus.posts.active}}</span>
+                            <span class="badge bg-warning-subtle text-warning px-2 py-1 rounded-pill">Locked: {{contentStatus.posts.locked}}</span>
+                            <span class="badge bg-info-subtle text-info px-2 py-1 rounded-pill">Pinned: {{contentStatus.posts.pinned}}</span>
+                            <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Soft-Deleted: {{contentStatus.posts.deleted}}</span>
+                        </div>
+                    </div>
+
+                    <!-- Comments Lifecycle -->
+                    <div class="mb-3 pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                            <span class="fw-semibold small" style="color: var(--text);">
+                                <i class="fa-solid fa-comments text-success me-1"></i> Comments Status
+                            </span>
+                            <span class="small text-muted">{{contentStatus.comments.total}} total records</span>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap text-muted small mb-2" style="font-size: 12px;">
+                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Active: {{contentStatus.comments.active}}</span>
+                            <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Soft-Deleted: {{contentStatus.comments.deleted}}</span>
+                        </div>
+                    </div>
+
+                    <!-- Stories Lifecycle -->
+                    <div class="pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                            <span class="fw-semibold small" style="color: var(--text);">
+                                <i class="fa-solid fa-circle-play text-info me-1"></i> Stories Status
+                            </span>
+                            <span class="small text-muted">{{contentStatus.stories.total}} total records</span>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap text-muted small" style="font-size: 12px;">
+                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Active: {{contentStatus.stories.active}}</span>
+                            <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-pill">Expired: {{contentStatus.stories.expired}}</span>
+                            <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Soft-Deleted: {{contentStatus.stories.deleted}}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 text-muted small" style="font-size: 11px;">
+                        <i class="fa-solid fa-shield-check text-success me-1"></i> Zero hard-deletes enforced: all soft-deleted records remain intact for audit safety.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION D: MODERATION HEALTH & BREAKDOWNS -->
+    <div class="row g-4 mb-4">
+        <!-- Reports Breakdown by Entity & Status -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--surface); border: 1px solid var(--border) !important;">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--text);">
+                            <i class="fa-solid fa-shield-halved text-warning me-2"></i> Moderation Health &amp; Reports
+                        </h5>
+                        <p class="text-muted small m-0">Phase 3 Reports Center distribution across entity targets.</p>
+                    </div>
+                    <a href="/admin/community/reports" class="btn btn-sm btn-outline-primary px-2.5 py-1 rounded-3 small">
+                        View Reports <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body px-4 pb-4">
+                    <!-- Status Distribution -->
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2" style="color: var(--text);">Reports by Status:</div>
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <div class="p-2 rounded-3 text-center border" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2) !important;">
+                                    <div class="text-warning fw-bold fs-5">{{moderation.statusMap.pending}}</div>
+                                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 10px;">Pending</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-3 text-center border" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2) !important;">
+                                    <div class="text-primary fw-bold fs-5">{{moderation.statusMap.investigating}}</div>
+                                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 10px;">Reviewing</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-3 text-center border" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2) !important;">
+                                    <div class="text-success fw-bold fs-5">{{moderation.statusMap.resolved}}</div>
+                                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 10px;">Resolved</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-3 text-center border" style="background: rgba(100, 116, 139, 0.08); border-color: rgba(100, 116, 139, 0.2) !important;">
+                                    <div class="text-muted fw-bold fs-5">{{moderation.statusMap.dismissed}}</div>
+                                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 10px;">Dismissed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entity Types -->
+                    <div class="mb-3 pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                        <div class="fw-semibold small mb-2" style="color: var(--text);">Reports by Target Entity:</div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="badge bg-surface-2 text-dark border px-2.5 py-1.5 rounded-pill" style="font-size: 12px; color: var(--text) !important;">
+                                <i class="fa-solid fa-signs-post text-primary me-1"></i> Posts: <strong>{{moderation.entityTypeMap.post}}</strong>
+                            </span>
+                            <span class="badge bg-surface-2 text-dark border px-2.5 py-1.5 rounded-pill" style="font-size: 12px; color: var(--text) !important;">
+                                <i class="fa-solid fa-comments text-success me-1"></i> Comments: <strong>{{moderation.entityTypeMap.comment}}</strong>
+                            </span>
+                            <span class="badge bg-surface-2 text-dark border px-2.5 py-1.5 rounded-pill" style="font-size: 12px; color: var(--text) !important;">
+                                <i class="fa-solid fa-circle-play text-info me-1"></i> Stories: <strong>{{moderation.entityTypeMap.story}}</strong>
+                            </span>
+                            <span class="badge bg-surface-2 text-dark border px-2.5 py-1.5 rounded-pill" style="font-size: 12px; color: var(--text) !important;">
+                                <i class="fa-solid fa-user-shield text-danger me-1"></i> Users: <strong>{{moderation.entityTypeMap.user}}</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Common Reasons -->
+                    {{#if moderation.reasons.length}}
+                    <div class="pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                        <div class="fw-semibold small mb-2" style="color: var(--text);">Top Reported Reasons:</div>
+                        <div class="d-flex flex-wrap gap-1.5">
+                            {{#each moderation.reasons}}
+                            <span class="badge bg-light text-muted border px-2 py-1 rounded-2" style="font-size: 11px;">
+                                {{this.reason}}: <strong>{{this.count}}</strong>
+                            </span>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderation Actions & Auditor Logs -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--surface); border: 1px solid var(--border) !important;">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--text);">
+                            <i class="fa-solid fa-gavel text-purple me-2" style="color: #8b5cf6;"></i> Moderation Actions
+                        </h5>
+                        <p class="text-muted small m-0">Audit summary of staff interventions executed via community_moderation_logs.</p>
+                    </div>
+                </div>
+
+                <div class="card-body px-4 pb-4">
+                    {{#if moderation.actionTypes.length}}
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-borderless align-middle mb-0" style="font-size: 12.5px;">
+                            <thead>
+                                <tr class="text-muted border-bottom" style="border-color: var(--border-subtle) !important;">
+                                    <th>Action Type</th>
+                                    <th class="text-end">Occurrences</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each moderation.actionTypes}}
+                                <tr class="border-bottom" style="border-color: var(--border-subtle) !important;">
+                                    <td>
+                                        <span class="badge bg-surface-2 text-dark border px-2 py-1 rounded-pill" style="font-size: 11.5px; color: var(--text) !important;">
+                                            {{this.label}}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold" style="color: var(--text);">{{this.count}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <div class="p-3 text-center text-muted small bg-surface-2 rounded-3 border mb-3">
+                        <i class="fa-solid fa-shield-cat me-1"></i> No moderation actions logged yet.
+                    </div>
+                    {{/if}}
+
+                    {{#if moderation.topModerators.length}}
+                    <div class="pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                        <div class="fw-semibold small mb-2" style="color: var(--text);">Active Staff Moderators:</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{#each moderation.topModerators}}
+                            <span class="badge bg-surface-2 text-dark border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px; color: var(--text) !important;">
+                                <i class="fa-solid fa-user-check text-success me-1"></i> {{this.name}}: <strong>{{this.count}}</strong>
+                            </span>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION F: RECENT OPERATIONAL ACTIVITY FEED -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--surface); border: 1px solid var(--border) !important;">
+        <div class="card-header bg-transparent border-0 pt-3 px-4 pb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold m-0" style="color: var(--text);">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Operational Activity
+                </h5>
+                <p class="text-muted small m-0">Latest posts, comments, reports, and staff moderation actions with direct links.</p>
+            </div>
+        </div>
+
+        <div class="card-body px-4 pb-4">
+            {{#if recentActivity.length}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <thead class="text-muted border-bottom" style="border-color: var(--border) !important; font-size: 12px; text-transform: uppercase;">
+                        <tr>
+                            <th style="width: 120px;">Type</th>
+                            <th>Item Details</th>
+                            <th>Actor / Author</th>
+                            <th>Time</th>
+                            <th class="text-end" style="width: 100px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each recentActivity}}
+                        <tr class="border-bottom" style="border-color: var(--border-subtle) !important;">
+                            <td>
+                                <span class="badge px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1.5" style="background: rgba(18, 49, 76, 0.08); color: var(--text); font-size: 11.5px; font-weight: 600;">
+                                    <i class="{{this.icon}}" style="color: {{this.iconColor}};"></i> {{this.typeLabel}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold text-truncate d-inline-block" style="max-width: 380px; color: var(--text);" title="{{this.title}}">
+                                        {{this.title}}
+                                    </span>
+                                    <span class="badge {{this.badgeClass}} px-2 py-0.5 rounded-pill" style="font-size: 10.5px;">
+                                        {{this.badgeLabel}}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted small">
+                                    <i class="fa-regular fa-user me-1"></i> {{this.actorName}}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted small" title="{{formatDateTime this.createdAt}}">
+                                    {{formatDateTime this.createdAt}}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                {{#ifEquals this.detailUrl '#'}}
+                                <span class="text-muted small">—</span>
+                                {{else}}
+                                <a href="{{this.detailUrl}}" class="btn btn-sm btn-outline-secondary px-2.5 py-1 rounded-3" style="font-size: 11.5px;">
+                                    Review <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </a>
+                                {{/ifEquals}}
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="text-center py-4 text-muted">
+                <i class="fa-solid fa-folder-open fs-2 mb-2 opacity-50"></i>
+                <p class="mb-0">No recent community activity found.</p>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- SECTION 11: COMMUNITY RULES / POLICY MANAGEMENT AUDIT STATUS -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 p-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.04), rgba(29, 78, 137, 0.03)); border: 1px solid var(--border) !important;">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div class="d-flex align-items-start gap-3">
+                <div class="p-3 rounded-circle text-primary" style="background: rgba(59, 130, 246, 0.1);">
+                    <i class="fa-solid fa-book-bookmark fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1" style="color: var(--text);">Community Guidelines &amp; Policy Management</h5>
+                    <p class="text-muted small mb-2" style="max-width: 780px;">
+                        {{rulesPolicy.message}}
+                    </p>
+                    <span class="badge bg-surface-2 text-muted border px-2.5 py-1 rounded-pill" style="font-size: 11.5px;">
+                        <i class="fa-solid fa-circle-info text-info me-1"></i> Schema Audit Finding: Dynamic database rule editor not implemented because no underlying collection exists in database.
+                    </span>
+                </div>
+            </div>
+            <div>
+                <a href="/settings" class="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-3">
+                    <i class="fa-solid fa-gear me-1"></i> Platform Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- SCRIPT: CHART.JS RENDERING & THEME INTEGRATION -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rawTrendsData = {{{trendsJson}}};
+    let trendsChartInstance = null;
+    let currentMode = 'all';
+
+    function getThemeColors() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            isDark: isDark,
+            gridColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(18, 49, 76, 0.07)',
+            textColor: isDark ? '#8fa5ba' : '#506e8b',
+            titleColor: isDark ? '#ffffff' : '#12314c',
+            tooltipBg: isDark ? 'rgba(18, 28, 41, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            tooltipBorder: isDark ? 'rgba(159, 213, 178, 0.2)' : 'rgba(18, 49, 76, 0.12)'
+        };
+    }
+
+    function initTrendsChart(mode) {
+        const canvas = document.getElementById('communityTrendsChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        const ctx = canvas.getContext('2d');
+        const colors = getThemeColors();
+
+        const labels = rawTrendsData?.labels || [];
+        const datasets = [];
+
+        if (mode === 'all' || mode === 'content') {
+            datasets.push({
+                label: 'Posts',
+                data: rawTrendsData?.datasets?.posts || [],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            });
+            datasets.push({
+                label: 'Comments',
+                data: rawTrendsData?.datasets?.comments || [],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            });
+            datasets.push({
+                label: 'Stories',
+                data: rawTrendsData?.datasets?.stories || [],
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            });
+        }
+
+        if (mode === 'all' || mode === 'safety') {
+            datasets.push({
+                label: 'Reports Filed',
+                data: rawTrendsData?.datasets?.reports || [],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2.5,
+                fill: mode === 'safety',
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            });
+            datasets.push({
+                label: 'Moderation Actions',
+                data: rawTrendsData?.datasets?.actions || [],
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderWidth: 2.5,
+                fill: false,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            });
+        }
+
+        if (trendsChartInstance) {
+            trendsChartInstance.destroy();
+        }
+
+        trendsChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: colors.textColor,
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            usePointStyle: true,
+                            font: { family: 'Inter', size: 12, weight: '500' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: colors.tooltipBg,
+                        titleColor: colors.titleColor,
+                        bodyColor: colors.titleColor,
+                        borderColor: colors.tooltipBorder,
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: colors.gridColor,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: colors.textColor,
+                            font: { family: 'Inter', size: 11, weight: '500' },
+                            maxRotation: 45
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: colors.gridColor,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            precision: 0,
+                            color: colors.textColor,
+                            font: { family: 'Inter', size: 11, weight: '500' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    window.setChartMode = function (mode) {
+        currentMode = mode;
+        document.querySelectorAll('[id^="btnChartMode"]').forEach(btn => btn.classList.remove('active'));
+        if (mode === 'all') document.getElementById('btnChartModeAll')?.classList.add('active');
+        if (mode === 'content') document.getElementById('btnChartModeContent')?.classList.add('active');
+        if (mode === 'safety') document.getElementById('btnChartModeSafety')?.classList.add('active');
+        initTrendsChart(mode);
+    };
+
+    // Initialize chart
+    initTrendsChart(currentMode);
+
+    // Watch for theme toggle if present
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (mutation.attributeName === 'data-theme') {
+                initTrendsChart(currentMode);
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+});
+</script>

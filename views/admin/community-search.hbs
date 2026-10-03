@@ -1,0 +1,234 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i> Global Discovery
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Community Search</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Safely search across posts, comments, stories, safety reports, and community users with bounded queries.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/admin/community" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-chart-line me-1"></i> Overview
+                </a>
+                <a href="/admin/community/posts" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-signs-post me-1"></i> Posts
+                </a>
+                <a href="/admin/community/reports" class="btn btn-light px-3 py-2">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Reports Center
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH & FILTER TOOLBAR -->
+    <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 16px;">
+        <form method="GET" action="/admin/community/search" id="communitySearchForm">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-8 col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control border-start-0" 
+                               name="q" 
+                               id="communitySearchInput"
+                               value="{{query}}" 
+                               maxlength="100"
+                               placeholder="Search by keywords, text content, author username, or UUID..." 
+                               autofocus>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select class="form-select" name="type" id="communitySearchType" onchange="document.getElementById('communitySearchForm').submit()">
+                        <option value="all" {{#ifEquals type 'all'}}selected{{/ifEquals}}>All Entities</option>
+                        <option value="posts" {{#ifEquals type 'posts'}}selected{{/ifEquals}}>Posts Only</option>
+                        <option value="comments" {{#ifEquals type 'comments'}}selected{{/ifEquals}}>Comments Only</option>
+                        <option value="stories" {{#ifEquals type 'stories'}}selected{{/ifEquals}}>Stories Only</option>
+                        <option value="reports" {{#ifEquals type 'reports'}}selected{{/ifEquals}}>Reports Only</option>
+                        <option value="users" {{#ifEquals type 'users'}}selected{{/ifEquals}}>Users Only</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-2 col-6 text-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-arrow-right me-1"></i> Search
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- TYPE FILTER PILLS -->
+        <div class="d-flex gap-2 flex-wrap mt-3 pt-2 border-top">
+            <span class="small text-muted align-self-center me-2"><i class="fa-solid fa-filter me-1"></i>Filter:</span>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=all" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'all'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                All Entities
+            </a>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=posts" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'posts'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                <i class="fa-solid fa-signs-post me-1"></i> Posts
+            </a>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=comments" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'comments'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                <i class="fa-solid fa-comments me-1"></i> Comments
+            </a>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=stories" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'stories'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                <i class="fa-solid fa-circle-play me-1"></i> Stories
+            </a>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=reports" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'reports'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                <i class="fa-solid fa-shield-halved me-1"></i> Reports
+            </a>
+            <a href="/admin/community/search?q={{encodeURIComponent query}}&type=users" 
+               class="badge text-decoration-none px-3 py-2 {{#ifEquals type 'users'}}bg-primary text-white{{else}}bg-light text-dark border{{/ifEquals}}" style="font-size: 12px;">
+                <i class="fa-solid fa-user me-1"></i> Users
+            </a>
+            {{#if hasQuery}}
+            <a href="/admin/community/search" class="badge text-decoration-none px-3 py-2 bg-light text-danger border ms-auto" style="font-size: 12px;">
+                <i class="fa-solid fa-xmark me-1"></i> Clear Query
+            </a>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- SEARCH RESULTS HEADER -->
+    {{#if hasQuery}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark">
+                Results for "<span class="text-primary">{{query}}</span>"
+            </h5>
+            <small class="text-muted">
+                Found <strong>{{total}}</strong> matching {{#ifEquals total 1}}record{{else}}records{{/ifEquals}} across 
+                {{#ifEquals type 'all'}}all community collections{{else}}{{type}}{{/ifEquals}}
+            </small>
+        </div>
+        <div>
+            <span class="badge bg-light text-secondary border px-3 py-2" style="font-size: 12px;">
+                Page {{page}} of {{totalPages}}
+            </span>
+        </div>
+    </div>
+
+    <!-- RESULTS LIST -->
+    <div class="row g-3 mb-4">
+        {{#if results.length}}
+        {{#each results}}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 14px; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease;">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded p-2 text-white d-inline-flex align-items-center justify-content-center" style="background-color: {{iconColor}}; width: 34px; height: 34px; font-size: 14px;">
+                                <i class="{{icon}}"></i>
+                            </span>
+                            <div>
+                                <span class="badge bg-light text-dark border text-uppercase" style="font-size: 11px;">{{entityType}}</span>
+                                <span class="badge {{badgeClass}} ms-1" style="font-size: 11px;">{{status}}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <a href="{{detailUrl}}" class="btn btn-sm btn-outline-primary px-3">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Detail
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Title & Snippet -->
+                    <h6 class="fw-bold text-dark mt-2 mb-1" style="font-size: 16px;">
+                        {{title}}
+                    </h6>
+                    <p class="text-secondary small mb-3" style="line-height: 1.5;">
+                        {{snippet}}
+                    </p>
+
+                    <!-- Author & Metadata Footer -->
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top small text-muted">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-regular fa-user"></i>
+                            <span>{{authorName}} <small class="text-muted">(@{{authorUsername}})</small></span>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="font-monospace" style="font-size: 11px;">ID: {{id}}</span>
+                            <span><i class="fa-regular fa-calendar me-1"></i>{{formatDate createdAt}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+        {{else}}
+        <!-- NO RESULTS MATCHED -->
+        <div class="col-12">
+            <div class="admin-empty-state card p-5 text-center border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="mb-3 text-muted" style="font-size: 48px;">
+                    <i class="fa-solid fa-magnifying-glass-arrow-right"></i>
+                </div>
+                <h4 class="fw-bold text-dark">No Matching Results Found</h4>
+                <p class="text-muted mx-auto mb-3" style="max-width: 500px;">
+                    We couldn't find any community posts, comments, stories, reports, or users matching "<strong>{{query}}</strong>".
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="/admin/community/search?q={{encodeURIComponent query}}&type=all" class="btn btn-outline-primary btn-sm">
+                        <i class="fa-solid fa-arrows-rotate me-1"></i> Search All Entities
+                    </a>
+                    <a href="/admin/community/search" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-xmark me-1"></i> Clear Search
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+
+    <!-- PAGINATION -->
+    {{> admin/admin-pagination totalPages=totalPages page=page total=total filters=filters}}
+
+    {{else}}
+    <!-- NO QUERY ENTERED INITIAL STATE -->
+    <div class="card p-5 text-center border-0 shadow-sm" style="border-radius: 16px;">
+        <div class="mb-3 text-primary" style="font-size: 54px; opacity: 0.85;">
+            <i class="fa-solid fa-compass"></i>
+        </div>
+        <h4 class="fw-bold text-dark">Search the Entire Community Ecosystem</h4>
+        <p class="text-muted mx-auto mb-4" style="max-width: 550px; font-size: 15px;">
+            Quickly locate posts, comments, stories, safety reports, and members across the platform. Enter any keyword, username, or identifier above to begin.
+        </p>
+
+        <div class="row g-3 justify-content-center" style="max-width: 720px; margin: 0 auto;">
+            <div class="col-md-4 col-sm-6">
+                <div class="p-3 border rounded-3 bg-light text-start h-100">
+                    <i class="fa-solid fa-signs-post text-primary mb-2 fs-5"></i>
+                    <h6 class="fw-bold mb-1">Posts & Media</h6>
+                    <small class="text-muted">Search post text, hashtags, titles, or author IDs.</small>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="p-3 border rounded-3 bg-light text-start h-100">
+                    <i class="fa-solid fa-comments text-success mb-2 fs-5"></i>
+                    <h6 class="fw-bold mb-1">Comments & Replies</h6>
+                    <small class="text-muted">Find specific discussions or responses across all threads.</small>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="p-3 border rounded-3 bg-light text-start h-100">
+                    <i class="fa-solid fa-shield-halved text-danger mb-2 fs-5"></i>
+                    <h6 class="fw-bold mb-1">Safety Reports</h6>
+                    <small class="text-muted">Look up reports by reason, target entity ID, or status.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+</div>

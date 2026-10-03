@@ -1,0 +1,279 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <a href="/admin/community/comments" class="text-light opacity-75 text-decoration-none small mb-2 d-inline-block">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Comments
+                </a>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    {{#if comment.isReply}}
+                    <span class="badge bg-secondary">Nested Reply</span>
+                    {{else}}
+                    <span class="badge bg-light text-dark">Top-Level Comment</span>
+                    {{/if}}
+                    {{#if comment.isDeleted}}
+                    <span class="badge bg-danger">Soft-Deleted</span>
+                    {{else}}
+                    <span class="badge bg-success">Active</span>
+                    {{/if}}
+                </div>
+                <h2 class="text-white fw-bold m-0" style="font-size: 26px; letter-spacing: -0.5px;">Comment Dossier: #{{comment._id}}</h2>
+                <p class="text-light opacity-75 mt-1 mb-0" style="font-size: 14px;">Authored by <strong>{{comment.author.name}}</strong> (@{{comment.author.username}}) on {{formatDateTime comment.createdAt}}</p>
+            </div>
+
+            <!-- MODERATION CONTROLS -->
+            <div>
+                {{#if comment.isDeleted}}
+                <button type="button" class="btn btn-success px-3 py-2" onclick="openRestoreCommentModal('{{comment._id}}')">
+                    <i class="fa-solid fa-trash-arrow-up me-1"></i> Restore Comment
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-danger px-3 py-2" onclick="openDeleteCommentModal('{{comment._id}}')">
+                    <i class="fa-solid fa-trash me-1"></i> Soft Delete Comment
+                </button>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: COMMENT & CONTEXT -->
+        <div class="col-lg-8">
+            <!-- COMMENT CONTENT CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 16px; font-weight: bold;">
+                            {{#if comment.author.avatar}}
+                            <img src="{{comment.author.avatar}}" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover;">
+                            {{else}}
+                            <i class="fa-solid fa-user"></i>
+                            {{/if}}
+                        </div>
+                        <div>
+                            <h5 class="m-0 fw-bold">{{comment.author.name}}</h5>
+                            <small class="text-muted">@{{comment.author.username}} • Role: <span class="badge bg-secondary">{{comment.author.role}}</span></small>
+                        </div>
+                    </div>
+
+                    <a href="/admin/network/users/{{comment.author._id}}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-id-card me-1"></i> User Dossier
+                    </a>
+                </div>
+
+                <div class="p-3 bg-light rounded mb-3" style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">{{comment.content}}</div>
+
+                <div class="d-flex gap-3 small text-muted">
+                    <span><i class="fa-regular fa-heart me-1"></i>{{comment.likesCount}} likes</span>
+                    <span><i class="fa-regular fa-comments me-1"></i>{{comment.repliesCount}} replies</span>
+                    <span><i class="fa-regular fa-clock me-1"></i>Created {{formatDateTime comment.createdAt}}</span>
+                </div>
+            </div>
+
+            <!-- PARENT POST CONTEXT CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-solid fa-signs-post me-2 text-primary"></i> Parent Post Context</h5>
+                    {{#if comment.parentPost}}
+                    <a href="/admin/community/posts/{{comment.parentPost._id}}" class="btn btn-sm btn-outline-primary">
+                        View Full Post
+                    </a>
+                    {{/if}}
+                </div>
+
+                {{#if comment.parentPost}}
+                <div class="p-3 rounded border bg-light">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted font-monospace">Post ID: {{comment.parentPost._id}}</small>
+                        <span class="badge bg-secondary">{{comment.parentPost.audience}}</span>
+                    </div>
+                    <p class="m-0 text-secondary" style="white-space: pre-wrap;">{{comment.parentPost.content}}</p>
+                </div>
+                {{else}}
+                <div class="text-muted small">Parent post record is unavailable or deleted.</div>
+                {{/if}}
+            </div>
+
+            <!-- PARENT COMMENT CONTEXT (IF REPLY) -->
+            {{#if comment.isReply}}
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-reply me-2 text-secondary"></i> In Reply To Comment</h5>
+
+                {{#if comment.parentComment}}
+                <div class="p-3 rounded border bg-light">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted font-monospace">Parent Comment ID: {{comment.parentComment._id}}</small>
+                        <a href="/admin/community/comments/{{comment.parentComment._id}}" class="btn btn-sm btn-link p-0 text-decoration-none">Inspect Parent</a>
+                    </div>
+                    <p class="m-0 text-secondary">{{comment.parentComment.content}}</p>
+                </div>
+                {{else}}
+                <div class="text-muted small">Parent comment record is unavailable.</div>
+                {{/if}}
+            </div>
+            {{/if}}
+
+            <!-- THREADED REPLIES PREVIEW -->
+            {{#if comment.replies.length}}
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-comments me-2 text-info"></i> Direct Replies to this Comment ({{comment.replies.length}})</h5>
+
+                <div class="list-group list-group-flush">
+                    {{#each comment.replies}}
+                    <div class="list-group-item px-0 py-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small">{{this.author.name}} <small class="text-muted">@{{this.author.username}}</small></span>
+                            <a href="/admin/community/comments/{{this._id}}" class="btn btn-sm btn-link p-0 text-decoration-none">Inspect</a>
+                        </div>
+                        <p class="small text-secondary m-0">{{this.content}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- RIGHT COLUMN: METADATA & MODERATION -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-circle-info me-1"></i> Specifications</h6>
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Comment ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 150px;">{{comment._id}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Target Post ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 150px;">{{comment.postId}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Status</span>
+                        <span class="fw-bold {{#if comment.isDeleted}}text-danger{{else}}text-success{{/if}}">{{comment.statusLabel}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Created At</span>
+                        <span>{{formatDateTime comment.createdAt}}</span>
+                    </li>
+                    {{#if comment.deletedAt}}
+                    <li class="d-flex justify-content-between py-2 border-bottom text-danger">
+                        <span>Deleted At</span>
+                        <span>{{formatDateTime comment.deletedAt}}</span>
+                    </li>
+                    {{/if}}
+                </ul>
+            </div>
+
+            <!-- REPORTS -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-flag text-danger me-1"></i> Reports Filed ({{comment.reportCount}})</h6>
+                {{#if comment.reports.length}}
+                <div class="list-group list-group-flush">
+                    {{#each comment.reports}}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <strong class="small text-danger">{{this.reason}}</strong>
+                        <div class="small text-muted">{{this.description}}</div>
+                        <small class="text-muted d-block mt-1">Status: {{this.status}}</small>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="small text-muted mb-0">No policy violation reports filed for this comment.</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-trash me-2"></i> Soft Delete Comment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action soft-deletes the comment. Reply threads will remain intact.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="deleteCommentReason" rows="3" placeholder="Provide moderation justification..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitDeleteComment()">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="restoreCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-trash-arrow-up me-2"></i> Restore Comment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Restore this comment to active visibility in the thread.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Restoration</label>
+                    <textarea class="form-control" id="restoreCommentReason" rows="2" placeholder="e.g. Cleared of violations"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitRestoreComment()">Confirm Restore</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const commentId = '{{comment._id}}';
+
+function openDeleteCommentModal() {
+    document.getElementById('deleteCommentReason').value = '';
+    new bootstrap.Modal(document.getElementById('deleteCommentModal')).show();
+}
+
+function openRestoreCommentModal() {
+    document.getElementById('restoreCommentReason').value = '';
+    new bootstrap.Modal(document.getElementById('restoreCommentModal')).show();
+}
+
+async function submitDeleteComment() {
+    const reason = document.getElementById('deleteCommentReason').value.trim() || 'Violated community guidelines';
+    try {
+        const res = await fetch(`/admin/community/comments/${commentId}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Error deleting comment.');
+    } catch(e) {
+        alert('Network error.');
+    }
+}
+
+async function submitRestoreComment() {
+    const reason = document.getElementById('restoreCommentReason').value.trim() || 'Restored by admin';
+    try {
+        const res = await fetch(`/admin/community/comments/${commentId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Error restoring comment.');
+    } catch(e) {
+        alert('Network error.');
+    }
+}
+</script>

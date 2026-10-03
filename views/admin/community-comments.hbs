@@ -1,0 +1,594 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-comments me-1"></i> Community Discussion
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Comments &amp; Replies</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Review comments across community posts, examine threaded reply chains, and moderate reported remarks.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/admin/community/posts" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-signs-post me-1"></i> Posts
+                </a>
+                <a href="/admin/community/stories" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-circle-play me-1"></i> Stories
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-4 col-md-4 col-12">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Comments</small>
+                    <h2>{{stats.totalComments}}</h2>
+                </div>
+                <i class="fa-solid fa-comments stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-4 col-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Active Comments</small>
+                    <h2>{{stats.activeComments}}</h2>
+                </div>
+                <i class="fa-solid fa-circle-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-4 col-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Soft-Deleted</small>
+                    <h2>{{stats.deletedComments}}</h2>
+                </div>
+                <i class="fa-solid fa-trash-can stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4 border-bottom" style="font-size: 14px; font-weight: 600;">
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/community/comments?status=all&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                All Comments ({{stats.totalComments}})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'active'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/community/comments?status=active&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                Active ({{stats.activeComments}})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'deleted'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/community/comments?status=deleted&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                Deleted ({{stats.deletedComments}})
+            </a>
+        </li>
+    </ul>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/community/comments" id="commentsFilterForm" style="border-radius: 16px;">
+        <input type="hidden" name="status" value="{{filters.status}}">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-6 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search comment content, author, post ID...">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-3 col-6">
+                <select class="form-select" name="sort" onchange="document.getElementById('commentsFilterForm').submit()">
+                    <option value="newest" {{#ifEquals filters.sort 'newest'}}selected{{/ifEquals}}>Newest First</option>
+                    <option value="oldest" {{#ifEquals filters.sort 'oldest'}}selected{{/ifEquals}}>Oldest First</option>
+                    <option value="likes" {{#ifEquals filters.sort 'likes'}}selected{{/ifEquals}}>Most Liked</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-3 col-6 text-end">
+                <a href="/admin/community/comments" class="btn btn-outline-secondary w-100"><i class="fa-solid fa-rotate"></i> Reset</a>
+            </div>
+        </div>
+
+        <div class="row g-2 align-items-center mt-2 pt-2 border-top">
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">From</span>
+                    <input type="date" class="form-control" name="startDate" value="{{filters.startDate}}" onchange="document.getElementById('commentsFilterForm').submit()">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">To</span>
+                    <input type="date" class="form-control" name="endDate" value="{{filters.endDate}}" onchange="document.getElementById('commentsFilterForm').submit()">
+                </div>
+            </div>
+            {{#if hasActiveFilters}}
+            <div class="col-lg-6 col-md-4 col-sm-12 text-lg-end">
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-2 px-3 small">
+                    <i class="fa-solid fa-filter me-1"></i> Active Filters Applied
+                </span>
+            </div>
+            {{/if}}
+        </div>
+    </form>
+
+    <!-- BULK ACTIONS TOOLBAR -->
+    <div id="commentsBulkToolbar" class="card shadow-lg border-0 mb-3 d-none" style="border-radius: 14px; background: #1e293b; color: white;">
+        <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary" id="selectedCommentsCount">0</span>
+                <span class="small fw-semibold">Comments selected (Max 50)</span>
+                <button type="button" class="btn btn-link text-light btn-sm text-decoration-none p-0 ms-2" onclick="clearCommentsSelection()">Clear</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-danger" onclick="executeCommentsBulk('delete')">
+                    <i class="fa-solid fa-trash me-1"></i> Soft Delete Selected
+                </button>
+                <button type="button" class="btn btn-sm btn-success" onclick="executeCommentsBulk('restore')">
+                    <i class="fa-solid fa-trash-arrow-up me-1"></i> Restore Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="community-comments" total=total itemLabel="comments" viewMode=viewMode}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="community-commentsCardView" data-section="community-comments">
+        <div class="row g-3">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card h-100">
+                    <div class="admin-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" class="form-check-input comment-bulk-checkbox m-0" value="{{_id}}" onchange="updateCommentsBulkState()">
+                            {{#if isReply}}
+                            <span class="badge bg-secondary"><i class="fa-solid fa-reply me-1"></i> Reply</span>
+                            {{else}}
+                            <span class="badge bg-light text-dark border">Top Comment</span>
+                            {{/if}}
+                            {{#if hasReports}}
+                            <span class="badge bg-danger"><i class="fa-solid fa-flag me-1"></i> {{reportTotal}} Reports</span>
+                            {{/if}}
+                        </div>
+                        <div>
+                            {{#if isDeleted}}
+                            <span class="admin-badge admin-badge-danger">Deleted</span>
+                            {{else}}
+                            <span class="admin-badge admin-badge-active">Active</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <!-- Author -->
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; font-size: 11px;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="text-truncate">
+                                <span class="fw-bold small">{{author.name}}</span>
+                                <small class="text-muted">@{{author.username}}</small>
+                            </div>
+                        </div>
+
+                        <!-- Comment content -->
+                        <p class="small text-secondary mb-2" style="min-height: 40px;">
+                            {{contentSnippet}}
+                        </p>
+
+                        <!-- Parent post reference -->
+                        <div class="p-2 mb-3 rounded bg-light border" style="font-size: 11px;">
+                            <span class="text-muted fw-bold">Post #{{postId}}:</span>
+                            <span class="text-secondary text-truncate d-inline-block align-bottom" style="max-width: 180px;">{{parentSnippet}}</span>
+                        </div>
+
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-heart"></i>
+                                <span>{{likesCount}} likes</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-comments"></i>
+                                <span>{{repliesCount}} replies</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>{{formatDate createdAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card-footer d-flex justify-content-between align-items-center">
+                        <a href="/admin/community/comments/{{_id}}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-circle-info me-1"></i> Context
+                        </a>
+
+                        <div>
+                            {{#if isDeleted}}
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="openRestoreCommentModal('{{_id}}')">
+                                <i class="fa-solid fa-trash-arrow-up"></i> Restore
+                            </button>
+                            {{else}}
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteCommentModal('{{_id}}')">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                            {{/if}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon"><i class="fa-solid fa-comments"></i></div>
+                    <div class="admin-empty-state-title">No Comments Found</div>
+                    <p class="admin-empty-state-desc">There are no comments matching the active filters.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="community-commentsTableView" data-section="community-comments">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-3" style="width: 40px;">
+                                <input type="checkbox" id="selectAllComments" class="form-check-input" onchange="toggleSelectAllComments(this)">
+                            </th>
+                            <th>Author</th>
+                            <th>Comment</th>
+                            <th>Target Post</th>
+                            <th>Engagement</th>
+                            <th>Reports</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-3">
+                                <input type="checkbox" class="form-check-input comment-bulk-checkbox" value="{{_id}}" onchange="updateCommentsBulkState()">
+                            </td>
+                            <td>
+                                <div class="fw-bold small">{{author.name}}</div>
+                                <small class="text-muted">@{{author.username}}</small>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 280px;" title="{{content}}">{{contentSnippet}}</div>
+                                <small class="text-muted font-monospace" style="font-size: 10px;">ID: {{_id}}</small>
+                            </td>
+                            <td>
+                                <a href="/admin/community/posts/{{postId}}" class="small text-decoration-none">
+                                    <i class="fa-solid fa-signs-post me-1"></i> #{{postId}}
+                                </a>
+                            </td>
+                            <td>
+                                <small><i class="fa-regular fa-heart me-1"></i>{{likesCount}}</small>
+                            </td>
+                            <td>
+                                {{#if hasReports}}
+                                <span class="badge bg-danger">{{reportTotal}}</span>
+                                {{else}}
+                                <span class="text-muted small">0</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if isDeleted}}
+                                <span class="badge bg-danger">Deleted</span>
+                                {{else}}
+                                <span class="badge bg-success">Active</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{formatDate createdAt}}</small>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/admin/community/comments/{{_id}}" class="btn btn-outline-primary" title="Inspect comment">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {{#if isDeleted}}
+                                    <button type="button" class="btn btn-outline-success" onclick="openRestoreCommentModal('{{_id}}')" title="Restore">
+                                        <i class="fa-solid fa-trash-arrow-up"></i>
+                                    </button>
+                                    {{else}}
+                                    <button type="button" class="btn btn-outline-danger" onclick="openDeleteCommentModal('{{_id}}')" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                    {{/if}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-comments fs-3 mb-2 d-block opacity-50"></i>
+                                No comments found.
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="mt-4">
+        {{> admin/admin-pagination total=total page=page limit=limit totalPages=totalPages filters=filters}}
+    </div>
+
+</div>
+
+<!-- MODAL: DELETE COMMENT -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-labelledby="deleteCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteCommentModalLabel"><i class="fa-solid fa-trash me-2"></i> Soft Delete Comment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action will hide the comment from the public thread. Child replies and discussion structure will be preserved.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Moderation Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="deleteCommentReason" rows="3" placeholder="State reason for comment removal..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteCommentBtn" onclick="submitDeleteComment()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RESTORE COMMENT -->
+<div class="modal fade" id="restoreCommentModal" tabindex="-1" aria-labelledby="restoreCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="restoreCommentModalLabel"><i class="fa-solid fa-trash-arrow-up me-2"></i> Restore Comment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This comment will be un-deleted and returned to active status in the discussion thread.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Restoration</label>
+                    <textarea class="form-control" id="restoreCommentReason" rows="2" placeholder="e.g. Cleared after moderator review"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRestoreCommentBtn" onclick="submitRestoreComment()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCommentId = null;
+
+function openDeleteCommentModal(commentId) {
+    currentCommentId = commentId;
+    document.getElementById('deleteCommentReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('deleteCommentModal'));
+    modal.show();
+}
+
+function openRestoreCommentModal(commentId) {
+    currentCommentId = commentId;
+    document.getElementById('restoreCommentReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('restoreCommentModal'));
+    modal.show();
+}
+
+async function submitDeleteComment() {
+    if (!currentCommentId) return;
+    const reason = document.getElementById('deleteCommentReason').value.trim() || 'Violated community guidelines';
+    const btn = document.getElementById('confirmDeleteCommentBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/comments/${currentCommentId}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to delete comment.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+async function submitRestoreComment() {
+    if (!currentCommentId) return;
+    const reason = document.getElementById('restoreCommentReason').value.trim() || 'Restored by admin';
+    const btn = document.getElementById('confirmRestoreCommentBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/comments/${currentCommentId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to restore comment.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+// Bulk Actions Logic for Comments
+let selectedCommentIds = new Set();
+
+function updateCommentsBulkState() {
+    const checkboxes = document.querySelectorAll('.comment-bulk-checkbox');
+    selectedCommentIds.clear();
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedCommentIds.add(cb.value);
+    });
+
+    const count = selectedCommentIds.size;
+    const toolbar = document.getElementById('commentsBulkToolbar');
+    const countEl = document.getElementById('selectedCommentsCount');
+    const selectAllCb = document.getElementById('selectAllComments');
+
+    if (countEl) countEl.textContent = count;
+    if (toolbar) {
+        if (count > 0) toolbar.classList.remove('d-none');
+        else toolbar.classList.add('d-none');
+    }
+    if (selectAllCb) {
+        selectAllCb.checked = checkboxes.length > 0 && count === checkboxes.length;
+        selectAllCb.indeterminate = count > 0 && count < checkboxes.length;
+    }
+}
+
+function toggleSelectAllComments(masterCb) {
+    const checkboxes = document.querySelectorAll('.comment-bulk-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = masterCb.checked;
+    });
+    updateCommentsBulkState();
+}
+
+function clearCommentsSelection() {
+    const checkboxes = document.querySelectorAll('.comment-bulk-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const selectAllCb = document.getElementById('selectAllComments');
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        selectAllCb.indeterminate = false;
+    }
+    updateCommentsBulkState();
+}
+
+async function executeCommentsBulk(action) {
+    const ids = Array.from(selectedCommentIds);
+    if (!ids.length) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select at least one comment.' });
+        } else {
+            alert('Please select at least one comment.');
+        }
+        return;
+    }
+    if (ids.length > 50) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Batch Limit Exceeded', text: 'Maximum 50 comments can be processed in a single bulk action.' });
+        } else {
+            alert('Maximum 50 comments can be processed in a single bulk action.');
+        }
+        return;
+    }
+
+    const isDestructive = action === 'delete';
+    let reason = '';
+
+    if (typeof Swal !== 'undefined') {
+        const result = await Swal.fire({
+            title: `Confirm Bulk ${action === 'delete' ? 'Soft Delete' : 'Restore'}`,
+            html: `Are you sure you want to execute <strong>${action.toUpperCase()}</strong> on <strong>${ids.length}</strong> selected comments?<br><br>
+                   <input id="swalBulkReason" class="swal2-input" placeholder="Moderation reason (optional)">`,
+            icon: isDestructive ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isDestructive ? '#dc2626' : '#2563eb',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: `Yes, ${action} ${ids.length} comments`,
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                return document.getElementById('swalBulkReason')?.value || '';
+            }
+        });
+
+        if (!result.isConfirmed) return;
+        reason = result.value || '';
+    } else {
+        if (!confirm(`Are you sure you want to execute ${action} on ${ids.length} comments?`)) return;
+        reason = prompt('Enter moderation reason (optional):') || '';
+    }
+
+    try {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Processing Bulk Action...',
+                text: `Executing ${action} on ${ids.length} comments. Please wait.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+        }
+
+        const res = await fetch('/admin/community/comments/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ action, ids, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Bulk Action Completed',
+                    html: `<strong>${data.succeeded}</strong> succeeded, <strong>${data.skipped}</strong> skipped, <strong>${data.failed}</strong> failed.<br><small class="text-muted">Operation ID: ${data.bulkOperationId}</small>`,
+                    timer: 2000,
+                    showConfirmButton: true
+                });
+            } else {
+                alert(`Bulk action completed: ${data.succeeded} succeeded, ${data.skipped} skipped, ${data.failed} failed.`);
+            }
+            window.location.reload();
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Action Failed', text: data.message || 'Bulk operation failed.' });
+            } else {
+                alert(data.message || 'Bulk operation failed.');
+            }
+        }
+    } catch (err) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Failed to communicate with server.' });
+        } else {
+            alert('Network error while processing bulk action.');
+        }
+    }
+}
+</script>

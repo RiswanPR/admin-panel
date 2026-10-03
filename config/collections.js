@@ -41,5 +41,13 @@ module.exports = {
     MODERATION_REPORTS_COLLECTION: 'moderation_reports',
     MODERATION_BLOCKS_COLLECTION: 'moderation_blocks',
     ERROR_REPORTS_COLLECTION: 'error_reports',
-    VERIFICATION_REQUESTS_COLLECTION: 'verification_requests'
+    VERIFICATION_REQUESTS_COLLECTION: 'verification_requests',
+    // Community Content Management Collections (Phase 2)
+    COMMUNITY_POSTS_COLLECTION: 'community_posts',
+    COMMUNITY_COMMENTS_COLLECTION: 'community_comments',
+    COMMUNITY_STORIES_COLLECTION: 'community_stories',
+    COMMUNITY_REPORTS_COLLECTION: 'community_reports',
+    COMMUNITY_MODERATION_LOGS_COLLECTION: 'community_moderation_logs',
+    COMMUNITY_POST_REACTIONS_COLLECTION: 'community_post_reactions',
+    COMMUNITY_POLLS_COLLECTION: 'community_polls'
 };

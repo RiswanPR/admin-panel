@@ -1,0 +1,466 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <a href="/admin/community/posts" class="text-light opacity-75 text-decoration-none small mb-2 d-inline-block">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Community Posts
+                </a>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-secondary" style="font-size: 11px;">{{post.type}}</span>
+                    <span class="badge bg-light text-dark" style="font-size: 11px;">{{post.audience}}</span>
+                    {{#if post.isDeleted}}
+                    <span class="badge bg-danger">Hidden / Soft-Deleted</span>
+                    {{else}}
+                    {{#if post.isLocked}}
+                    <span class="badge bg-warning text-dark">Comments Locked</span>
+                    {{else}}
+                    <span class="badge bg-success">Active</span>
+                    {{/if}}
+                    {{/if}}
+                </div>
+                <h2 class="text-white fw-bold m-0" style="font-size: 26px; letter-spacing: -0.5px;">Post Dossier: #{{post._id}}</h2>
+                <p class="text-light opacity-75 mt-1 mb-0" style="font-size: 14px;">Published by <strong>{{post.author.name}}</strong> (@{{post.author.username}}) on {{formatDateTime post.createdAt}}</p>
+            </div>
+
+            <!-- MODERATION CONTROLS -->
+            <div class="d-flex gap-2 flex-wrap">
+                {{#if post.isDeleted}}
+                <button type="button" class="btn btn-success px-3 py-2" onclick="openRestorePostModal('{{post._id}}')">
+                    <i class="fa-solid fa-trash-arrow-up me-1"></i> Restore Post
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-danger px-3 py-2" onclick="openHidePostModal('{{post._id}}')">
+                    <i class="fa-solid fa-eye-slash me-1"></i> Hide Post
+                </button>
+                {{/if}}
+
+                {{#if post.isLocked}}
+                <button type="button" class="btn btn-light px-3 py-2" onclick="toggleLockPost('{{post._id}}', false)">
+                    <i class="fa-solid fa-lock-open me-1"></i> Unlock Comments
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-warning px-3 py-2" onclick="toggleLockPost('{{post._id}}', true)">
+                    <i class="fa-solid fa-lock me-1"></i> Lock Comments
+                </button>
+                {{/if}}
+
+                {{#if post.isPinned}}
+                <button type="button" class="btn btn-outline-light px-3 py-2" onclick="togglePinPost('{{post._id}}', false)">
+                    <i class="fa-solid fa-thumbtack me-1"></i> Unpin
+                </button>
+                {{else}}
+                <button type="button" class="btn btn-outline-light px-3 py-2" onclick="togglePinPost('{{post._id}}', true)">
+                    <i class="fa-solid fa-thumbtack me-1"></i> Pin
+                </button>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- ENGAGEMENT STATS ROW -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Total Likes</small>
+                <h3 class="m-0">{{post.likesCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Comments</small>
+                <h3 class="m-0">{{post.commentsCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Total Views</small>
+                <h3 class="m-0">{{post.viewsCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Shares / Reposts</small>
+                <h3 class="m-0">{{add post.sharesCount post.repostsCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card {{#if post.reportCount}}stat-red{{else}}stat-dark{{/if}} p-3">
+                <small>Reports Filed</small>
+                <h3 class="m-0">{{post.reportCount}}</h3>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+            <div class="stat-card stat-dark p-3">
+                <small>Moderation Status</small>
+                <h4 class="m-0 {{#if post.isDeleted}}text-danger{{else}}text-success{{/if}}">{{post.statusLabel}}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: CONTENT & MEDIA -->
+        <div class="col-lg-8">
+            <!-- POST CONTENT CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 18px; font-weight: bold;">
+                            {{#if post.author.avatar}}
+                            <img src="{{post.author.avatar}}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                            {{else}}
+                            <i class="fa-solid fa-user"></i>
+                            {{/if}}
+                        </div>
+                        <div>
+                            <h5 class="m-0 fw-bold">{{post.author.name}}</h5>
+                            <small class="text-muted">@{{post.author.username}} • Role: <span class="badge bg-secondary">{{post.author.role}}</span></small>
+                        </div>
+                    </div>
+
+                    <a href="/admin/network/users/{{post.author._id}}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-id-card me-1"></i> User Profile
+                    </a>
+                </div>
+
+                <!-- BODY -->
+                <div class="post-content-body mb-4" style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">{{post.content}}</div>
+
+                <!-- QUOTE POST PREVIEW IF APPLICABLE -->
+                {{#if post.originalPost}}
+                <div class="p-3 mb-4 rounded border bg-light">
+                    <div class="small fw-bold text-muted mb-1"><i class="fa-solid fa-quote-left me-1"></i> Quoted / Original Post (#{{post.originalPost._id}})</div>
+                    <p class="m-0 small">{{post.originalPost.content}}</p>
+                </div>
+                {{/if}}
+
+                <!-- MEDIA ATTACHMENTS GALLERY -->
+                {{#if post.hasMedia}}
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-paperclip me-1"></i> Media Attachments ({{post.media.length}})</h6>
+                    <div class="row g-2">
+                        {{#each post.media}}
+                        <div class="col-md-6 col-12">
+                            <div class="card h-100 border">
+                                {{#ifEquals this.type 'image'}}
+                                <img src="{{this.url}}" class="card-img-top" style="max-height: 220px; object-fit: cover;" onerror="this.src='/images/placeholder.png'">
+                                {{else}}
+                                <div class="p-4 text-center bg-dark text-white rounded-top">
+                                    <i class="fa-solid fa-film fs-2 mb-2"></i>
+                                    <div class="small">Video Attachment</div>
+                                </div>
+                                {{/ifEquals}}
+                                <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-secondary">{{this.type}}</span>
+                                    <a href="{{this.url}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- TAGS & METADATA -->
+                <div class="d-flex flex-wrap gap-1 border-top pt-3">
+                    {{#each post.hashtags}}
+                    <span class="badge bg-light text-primary border">#{{this}}</span>
+                    {{/each}}
+                    {{#each post.tags}}
+                    <span class="badge bg-light text-dark border">{{this}}</span>
+                    {{/each}}
+                </div>
+            </div>
+
+            <!-- COMMENTS PREVIEW CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fa-regular fa-comment me-2"></i> Recent Comments ({{post.comments.length}})</h5>
+                    <a href="/admin/community/comments?postId={{post._id}}" class="btn btn-sm btn-outline-primary">
+                        View All Comments
+                    </a>
+                </div>
+
+                {{#if post.comments.length}}
+                <div class="list-group list-group-flush">
+                    {{#each post.comments}}
+                    <div class="list-group-item px-0 py-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <span class="fw-bold small">{{this.author.name}}</span>
+                                <small class="text-muted">@{{this.author.username}} • {{formatDateTime this.createdAt}}</small>
+                            </div>
+                            <div>
+                                {{#if this.isDeleted}}
+                                <span class="badge bg-danger">Deleted</span>
+                                {{/if}}
+                                <a href="/admin/community/comments/{{this._id}}" class="btn btn-sm btn-link text-decoration-none">Inspect</a>
+                            </div>
+                        </div>
+                        <p class="small text-secondary m-0">{{this.content}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-regular fa-comment-dots fs-3 mb-2 d-block opacity-50"></i>
+                    No comments submitted for this post.
+                </div>
+                {{/if}}
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: METADATA, REPORTS & AUDIT -->
+        <div class="col-lg-4">
+            <!-- SPECIFICATIONS CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-circle-info me-1"></i> Post Specifications</h6>
+
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Post ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 160px;" title="{{post._id}}">{{post._id}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Author ID</span>
+                        <span class="font-monospace text-truncate" style="max-width: 160px;" title="{{post.author._id}}">{{post.author._id}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Post Type</span>
+                        <span class="fw-semibold">{{post.postType}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Audience</span>
+                        <span class="fw-semibold">{{post.audience}}</span>
+                    </li>
+                    {{#if post.courseTitle}}
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Scoped Course</span>
+                        <span class="fw-semibold text-truncate" style="max-width: 160px;">{{post.courseTitle}}</span>
+                    </li>
+                    {{/if}}
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Created At</span>
+                        <span>{{formatDateTime post.createdAt}}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Edited</span>
+                        <span>{{#if post.isEdited}}Yes{{else}}No{{/if}}</span>
+                    </li>
+                    {{#if post.deletedAt}}
+                    <li class="d-flex justify-content-between py-2 border-bottom text-danger">
+                        <span>Deleted At</span>
+                        <span>{{formatDateTime post.deletedAt}}</span>
+                    </li>
+                    {{/if}}
+                </ul>
+            </div>
+
+            <!-- REPORTS FILED CARD -->
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-flag text-danger me-1"></i> Community Reports ({{post.reportCount}})</h6>
+
+                {{#if post.reports.length}}
+                <div class="list-group list-group-flush">
+                    {{#each post.reports}}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small text-danger">{{this.reason}}</strong>
+                            <span class="badge bg-secondary small">{{this.status}}</span>
+                        </div>
+                        {{#if this.description}}
+                        <div class="small text-muted mt-1">{{this.description}}</div>
+                        {{/if}}
+                        <small class="text-muted d-block mt-1">Reported on {{formatDate this.createdAt}}</small>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="small text-muted mb-0">No policy violation reports filed against this post.</p>
+                {{/if}}
+            </div>
+
+            <!-- AUDIT / MODERATION HISTORY -->
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left me-1"></i> Moderation History</h6>
+
+                {{#if post.moderationLogs.length}}
+                <div class="timeline small">
+                    {{#each post.moderationLogs}}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex justify-content-between">
+                            <strong class="text-primary">{{upper this.action}}</strong>
+                            <small class="text-muted">{{formatDate this.createdAt}}</small>
+                        </div>
+                        <div class="text-muted">By: {{this.moderatorId}}</div>
+                        {{#if this.reason}}
+                        <div class="text-secondary mt-1"><em>"{{this.reason}}"</em></div>
+                        {{/if}}
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <p class="small text-muted mb-0">No prior moderation actions recorded for this post.</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: HIDE POST -->
+<div class="modal fade" id="hidePostModal" tabindex="-1" aria-labelledby="hidePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="hidePostModalLabel"><i class="fa-solid fa-eye-slash me-2"></i> Hide Community Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action will soft-delete the post from the public feed. Related comments and reactions will remain preserved.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Moderation Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="hidePostReason" rows="3" placeholder="Provide reason for policy enforcement..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmHidePostBtn" onclick="submitHidePost()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Hide
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RESTORE POST -->
+<div class="modal fade" id="restorePostModal" tabindex="-1" aria-labelledby="restorePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="restorePostModalLabel"><i class="fa-solid fa-trash-arrow-up me-2"></i> Restore Community Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This post will be restored to active status on the community feed.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Restoration</label>
+                    <textarea class="form-control" id="restorePostReason" rows="2" placeholder="e.g. Cleared of guideline violations"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRestorePostBtn" onclick="submitRestorePost()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentActionPostId = '{{post._id}}';
+
+function openHidePostModal(postId) {
+    currentActionPostId = postId || '{{post._id}}';
+    document.getElementById('hidePostReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('hidePostModal'));
+    modal.show();
+}
+
+function openRestorePostModal(postId) {
+    currentActionPostId = postId || '{{post._id}}';
+    document.getElementById('restorePostReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('restorePostModal'));
+    modal.show();
+}
+
+async function submitHidePost() {
+    const reason = document.getElementById('hidePostReason').value.trim() || 'Violated community guidelines';
+    const btn = document.getElementById('confirmHidePostBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${currentActionPostId}/hide`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to hide post.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+async function submitRestorePost() {
+    const reason = document.getElementById('restorePostReason').value.trim() || 'Restored by admin';
+    const btn = document.getElementById('confirmRestorePostBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${currentActionPostId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to restore post.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+async function toggleLockPost(postId, isLocked) {
+    if (!confirm(`Are you sure you want to ${isLocked ? 'lock' : 'unlock'} comments on this post?`)) return;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${postId}/lock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ isLocked, reason: isLocked ? 'Moderator locked comments' : 'Moderator unlocked comments' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to update lock status.');
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+    }
+}
+
+async function togglePinPost(postId, isPinned) {
+    try {
+        const res = await fetch(`/admin/community/posts/${postId}/pin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ isPinned, reason: isPinned ? 'Moderator pinned post' : 'Moderator unpinned post' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to update pin status.');
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+    }
+}
+</script>

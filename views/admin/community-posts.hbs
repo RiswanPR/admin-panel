@@ -1,0 +1,736 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- HERO HEADER -->
+    <div class="hero-card mb-4" style="background: linear-gradient(135deg, rgba(18, 49, 76, 0.95), rgba(29, 78, 137, 0.9)), url('/images/banner.jpg') center/cover; padding: 32px 36px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 49, 76, 0.15);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <span class="badge mb-2 px-3 py-2" style="background: rgba(159, 213, 178, 0.2); color: #9fd5b2; border: 1px solid rgba(159, 213, 178, 0.35); border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-users me-1"></i> Community Management
+                </span>
+                <h2 class="text-white fw-bold m-0" style="font-size: 28px; letter-spacing: -0.5px;">Community Posts</h2>
+                <p class="text-light opacity-75 mt-2 mb-0" style="font-size: 14px;">Monitor social feed postings, inspect media attachments, lock comments, and moderate community content.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/admin/community/comments" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-comments me-1"></i> Comments
+                </a>
+                <a href="/admin/community/stories" class="btn btn-outline-light px-3 py-2">
+                    <i class="fa-solid fa-circle-play me-1"></i> Stories
+                </a>
+                <a href="/admin/moderation" class="btn btn-light px-3 py-2">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Reports Center
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-dark">
+                <div>
+                    <small>Total Posts</small>
+                    <h2>{{stats.totalPosts}}</h2>
+                </div>
+                <i class="fa-solid fa-newspaper stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-green">
+                <div>
+                    <small>Active Posts</small>
+                    <h2>{{stats.activePosts}}</h2>
+                </div>
+                <i class="fa-solid fa-circle-check stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-yellow">
+                <div>
+                    <small>Locked Posts</small>
+                    <h2>{{stats.lockedPosts}}</h2>
+                </div>
+                <i class="fa-solid fa-lock stat-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="stat-card stat-red">
+                <div>
+                    <small>Hidden / Deleted</small>
+                    <h2>{{stats.deletedPosts}}</h2>
+                </div>
+                <i class="fa-solid fa-eye-slash stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4 border-bottom" style="font-size: 14px; font-weight: 600;">
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'all'}}active text-primary{{else}}text-muted{{/ifEquals}}" href="/admin/community/posts?status=all&audience={{filters.audience}}&type={{filters.type}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                All Posts ({{stats.totalPosts}})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'active'}}active text-success{{else}}text-muted{{/ifEquals}}" href="/admin/community/posts?status=active&audience={{filters.audience}}&type={{filters.type}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                Active ({{stats.activePosts}})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'locked'}}active text-warning{{else}}text-muted{{/ifEquals}}" href="/admin/community/posts?status=locked&audience={{filters.audience}}&type={{filters.type}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                Locked ({{stats.lockedPosts}})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#ifEquals filters.status 'deleted'}}active text-danger{{else}}text-muted{{/ifEquals}}" href="/admin/community/posts?status=deleted&audience={{filters.audience}}&type={{filters.type}}&view={{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+                Hidden / Deleted ({{stats.deletedPosts}})
+            </a>
+        </li>
+    </ul>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-3 border-0 shadow-sm" method="GET" action="/admin/community/posts" id="postsFilterForm" style="border-radius: 16px;">
+        <input type="hidden" name="status" value="{{filters.status}}">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search content, author, ID...">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="audience" onchange="document.getElementById('postsFilterForm').submit()">
+                    <option value="ALL" {{#ifEquals filters.audience 'ALL'}}selected{{/ifEquals}}>All Audiences</option>
+                    <option value="PUBLIC" {{#ifEquals filters.audience 'PUBLIC'}}selected{{/ifEquals}}>Public</option>
+                    <option value="COURSE" {{#ifEquals filters.audience 'COURSE'}}selected{{/ifEquals}}>Course Cohort</option>
+                    <option value="BATCH" {{#ifEquals filters.audience 'BATCH'}}selected{{/ifEquals}}>Batch</option>
+                    <option value="PRIVATE" {{#ifEquals filters.audience 'PRIVATE'}}selected{{/ifEquals}}>Private</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="type" onchange="document.getElementById('postsFilterForm').submit()">
+                    <option value="ALL" {{#ifEquals filters.type 'ALL'}}selected{{/ifEquals}}>All Media Types</option>
+                    <option value="TEXT" {{#ifEquals filters.type 'TEXT'}}selected{{/ifEquals}}>Text Only</option>
+                    <option value="IMAGE" {{#ifEquals filters.type 'IMAGE'}}selected{{/ifEquals}}>Images</option>
+                    <option value="VIDEO" {{#ifEquals filters.type 'VIDEO'}}selected{{/ifEquals}}>Videos</option>
+                    <option value="DOCUMENT" {{#ifEquals filters.type 'DOCUMENT'}}selected{{/ifEquals}}>Documents</option>
+                    <option value="POLL" {{#ifEquals filters.type 'POLL'}}selected{{/ifEquals}}>Polls</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6">
+                <select class="form-select" name="sort" onchange="document.getElementById('postsFilterForm').submit()">
+                    <option value="newest" {{#ifEquals filters.sort 'newest'}}selected{{/ifEquals}}>Newest First</option>
+                    <option value="oldest" {{#ifEquals filters.sort 'oldest'}}selected{{/ifEquals}}>Oldest First</option>
+                    <option value="likes" {{#ifEquals filters.sort 'likes'}}selected{{/ifEquals}}>Most Liked</option>
+                    <option value="comments" {{#ifEquals filters.sort 'comments'}}selected{{/ifEquals}}>Most Comments</option>
+                    <option value="views" {{#ifEquals filters.sort 'views'}}selected{{/ifEquals}}>Most Viewed</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-3 col-6 text-end">
+                <a href="/admin/community/posts" class="btn btn-outline-secondary w-100"><i class="fa-solid fa-rotate"></i> Reset</a>
+            </div>
+        </div>
+
+        <div class="row g-2 align-items-center mt-2 pt-2 border-top">
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">From</span>
+                    <input type="date" class="form-control" name="startDate" value="{{filters.startDate}}" onchange="document.getElementById('postsFilterForm').submit()">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">To</span>
+                    <input type="date" class="form-control" name="endDate" value="{{filters.endDate}}" onchange="document.getElementById('postsFilterForm').submit()">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="form-check form-switch pt-1">
+                    <input class="form-check-input" type="checkbox" name="hasReports" value="true" id="filterHasReports" {{#if filters.hasReports}}checked{{/if}} onchange="document.getElementById('postsFilterForm').submit()">
+                    <label class="form-check-label small" for="filterHasReports">Has Reports Only</label>
+                </div>
+            </div>
+            {{#if hasActiveFilters}}
+            <div class="col-lg-3 col-md-12 col-sm-6 text-lg-end">
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-2 px-3 small">
+                    <i class="fa-solid fa-filter me-1"></i> Active Filters Applied
+                </span>
+            </div>
+            {{/if}}
+        </div>
+    </form>
+
+    <!-- BULK ACTIONS TOOLBAR -->
+    <div id="postsBulkToolbar" class="card shadow-lg border-0 mb-3 d-none" style="border-radius: 14px; background: #1e293b; color: white;">
+        <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary" id="selectedPostsCount">0</span>
+                <span class="small fw-semibold">Posts selected (Max 50)</span>
+                <button type="button" class="btn btn-link text-light btn-sm text-decoration-none p-0 ms-2" onclick="clearPostsSelection()">Clear</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-danger" onclick="executePostsBulk('hide')">
+                    <i class="fa-solid fa-eye-slash me-1"></i> Hide
+                </button>
+                <button type="button" class="btn btn-sm btn-success" onclick="executePostsBulk('restore')">
+                    <i class="fa-solid fa-trash-arrow-up me-1"></i> Restore
+                </button>
+                <button type="button" class="btn btn-sm btn-warning text-dark" onclick="executePostsBulk('lock')">
+                    <i class="fa-solid fa-lock me-1"></i> Lock
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="executePostsBulk('unlock')">
+                    <i class="fa-solid fa-lock-open me-1"></i> Unlock
+                </button>
+                <button type="button" class="btn btn-sm btn-info text-white" onclick="executePostsBulk('pin')">
+                    <i class="fa-solid fa-thumbtack me-1"></i> Pin
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="executePostsBulk('unpin')">
+                    <i class="fa-solid fa-thumbtack-slash me-1"></i> Unpin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW TOGGLE -->
+    {{> admin/view-toggle section="community-posts" total=total itemLabel="posts" viewMode=viewMode}}
+
+    <!-- CARD VIEW (DEFAULT) -->
+    <div class="admin-cards-container {{#ifEquals viewMode 'table'}}d-none{{/ifEquals}}" id="community-postsCardView" data-section="community-posts">
+        <div class="row g-3">
+            {{#if records.length}}
+            {{#each records}}
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="admin-governance-card h-100">
+                    <div class="admin-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" class="form-check-input post-bulk-checkbox m-0" value="{{_id}}" onchange="updatePostsBulkState()">
+                            <span class="badge bg-secondary" style="font-size: 11px;">{{type}}</span>
+                            <span class="badge bg-light text-dark border" style="font-size: 11px;">{{audience}}</span>
+                            {{#if isPinned}}
+                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-thumbtack"></i> Pinned</span>
+                            {{/if}}
+                        </div>
+                        <div>
+                            {{#if isDeleted}}
+                            <span class="admin-badge admin-badge-danger">Hidden</span>
+                            {{else}}
+                            {{#if isLocked}}
+                            <span class="admin-badge admin-badge-warning">Locked</span>
+                            {{else}}
+                            <span class="admin-badge admin-badge-active">Active</span>
+                            {{/if}}
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="admin-card-body">
+                        <!-- Author snippet -->
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 12px; font-weight: bold;">
+                                {{#if author.avatar}}
+                                <img src="{{author.avatar}}" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;">
+                                {{else}}
+                                <i class="fa-solid fa-user"></i>
+                                {{/if}}
+                            </div>
+                            <div class="text-truncate">
+                                <span class="fw-bold small">{{author.name}}</span>
+                                <small class="text-muted">@{{author.username}}</small>
+                            </div>
+                        </div>
+
+                        <!-- Post snippet -->
+                        <p class="small text-secondary mb-2" style="min-height: 42px;">
+                            {{#if contentSnippet}}{{contentSnippet}}{{else}}<em class="text-muted">No text content</em>{{/if}}
+                        </p>
+
+                        <!-- Media indicator & Reports -->
+                        <div class="d-flex gap-2 align-items-center flex-wrap mb-3">
+                            {{#if hasMedia}}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle small">
+                                <i class="fa-solid fa-photo-film me-1"></i> {{mediaCount}} media
+                            </span>
+                            {{/if}}
+                            {{#if hasReports}}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
+                                <i class="fa-solid fa-flag me-1"></i> {{reportTotal}} reports
+                            </span>
+                            {{/if}}
+                            {{#ifEquals postType 'repost'}}
+                            <span class="badge bg-light text-muted border small"><i class="fa-solid fa-retweet me-1"></i> Repost</span>
+                            {{/ifEquals}}
+                            {{#ifEquals postType 'quote'}}
+                            <span class="badge bg-light text-muted border small"><i class="fa-solid fa-quote-left me-1"></i> Quote</span>
+                            {{/ifEquals}}
+                        </div>
+
+                        <!-- Metrics list -->
+                        <div class="admin-card-meta-list">
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-heart"></i>
+                                <span>{{likesCount}} likes</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-comment"></i>
+                                <span>{{commentsCount}} comments</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-eye"></i>
+                                <span>{{viewsCount}} views</span>
+                            </div>
+                            <div class="admin-card-meta-item">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>{{formatDate createdAt}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card-footer d-flex justify-content-between align-items-center">
+                        <a href="/admin/community/posts/{{_id}}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-circle-info me-1"></i> Dossier
+                        </a>
+
+                        <div class="btn-group btn-group-sm">
+                            {{#if isDeleted}}
+                            <button type="button" class="btn btn-outline-success" onclick="openRestorePostModal('{{_id}}')" title="Restore post">
+                                <i class="fa-solid fa-trash-arrow-up"></i> Restore
+                            </button>
+                            {{else}}
+                            <button type="button" class="btn btn-outline-danger" onclick="openHidePostModal('{{_id}}')" title="Hide post">
+                                <i class="fa-solid fa-eye-slash"></i> Hide
+                            </button>
+                            {{/if}}
+
+                            {{#if isLocked}}
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleLockPost('{{_id}}', false)" title="Unlock comments">
+                                <i class="fa-solid fa-lock-open"></i>
+                            </button>
+                            {{else}}
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleLockPost('{{_id}}', true)" title="Lock comments">
+                                <i class="fa-solid fa-lock"></i>
+                            </button>
+                            {{/if}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <div class="col-12">
+                <div class="admin-empty-state">
+                    <div class="admin-empty-state-icon"><i class="fa-solid fa-signs-post"></i></div>
+                    <div class="admin-empty-state-title">No Community Posts Found</div>
+                    <p class="admin-empty-state-desc">There are no posts matching the current query criteria or no posts have been published yet.</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="admin-table-container {{#ifEquals viewMode 'table'}}{{else}}d-none{{/ifEquals}}" id="community-postsTableView" data-section="community-posts">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="table-responsive mb-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 12px; text-transform: uppercase;">
+                            <th class="ps-3" style="width: 40px;">
+                                <input type="checkbox" id="selectAllPosts" class="form-check-input" onchange="toggleSelectAllPosts(this)">
+                            </th>
+                            <th>Author</th>
+                            <th>Content Preview</th>
+                            <th>Type / Audience</th>
+                            <th>Engagement</th>
+                            <th>Reports</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if records.length}}
+                        {{#each records}}
+                        <tr>
+                            <td class="ps-3">
+                                <input type="checkbox" class="form-check-input post-bulk-checkbox" value="{{_id}}" onchange="updatePostsBulkState()">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 13px; font-weight: bold;">
+                                        {{#if author.avatar}}
+                                        <img src="{{author.avatar}}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                        {{else}}
+                                        <i class="fa-solid fa-user"></i>
+                                        {{/if}}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold small">{{author.name}}</div>
+                                        <small class="text-muted">@{{author.username}}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 280px;" title="{{content}}">
+                                    {{#if contentSnippet}}{{contentSnippet}}{{else}}<em class="text-muted">No text</em>{{/if}}
+                                </div>
+                                <small class="text-muted font-monospace" style="font-size: 10px;">ID: {{_id}}</small>
+                            </td>
+                            <td>
+                                <div><span class="badge bg-secondary">{{type}}</span></div>
+                                <small class="text-muted">{{audience}}</small>
+                            </td>
+                            <td>
+                                <small>
+                                    <i class="fa-regular fa-heart me-1 text-muted"></i>{{likesCount}} &nbsp;
+                                    <i class="fa-regular fa-comment me-1 text-muted"></i>{{commentsCount}}
+                                </small>
+                            </td>
+                            <td>
+                                {{#if hasReports}}
+                                <span class="badge bg-danger">{{reportTotal}}</span>
+                                {{else}}
+                                <span class="text-muted small">0</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if isDeleted}}
+                                <span class="badge bg-danger">Hidden</span>
+                                {{else}}
+                                {{#if isLocked}}
+                                <span class="badge bg-warning text-dark">Locked</span>
+                                {{else}}
+                                <span class="badge bg-success">Active</span>
+                                {{/if}}
+                                {{/if}}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{formatDate createdAt}}</small>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/admin/community/posts/{{_id}}" class="btn btn-outline-primary" title="View details">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {{#if isDeleted}}
+                                    <button type="button" class="btn btn-outline-success" onclick="openRestorePostModal('{{_id}}')" title="Restore post">
+                                        <i class="fa-solid fa-trash-arrow-up"></i>
+                                    </button>
+                                    {{else}}
+                                    <button type="button" class="btn btn-outline-danger" onclick="openHidePostModal('{{_id}}')" title="Hide post">
+                                        <i class="fa-solid fa-eye-slash"></i>
+                                    </button>
+                                    {{/if}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                        {{else}}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-signs-post fs-3 mb-2 d-block opacity-50"></i>
+                                No community posts match the selected criteria.
+                            </td>
+                        </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="mt-4">
+        {{> admin/admin-pagination total=total page=page limit=limit totalPages=totalPages}}
+    </div>
+
+</div>
+
+<!-- MODAL: HIDE POST -->
+<div class="modal fade" id="hidePostModal" tabindex="-1" aria-labelledby="hidePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="hidePostModalLabel"><i class="fa-solid fa-eye-slash me-2"></i> Hide Community Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action will soft-delete the post from the public feed. Related comments and reactions will remain preserved.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Moderation Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="hidePostReason" rows="3" placeholder="Provide reason for policy enforcement..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmHidePostBtn" onclick="submitHidePost()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Hide
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RESTORE POST -->
+<div class="modal fade" id="restorePostModal" tabindex="-1" aria-labelledby="restorePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="restorePostModalLabel"><i class="fa-solid fa-trash-arrow-up me-2"></i> Restore Community Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This post will be restored to the active community feed.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Restoration</label>
+                    <textarea class="form-control" id="restorePostReason" rows="2" placeholder="e.g. Cleared of guideline violations after review"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRestorePostBtn" onclick="submitRestorePost()">
+                    <i class="fa-solid fa-check me-1"></i> Confirm Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentActionPostId = null;
+
+function openHidePostModal(postId) {
+    currentActionPostId = postId;
+    document.getElementById('hidePostReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('hidePostModal'));
+    modal.show();
+}
+
+function openRestorePostModal(postId) {
+    currentActionPostId = postId;
+    document.getElementById('restorePostReason').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('restorePostModal'));
+    modal.show();
+}
+
+async function submitHidePost() {
+    if (!currentActionPostId) return;
+    const reason = document.getElementById('hidePostReason').value.trim() || 'Violated community guidelines';
+    const btn = document.getElementById('confirmHidePostBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${currentActionPostId}/hide`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to hide post.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+async function submitRestorePost() {
+    if (!currentActionPostId) return;
+    const reason = document.getElementById('restorePostReason').value.trim() || 'Restored by admin';
+    const btn = document.getElementById('confirmRestorePostBtn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${currentActionPostId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to restore post.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+        btn.disabled = false;
+    }
+}
+
+async function toggleLockPost(postId, isLocked) {
+    if (!confirm(`Are you sure you want to ${isLocked ? 'lock' : 'unlock'} comments on this post?`)) return;
+
+    try {
+        const res = await fetch(`/admin/community/posts/${postId}/lock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ isLocked, reason: isLocked ? 'Moderator locked comments' : 'Moderator unlocked comments' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to update lock status.');
+        }
+    } catch (e) {
+        alert('Network error while processing request.');
+    }
+}
+
+// Bulk Actions Logic
+let selectedPostIds = new Set();
+
+function updatePostsBulkState() {
+    const checkboxes = document.querySelectorAll('.post-bulk-checkbox');
+    selectedPostIds.clear();
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedPostIds.add(cb.value);
+    });
+
+    const count = selectedPostIds.size;
+    const toolbar = document.getElementById('postsBulkToolbar');
+    const countEl = document.getElementById('selectedPostsCount');
+    const selectAllCb = document.getElementById('selectAllPosts');
+
+    if (countEl) countEl.textContent = count;
+    if (toolbar) {
+        if (count > 0) {
+            toolbar.classList.remove('d-none');
+        } else {
+            toolbar.classList.add('d-none');
+        }
+    }
+    if (selectAllCb) {
+        selectAllCb.checked = checkboxes.length > 0 && count === checkboxes.length;
+        selectAllCb.indeterminate = count > 0 && count < checkboxes.length;
+    }
+}
+
+function toggleSelectAllPosts(masterCb) {
+    const checkboxes = document.querySelectorAll('.post-bulk-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = masterCb.checked;
+    });
+    updatePostsBulkState();
+}
+
+function clearPostsSelection() {
+    const checkboxes = document.querySelectorAll('.post-bulk-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const selectAllCb = document.getElementById('selectAllPosts');
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        selectAllCb.indeterminate = false;
+    }
+    updatePostsBulkState();
+}
+
+async function executePostsBulk(action) {
+    const ids = Array.from(selectedPostIds);
+    if (!ids.length) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select at least one post.' });
+        } else {
+            alert('Please select at least one post.');
+        }
+        return;
+    }
+    if (ids.length > 50) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Batch Limit Exceeded', text: 'Maximum 50 posts can be processed in a single bulk action.' });
+        } else {
+            alert('Maximum 50 posts can be processed in a single bulk action.');
+        }
+        return;
+    }
+
+    const actionLabels = {
+        hide: 'Hide / Soft Delete',
+        restore: 'Restore to Feed',
+        lock: 'Lock Comments',
+        unlock: 'Unlock Comments',
+        pin: 'Pin to Feed',
+        unpin: 'Unpin from Feed'
+    };
+
+    const isDestructive = action === 'hide';
+    let reason = '';
+
+    if (typeof Swal !== 'undefined') {
+        const result = await Swal.fire({
+            title: `Confirm Bulk ${actionLabels[action] || action}`,
+            html: `Are you sure you want to execute <strong>${action.toUpperCase()}</strong> on <strong>${ids.length}</strong> selected posts?<br><br>
+                   <input id="swalBulkReason" class="swal2-input" placeholder="Moderation reason (optional)">`,
+            icon: isDestructive ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isDestructive ? '#dc2626' : '#2563eb',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: `Yes, ${action} ${ids.length} posts`,
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                return document.getElementById('swalBulkReason')?.value || '';
+            }
+        });
+
+        if (!result.isConfirmed) return;
+        reason = result.value || '';
+    } else {
+        if (!confirm(`Are you sure you want to execute ${action} on ${ids.length} posts?`)) return;
+        reason = prompt('Enter moderation reason (optional):') || '';
+    }
+
+    try {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Processing Bulk Action...',
+                text: `Executing ${action} on ${ids.length} items. Please wait.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+        }
+
+        const res = await fetch('/admin/community/posts/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ action, ids, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Bulk Action Completed',
+                    html: `<strong>${data.succeeded}</strong> succeeded, <strong>${data.skipped}</strong> skipped, <strong>${data.failed}</strong> failed.<br><small class="text-muted">Operation ID: ${data.bulkOperationId}</small>`,
+                    timer: 2000,
+                    showConfirmButton: true
+                });
+            } else {
+                alert(`Bulk operation completed: ${data.succeeded} succeeded, ${data.skipped} skipped, ${data.failed} failed.`);
+            }
+            window.location.reload();
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Action Failed', text: data.message || 'Bulk operation failed.' });
+            } else {
+                alert(data.message || 'Bulk operation failed.');
+            }
+        }
+    } catch (err) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Failed to communicate with server.' });
+        } else {
+            alert('Network error while processing bulk action.');
+        }
+    }
+}
+</script>

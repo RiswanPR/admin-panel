@@ -51,33 +51,126 @@
     </div>
 
 
+    <!-- CONTROLLED ERROR STATE FALLBACK BANNER -->
+    {{#if dashboardError}}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="p-3 bg-surface border border-warning rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block" style="font-size: 13.5px; color: var(--text);">Telemetry Fallback Active</strong>
+                        <span class="text-muted" style="font-size: 12px;">Live database metrics are temporarily unavailable. System operation is in resilient fallback mode.</span>
+                    </div>
+                </div>
+                <a href="/" class="btn btn-sm btn-outline-warning text-dark px-3">
+                    <i class="fa-solid fa-rotate-right me-1"></i> Retry
+                </a>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
     <!-- SYSTEM HEALTH & OPERATIONAL STATUS -->
     {{#if dashboard.systemHealth}}
     <div class="row mb-3">
         <div class="col-12">
             <div class="p-3 bg-surface border rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-3" style="border-color: var(--border) !important;">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="badge {{#ifEquals dashboard.systemHealth.database 'ONLINE'}}bg-success-subtle text-success{{else}}bg-danger-subtle text-danger{{/ifEquals}} px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5" style="font-size: 11.5px; font-weight: 700;">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    {{#if dashboard.operationalHealth}}
+                    <span class="badge {{dashboard.operationalHealth.badgeClass}} px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5 border" style="font-size: 11.5px; font-weight: 700;">
+                        <i class="{{dashboard.operationalHealth.icon}}"></i>
+                        Ops: {{dashboard.operationalHealth.label}}
+                    </span>
+                    {{/if}}
+                    <span class="badge {{#if (or (eq dashboard.systemHealth.database 'OPERATIONAL') (eq dashboard.systemHealth.database 'ONLINE'))}}bg-success-subtle text-success{{else}}bg-danger-subtle text-danger{{/if}} px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5" style="font-size: 11.5px; font-weight: 700;">
                         <span class="badge-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
                         DB: {{dashboard.systemHealth.database}}
                     </span>
                     <span class="badge bg-surface-2 text-muted px-2.5 py-1.5 rounded-pill border" style="font-size: 11.5px; font-weight: 600;">
                         <i class="fa-solid fa-server me-1"></i> Sessions: {{dashboard.systemHealth.sessionStore}}
                     </span>
+                    {{#if canViewErrors}}
                     <span class="badge {{#ifEquals dashboard.systemHealth.errorRate 'NORMAL'}}bg-success-subtle text-success{{else}}bg-warning-subtle text-warning{{/ifEquals}} px-2.5 py-1.5 rounded-pill border" style="font-size: 11.5px; font-weight: 600;">
                         <i class="fa-solid fa-heart-pulse me-1"></i> Error Rate: {{dashboard.systemHealth.errorRate}}
                     </span>
+                    {{/if}}
                 </div>
-                <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 12px;">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>Uptime: <strong>{{dashboard.systemHealth.uptimeFormatted}}</strong></span>
+                <div class="d-flex align-items-center gap-3 text-muted flex-wrap" style="font-size: 12px;">
+                    {{#if dashboard.operationalHealth.summary}}
+                    <span class="d-none d-md-inline text-muted-extra" style="font-size: 12px;"><i class="fa-solid fa-circle-info me-1"></i>{{dashboard.operationalHealth.summary}}</span>
+                    {{/if}}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Uptime: <strong>{{dashboard.systemHealth.uptimeFormatted}}</strong></span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     {{/if}}
 
-    <!-- ACTIONABLE OPERATIONAL ALERTS -->
+    <!-- PHASE 4: NEEDS ATTENTION OPERATIONAL QUEUES -->
+    {{#if dashboard.attention.visible}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="panel-card p-3 border rounded-3 shadow-xs" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge {{#if dashboard.attention.hasCritical}}bg-danger text-white{{else if (gt dashboard.attention.queueCount 0)}}bg-warning-subtle text-warning border border-warning{{else}}bg-success-subtle text-success border border-success{{/if}} px-2.5 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                            <i class="fa-solid {{#if dashboard.attention.hasCritical}}fa-triangle-exclamation{{else if (gt dashboard.attention.queueCount 0)}}fa-bell{{else}}fa-circle-check{{/if}} me-1"></i>
+                            Needs Attention
+                        </span>
+                        <h6 class="fw-bold m-0" style="color: var(--text);">Actionable Operational Queues</h6>
+                        {{#if (gt dashboard.attention.queueCount 0)}}
+                        <span class="badge bg-secondary-subtle text-muted rounded-pill px-2 py-0.5" style="font-size: 11px;">
+                            {{dashboard.attention.queueCount}} active queue{{#if (gt dashboard.attention.queueCount 1)}}s{{/if}} ({{dashboard.attention.total}} pending item{{#if (gt dashboard.attention.total 1)}}s{{/if}})
+                        </span>
+                        {{/if}}
+                    </div>
+                </div>
+
+                {{#if dashboard.attention.items.length}}
+                <div class="row g-2 mt-1">
+                    {{#each dashboard.attention.items}}
+                    <div class="col-xl-6 col-12">
+                        <div class="p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-3 h-100" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                            <div class="d-flex align-items-center gap-2.5 min-w-0">
+                                <div style="width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="{{this.badgeClass}}">
+                                    <i class="{{this.icon}} fs-6"></i>
+                                </div>
+                                <div class="text-truncate">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong style="font-size: 13px; color: var(--text);">{{this.title}}</strong>
+                                        <span class="badge {{this.badgeClass}} rounded-pill px-2 py-0.5" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                                            {{this.count}} • {{this.severity}}
+                                        </span>
+                                    </div>
+                                    <span class="text-muted text-truncate d-block" style="font-size: 11.5px;">{{this.description}}</span>
+                                </div>
+                            </div>
+                            <a href="{{{this.href}}}" class="admin-btn admin-btn-sm admin-btn-secondary flex-shrink-0" style="min-height: 28px; padding: 3px 10px; font-size: 11.5px; white-space: nowrap;">
+                                <span>Act</span>
+                                <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="p-2.5 rounded-3 border d-flex align-items-center gap-2 text-success mt-1" style="background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.2) !important; font-size: 12.5px;">
+                    <i class="fa-solid fa-circle-check fs-6 text-success"></i>
+                    <span style="font-weight: 600;">All operational queues are clear. No pending items require your immediate attention.</span>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- ACTIONABLE OPERATIONAL ALERTS (BACKWARD COMPATIBILITY) -->
     {{#if dashboard.alerts.length}}
     <div class="row mb-4">
         <div class="col-12">
@@ -119,9 +212,9 @@
                         <h2 class="stat-value">
                             <span class="counter" data-target="{{dashboard.totalLearners}}">0</span>
                         </h2>
-                        <div class="stat-trend trend-neutral">
-                            <i class="fa-solid fa-graduation-cap me-1"></i>
-                            <span>Enrolled learners ({{dashboard.totalStudents}} students)</span>
+                        <div class="stat-trend {{#if dashboard.trends.users7d.isPositive}}trend-positive{{else if (lt dashboard.trends.users7d.delta 0)}}trend-negative{{else}}trend-neutral{{/if}}">
+                            <i class="fa-solid {{#if (eq dashboard.trends.users7d.direction 'up')}}fa-arrow-trend-up{{else if (eq dashboard.trends.users7d.direction 'down')}}fa-arrow-trend-down{{else}}fa-graduation-cap{{/if}} me-1"></i>
+                            <span>{{#if dashboard.trends.users7d.text}}{{dashboard.trends.users7d.text}} ({{dashboard.totalStudents}} enrolled){{else}}Enrolled learners ({{dashboard.totalStudents}} students){{/if}}</span>
                         </div>
                     </div>
                     <div class="stat-card-footer">
@@ -171,9 +264,9 @@
                         <h2 class="stat-value">
                             <span class="counter" data-target="{{dashboard.totalCourses}}">0</span>
                         </h2>
-                        <div class="stat-trend trend-info">
-                            <i class="fa-solid fa-book-open me-1"></i>
-                            <span>{{dashboard.totalChapters}} learning chapters</span>
+                        <div class="stat-trend {{#if dashboard.trends.monthlyEnrollment.isPositive}}trend-positive{{else if (lt dashboard.trends.monthlyEnrollment.delta 0)}}trend-negative{{else}}trend-info{{/if}}">
+                            <i class="fa-solid {{#if (eq dashboard.trends.monthlyEnrollment.direction 'up')}}fa-arrow-trend-up{{else if (eq dashboard.trends.monthlyEnrollment.direction 'down')}}fa-arrow-trend-down{{else}}fa-book-open{{/if}} me-1"></i>
+                            <span>{{#if dashboard.trends.monthlyEnrollment.text}}{{dashboard.trends.monthlyEnrollment.text}} • {{/if}}{{dashboard.totalChapters}} learning chapters</span>
                         </div>
                     </div>
                     <div class="stat-card-footer">
@@ -184,8 +277,9 @@
                 </div>
             </div>
 
-            <!-- Total Revenue -->
+            <!-- Total Revenue / Registered Accounts -->
             <div class="col-xl-3 col-md-6 mb-3">
+                {{#if canViewRevenue}}
                 <div class="stat-card stat-card-revenue">
                     <div class="stat-card-header">
                         <span class="stat-label">Total Revenue</span>
@@ -197,9 +291,9 @@
                         <h2 class="stat-value">
                             ₹<span class="counter" data-target="{{dashboard.totalRevenue}}">0</span>
                         </h2>
-                        <div class="stat-trend trend-positive">
-                            <i class="fa-solid fa-shield-halved me-1"></i>
-                            <span>Verified collections</span>
+                        <div class="stat-trend {{#if dashboard.trends.monthlyRevenue.isPositive}}trend-positive{{else if (lt dashboard.trends.monthlyRevenue.delta 0)}}trend-negative{{else}}trend-positive{{/if}}">
+                            <i class="fa-solid {{#if (eq dashboard.trends.monthlyRevenue.direction 'up')}}fa-arrow-trend-up{{else if (eq dashboard.trends.monthlyRevenue.direction 'down')}}fa-arrow-trend-down{{else}}fa-shield-halved{{/if}} me-1"></i>
+                            <span>{{#if dashboard.trends.monthlyRevenue.text}}{{dashboard.trends.monthlyRevenue.text}}{{else}}Verified collections{{/if}}</span>
                         </div>
                     </div>
                     <div class="stat-card-footer">
@@ -208,6 +302,30 @@
                         </div>
                     </div>
                 </div>
+                {{else}}
+                <div class="stat-card stat-card-revenue">
+                    <div class="stat-card-header">
+                        <span class="stat-label">Registered Accounts</span>
+                        <div class="stat-icon-wrap icon-revenue">
+                            <i class="fa-solid fa-users-gear"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <h2 class="stat-value">
+                            <span class="counter" data-target="{{dashboard.totalUsers}}">0</span>
+                        </h2>
+                        <div class="stat-trend {{#if dashboard.trends.users7d.isPositive}}trend-positive{{else if (lt dashboard.trends.users7d.delta 0)}}trend-negative{{else}}trend-neutral{{/if}}">
+                            <i class="fa-solid {{#if (eq dashboard.trends.users7d.direction 'up')}}fa-arrow-trend-up{{else if (eq dashboard.trends.users7d.direction 'down')}}fa-arrow-trend-down{{else}}fa-id-badge{{/if}} me-1"></i>
+                            <span>{{#if dashboard.trends.users7d.text}}{{dashboard.trends.users7d.text}}{{else}}Total Platform Users{{/if}}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill fill-revenue" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                {{/if}}
             </div>
 
         </div>
@@ -223,9 +341,11 @@
                             </span>
                             <h5 class="fw-bold m-0" style="color:var(--text);">Network &amp; Operations Control</h5>
                         </div>
+                        {{#if (or isSuperuser canManageSettings)}}
                         <a href="/admin/analytics" class="btn btn-sm btn-outline-primary px-3">
                             <i class="fa-solid fa-chart-column me-1"></i> Multi-Domain Analytics
                         </a>
+                        {{/if}}
                     </div>
 
                     <div class="row g-3">
@@ -240,9 +360,15 @@
                                     <span class="text-muted small d-block">Network Users</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Directory &amp; Roles</strong>
                                 </div>
+                                {{#if (or isSuperuser canManageNetwork)}}
                                 <a href="/admin/network/users" class="btn btn-sm btn-outline-primary w-100 mt-auto">
                                     <i class="fa-solid fa-user-gear me-1"></i> Manage
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
 
@@ -261,9 +387,15 @@
                                     <span class="text-muted small d-block">Businesses</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Pending Review</strong>
                                 </div>
+                                {{#if (or isSuperuser canReviewBusinesses)}}
                                 <a href="/admin/businesses?tab=pending" class="btn btn-sm btn-outline-warning text-dark w-100 mt-auto">
                                     <i class="fa-solid fa-clipboard-check me-1"></i> Review
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
 
@@ -278,9 +410,15 @@
                                     <span class="text-muted small d-block">Job Governance</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Postings &amp; Flags</strong>
                                 </div>
+                                {{#if (or isSuperuser canManageJobs)}}
                                 <a href="/admin/jobs?tab=published" class="btn btn-sm btn-outline-success w-100 mt-auto">
                                     <i class="fa-solid fa-eye me-1"></i> View
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
 
@@ -295,9 +433,15 @@
                                     <span class="text-muted small d-block">AI Matching</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Telemetry Engine</strong>
                                 </div>
+                                {{#if (or isSuperuser canManageAI)}}
                                 <a href="/admin/ai/matching" class="btn btn-sm btn-outline-info w-100 mt-auto">
                                     <i class="fa-solid fa-magnifying-glass-chart me-1"></i> Inspect
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
 
@@ -312,9 +456,15 @@
                                     <span class="text-muted small d-block">Career Intel</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Roles &amp; Ladders</strong>
                                 </div>
+                                {{#if (or isSuperuser canManageTaxonomy)}}
                                 <a href="/admin/career-intelligence/roles" class="btn btn-sm btn-outline-primary w-100 mt-auto">
                                     <i class="fa-solid fa-compass me-1"></i> Explore
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
 
@@ -333,12 +483,181 @@
                                     <span class="text-muted small d-block">Moderation</span>
                                     <strong class="text-dark fs-6 d-block mb-3">Triage Queue</strong>
                                 </div>
+                                {{#if (or isSuperuser canModerateContent)}}
                                 <a href="/admin/moderation?tab=open" class="btn btn-sm btn-outline-danger w-100 mt-auto">
                                     <i class="fa-solid fa-gavel me-1"></i> Moderate
                                 </a>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-muted w-100 py-1.5 text-center mt-auto" style="font-size: 11px;">
+                                    <i class="fa-solid fa-lock me-1"></i> Restricted
+                                </span>
+                                {{/if}}
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZEITNAH COMMUNITY & SOCIAL ECOSYSTEM SECTION -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="panel-card p-4 border rounded-3 shadow-xs" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge px-3 py-2 rounded-pill" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(99, 102, 241, 0.25);">
+                                <i class="fa-solid fa-users-rays me-1"></i> Community Health
+                            </span>
+                            <h5 class="fw-bold m-0" style="color: var(--text);">Community &amp; Social Ecosystem</h5>
+                            {{#if dashboard.community.recentActivityCount}}
+                            <span class="badge bg-success-subtle text-success border rounded-pill px-2.5 py-1" style="font-size: 11px; font-weight: 600;">
+                                <i class="fa-solid fa-bolt me-1"></i>{{dashboard.community.recentActivityCount}} new (7d)
+                            </span>
+                            {{/if}}
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            {{#if (or isSuperuser canModerateContent)}}
+                            <a href="/admin/community" class="btn btn-sm btn-outline-primary px-3" style="font-size: 12px; font-weight: 600;">
+                                <i class="fa-solid fa-chart-line me-1"></i> Operations Overview
+                            </a>
+                            <a href="/admin/community/search" class="btn btn-sm btn-outline-secondary px-3" style="font-size: 12px; font-weight: 600;">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i> Search
+                            </a>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <!-- 4 Operational Metrics Cards -->
+                    <div class="row g-3 mb-3">
+                        <!-- Posts Metric Card -->
+                        <div class="col-xl-3 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="text-muted small d-block" style="font-size: 12px;">Published Posts</span>
+                                        <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
+                                            {{dashboard.community.overview.activePosts}}
+                                        </h3>
+                                    </div>
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                                        <i class="fa-solid fa-signs-post fs-5"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2" style="border-color: var(--border) !important; font-size: 11.5px;">
+                                    <span class="text-muted">Total: <strong>{{dashboard.community.overview.totalPosts}}</strong>{{#if dashboard.trends.posts7d}} <span class="ms-1 {{#if dashboard.trends.posts7d.isPositive}}text-success{{else if (lt dashboard.trends.posts7d.delta 0)}}text-danger{{else}}text-muted{{/if}}">({{dashboard.trends.posts7d.text}})</span>{{/if}}</span>
+                                    <a href="/admin/community/posts" class="text-primary text-decoration-none fw-semibold">
+                                        Manage <i class="fa-solid fa-angle-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comments Metric Card -->
+                        <div class="col-xl-3 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="text-muted small d-block" style="font-size: 12px;">Comments</span>
+                                        <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
+                                            {{dashboard.community.overview.activeComments}}
+                                        </h3>
+                                    </div>
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                                        <i class="fa-solid fa-comments fs-5"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2" style="border-color: var(--border) !important; font-size: 11.5px;">
+                                    <span class="text-muted">Total: <strong>{{dashboard.community.overview.totalComments}}</strong>{{#if dashboard.trends.comments7d}} <span class="ms-1 {{#if dashboard.trends.comments7d.isPositive}}text-success{{else if (lt dashboard.trends.comments7d.delta 0)}}text-danger{{else}}text-muted{{/if}}">({{dashboard.trends.comments7d.text}})</span>{{/if}}</span>
+                                    <a href="/admin/community/comments" class="text-success text-decoration-none fw-semibold">
+                                        Manage <i class="fa-solid fa-angle-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stories Metric Card -->
+                        <div class="col-xl-3 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="text-muted small d-block" style="font-size: 12px;">Active Stories</span>
+                                        <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
+                                            {{dashboard.community.overview.activeStories}}
+                                        </h3>
+                                    </div>
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+                                        <i class="fa-solid fa-circle-play fs-5"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2" style="border-color: var(--border) !important; font-size: 11.5px;">
+                                    <span class="text-muted">Total: <strong>{{dashboard.community.overview.totalStories}}</strong>{{#if dashboard.trends.stories7d}} <span class="ms-1 {{#if dashboard.trends.stories7d.isPositive}}text-success{{else if (lt dashboard.trends.stories7d.delta 0)}}text-danger{{else}}text-muted{{/if}}">({{dashboard.trends.stories7d.text}})</span>{{/if}}</span>
+                                    <a href="/admin/community/stories" class="text-warning text-decoration-none fw-semibold">
+                                        Manage <i class="fa-solid fa-angle-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Moderation & Reports Metric Card (RBAC-Gated) -->
+                        <div class="col-xl-3 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="text-muted small d-block" style="font-size: 12px;">Community Reports</span>
+                                        {{#if dashboard.community.moderation.visible}}
+                                        <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
+                                            {{dashboard.community.moderation.pendingReports}}
+                                            <span class="badge {{#if (gt dashboard.community.moderation.pendingReports 0)}}bg-danger{{else}}bg-success-subtle text-success{{/if}} rounded-pill align-middle ms-1" style="font-size: 10.5px; font-weight: 700;">
+                                                {{#if (gt dashboard.community.moderation.pendingReports 0)}}Pending{{else}}Clean{{/if}}
+                                            </span>
+                                        </h3>
+                                        {{else}}
+                                        <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.25rem;">
+                                            <span class="badge bg-secondary-subtle text-muted rounded-pill py-1 px-2.5" style="font-size: 11px;">
+                                                <i class="fa-solid fa-lock me-1"></i> Restricted
+                                            </span>
+                                        </h3>
+                                        {{/if}}
+                                    </div>
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(239, 68, 68, 0.12); display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                                        <i class="fa-solid fa-flag fs-5"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2" style="border-color: var(--border) !important; font-size: 11.5px;">
+                                    {{#if dashboard.community.moderation.visible}}
+                                    <span class="text-muted">Under Review: <strong>{{dashboard.community.moderation.underReviewReports}}</strong>{{#if dashboard.trends.communityReports7d.text}} <span class="ms-1 {{#if (gt dashboard.trends.communityReports7d.delta 0)}}text-danger{{else if (lt dashboard.trends.communityReports7d.delta 0)}}text-success{{else}}text-muted{{/if}}">({{dashboard.trends.communityReports7d.text}})</span>{{/if}}</span>
+                                    <a href="/admin/community/reports?status=pending" class="text-danger text-decoration-none fw-semibold">
+                                        Triage <i class="fa-solid fa-angle-right ms-1"></i>
+                                    </a>
+                                    {{else}}
+                                    <span class="text-muted">Moderation capability required</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Summary Bar (Report Types & Quick Navigation) -->
+                    {{#if dashboard.community.moderation.visible}}
+                    <div class="p-2.5 rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important; font-size: 12px;">
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <span class="fw-bold text-muted"><i class="fa-solid fa-shield-halved me-1 text-primary"></i> Actionable Queue:</span>
+                            <span>Posts: <strong>{{dashboard.community.moderation.reportsByType.post}}</strong></span>
+                            <span class="text-muted">•</span>
+                            <span>Comments: <strong>{{dashboard.community.moderation.reportsByType.comment}}</strong></span>
+                            <span class="text-muted">•</span>
+                            <span>Stories: <strong>{{dashboard.community.moderation.reportsByType.story}}</strong></span>
+                            <span class="text-muted">•</span>
+                            <span>Users: <strong>{{dashboard.community.moderation.reportsByType.user}}</strong></span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="/admin/community/reports" class="btn btn-sm btn-outline-danger py-1 px-2.5" style="font-size: 11.5px; font-weight: 600;">
+                                <i class="fa-solid fa-inbox me-1"></i> Reports Center
+                            </a>
+                        </div>
+                    </div>
+                    {{/if}}
+
                 </div>
             </div>
         </div>
@@ -361,9 +680,11 @@
                             <button type="button" class="chart-tab-btn active" id="btnTrendEnrollment" onclick="switchMainChart('enrollment')">
                                 <i class="fa-solid fa-user-graduate me-1"></i> Learners
                             </button>
+                            {{#if canViewRevenue}}
                             <button type="button" class="chart-tab-btn" id="btnTrendRevenue" onclick="switchMainChart('revenue')">
                                 <i class="fa-solid fa-indian-rupee-sign me-1"></i> Revenue
                             </button>
+                            {{/if}}
                         </div>
                     </div>
 
@@ -587,9 +908,11 @@
                                 <span class="panel-subtitle">Live administrative actions</span>
                             </div>
                         </div>
+                        {{#if (or isSuperuser canViewAuditLogs)}}
                         <a href="/audit-logs" class="btn-panel-action" title="View Full Audit Log">
                             All Logs <i class="fa-solid fa-chevron-right ms-1"></i>
                         </a>
+                        {{/if}}
                     </div>
 
                     <div class="panel-card-body">
@@ -631,9 +954,9 @@
 <!-- EMBEDDED DASHBOARD DATA FOR CHART.JS -->
 <script id="dashboardAnalyticsData" type="application/json">
 {
-    "enrollmentChart": {{{json dashboard.enrollmentChart}}},
-    "revenueChart": {{{json dashboard.revenueChart}}},
-    "courseDistribution": {{{json dashboard.courseDistribution}}}
+    "enrollmentChart": {{{safeJson dashboard.enrollmentChart}}},
+    "revenueChart": {{{safeJson dashboard.revenueChart}}},
+    "courseDistribution": {{{safeJson dashboard.courseDistribution}}}
 }
 </script>
 
@@ -1705,10 +2028,8 @@
         const btnEnroll = document.getElementById('btnTrendEnrollment');
         const btnRev = document.getElementById('btnTrendRevenue');
 
-        if (btnEnroll && btnRev) {
-            btnEnroll.classList.toggle('active', mode === 'enrollment');
-            btnRev.classList.toggle('active', mode === 'revenue');
-        }
+        if (btnEnroll) btnEnroll.classList.toggle('active', mode === 'enrollment');
+        if (btnRev) btnRev.classList.toggle('active', mode === 'revenue');
 
         const dataScript = document.getElementById('dashboardAnalyticsData');
         if (dataScript) {

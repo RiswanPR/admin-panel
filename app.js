@@ -15,6 +15,7 @@ const compression = require('compression');
 var usersRouter = require('./routes/users');
 var teacherRouter = require('./routes/teacher');
 var adminGovernanceRouter = require('./routes/admin-governance');
+var adminCommunityRouter = require('./routes/admin-community');
 var db = require('./config/connection');
 const errorHelper = require('./Helpers/error-helper');
 
@@ -263,7 +264,27 @@ app.engine(
       },
 
       json: function (context) {
-        return JSON.stringify(context || {});
+        const jsonStr = JSON.stringify(context !== undefined ? context : {});
+        const safe = jsonStr
+          .replace(/</g, '\\u003c')
+          .replace(/>/g, '\\u003e')
+          .replace(/&/g, '\\u0026')
+          .replace(/\u2028/g, '\\u2028')
+          .replace(/\u2029/g, '\\u2029');
+        const Handlebars = require('handlebars');
+        return new Handlebars.SafeString(safe);
+      },
+
+      safeJson: function (context) {
+        const jsonStr = JSON.stringify(context !== undefined ? context : {});
+        const safe = jsonStr
+          .replace(/</g, '\\u003c')
+          .replace(/>/g, '\\u003e')
+          .replace(/&/g, '\\u0026')
+          .replace(/\u2028/g, '\\u2028')
+          .replace(/\u2029/g, '\\u2029');
+        const Handlebars = require('handlebars');
+        return new Handlebars.SafeString(safe);
       },
 
       truncate: function (str, len) {
@@ -518,6 +539,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/admin/community', adminCommunityRouter);
 app.use('/admin', adminGovernanceRouter);
 app.use('/', adminGovernanceRouter);
 app.use('/', usersRouter);

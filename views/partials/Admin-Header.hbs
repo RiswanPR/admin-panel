@@ -78,6 +78,37 @@
         {{/if}}
         {{/if}}
 
+        <!-- 3B. COMMUNITY -->
+        {{#if (or canModerateContent canManageNetwork isSuperuser)}}
+        <div class="sidebar-heading mt-3 mb-1 ms-3">
+            COMMUNITY
+        </div>
+        <a href="/admin/community" class="{{#ifEquals currentPage 'community-overview'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Overview</span>
+        </a>
+        <a href="/admin/community/posts" class="{{#ifEquals currentPage 'community-posts'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-signs-post"></i>
+            <span>Posts</span>
+        </a>
+        <a href="/admin/community/comments" class="{{#ifEquals currentPage 'community-comments'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-comments"></i>
+            <span>Comments</span>
+        </a>
+        <a href="/admin/community/stories" class="{{#ifEquals currentPage 'community-stories'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-circle-play"></i>
+            <span>Stories</span>
+        </a>
+        <a href="/admin/community/reports" class="{{#ifEquals currentPage 'community-reports'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-flag"></i>
+            <span>Reports</span>
+        </a>
+        <a href="/admin/community/search" class="{{#ifEquals currentPage 'community-search'}}active{{/ifEquals}}">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        {{/if}}
+
         <!-- 4. BUSINESSES -->
         {{#if (or canReviewBusinesses isSuperuser)}}
         <div class="sidebar-heading mt-3 mb-1 ms-3">
