@@ -49,5 +49,8 @@ module.exports = {
     COMMUNITY_REPORTS_COLLECTION: 'community_reports',
     COMMUNITY_MODERATION_LOGS_COLLECTION: 'community_moderation_logs',
     COMMUNITY_POST_REACTIONS_COLLECTION: 'community_post_reactions',
-    COMMUNITY_POLLS_COLLECTION: 'community_polls'
+    COMMUNITY_POLLS_COLLECTION: 'community_polls',
+    // Professional Identity Catalogue Collections (Phase 1)
+    CATALOGUE_DEPARTMENTS_COLLECTION: 'catalogue_departments',
+    CATALOGUE_TITLES_COLLECTION: 'catalogue_titles'
 };

@@ -16,6 +16,7 @@ var usersRouter = require('./routes/users');
 var teacherRouter = require('./routes/teacher');
 var adminGovernanceRouter = require('./routes/admin-governance');
 var adminCommunityRouter = require('./routes/admin-community');
+var adminCatalogueRouter = require('./routes/admin-catalogue');
 var db = require('./config/connection');
 const errorHelper = require('./Helpers/error-helper');
 
@@ -167,6 +168,17 @@ app.engine(
       eq: (a, b) => String(a) === String(b),
       gt: (a, b) => a > b,
       lt: (a, b) => a < b,
+
+      join: function (arr, separator) {
+        if (!arr || !Array.isArray(arr)) return '';
+        const sep = typeof separator === 'string' ? separator : ', ';
+        return arr.join(sep);
+      },
+
+      replace: function (str, find, replacement) {
+        if (!str) return '';
+        return String(str).split(find).join(replacement);
+      },
 
       ifEquals: function (a, b, options) {
         return String(a) === String(b)
@@ -472,10 +484,16 @@ app.use(
 const isProduction = process.env.NODE_ENV === 'production';
 const MongoStore = require('connect-mongo').default;
 
+const NINETY_DAYS_SECONDS = 90 * 24 * 60 * 60; // 90 days in seconds (7,776,000s)
+const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000; // 90 days in ms (7,776,000,000ms)
+
+const sessionTtlSeconds = Number(process.env.SESSION_TTL_SECONDS) || NINETY_DAYS_SECONDS;
+const sessionMaxAgeMs = Number(process.env.SESSION_MAX_AGE_MS) || (sessionTtlSeconds * 1000);
+
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
   collectionName: 'sessions',
-  ttl: 24 * 60 * 60 // 1 day
+  ttl: sessionTtlSeconds
 });
 
 sessionStore.on('error', (err) => {
@@ -490,7 +508,7 @@ app.use(
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      maxAge:   1000 * 60 * 60 * 24, // 1 day
+      maxAge:   sessionMaxAgeMs,       // 90 days
       httpOnly: true,                  // JS cannot read this cookie (XSS protection)
       secure:   isProduction,          // HTTPS-only in production
       sameSite: 'lax'                  // CSRF protection
@@ -540,6 +558,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/admin/community', adminCommunityRouter);
+app.use('/admin/catalogue', adminCatalogueRouter);
 app.use('/admin', adminGovernanceRouter);
 app.use('/', adminGovernanceRouter);
 app.use('/', usersRouter);

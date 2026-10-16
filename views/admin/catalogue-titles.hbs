@@ -1,0 +1,497 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- BREADCRUMBS & HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/catalogue/departments">Identity Catalogue</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{department.name}}</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-2">
+                <h2 class="fw-bold m-0" style="color:var(--brand);">
+                    {{department.name}}
+                </h2>
+                {{#ifEquals department.status 'active'}}
+                <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">
+                    <i class="fa-solid fa-circle-check me-1"></i> Active Department
+                </span>
+                {{else}}
+                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill">
+                    <i class="fa-solid fa-box-archive me-1"></i> Retired Department
+                </span>
+                {{/ifEquals}}
+            </div>
+            <small class="text-muted">
+                Stable ID: <code class="fw-bold text-dark">{{department.id}}</code> &bull; Display Order: #{{department.displayOrder}} &bull; Catalogue Version: {{department.catalogueVersion}}
+            </small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#addTitleModal">
+                <i class="fa-solid fa-plus me-1"></i> Add Professional Title
+            </button>
+            <button type="button" class="btn btn-outline-secondary px-3" data-bs-toggle="modal" data-bs-target="#editParentDeptModal">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Edit Department
+            </button>
+            <a href="/admin/catalogue/departments" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> All Departments
+            </a>
+        </div>
+    </div>
+
+    <!-- FLASH FEEDBACK ALERTS -->
+    {{#if successMessage}}
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <div class="fw-semibold">{{successMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    {{#if errorMessage}}
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+        <div class="fw-semibold">{{errorMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    <!-- DATA INTEGRITY & SCOPING ADVISORY -->
+    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(16, 185, 129, 0.04) 100%); border-left: 5px solid #10b981 !important;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-start gap-3">
+                <i class="fa-solid fa-id-card-clip text-success fs-4 mt-1"></i>
+                <div>
+                    <h6 class="fw-bold m-0 text-dark">Department-Scoped Title Identification Rules</h6>
+                    <p class="small text-muted mb-0 mt-1">
+                        <strong>Deterministic Composite IDs:</strong> Titles belong strictly to this department with IDs formatted as <code>{{department.id}}:&lt;slug&gt;</code>.
+                        <br>
+                        <strong>Cross-Department Identical Labels:</strong> Identical title names (e.g., <em>Project manager</em>) across different departments are fully supported with distinct composite IDs.
+                        <br>
+                        <strong>Renaming Safety:</strong> Renaming a title updates catalogue selection labels but never alters the immutable composite ID or historical profile displays.
+                        <br>
+                        <strong>Permanent Preservation:</strong> Titles are never hard-deleted. Retirement preserves all historical profile references.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/catalogue/departments/{{department.id}}" style="border-radius: 16px;">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-6 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search titles by label, stable ID, or alias...">
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-3 col-6">
+                <select class="form-select" name="status" onchange="this.form.submit()">
+                    <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+                    <option value="active" {{#ifEquals filters.status 'active'}}selected{{/ifEquals}}>Active Only</option>
+                    <option value="retired" {{#ifEquals filters.status 'retired'}}selected{{/ifEquals}}>Retired Only</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-3 col-6">
+                <div class="btn-group w-100" role="group">
+                    <a href="/admin/catalogue/departments/{{department.id}}?view=card{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}" class="btn {{#ifEquals viewMode 'card'}}btn-primary{{else}}btn-outline-secondary{{/ifEquals}}">
+                        <i class="fa-solid fa-grip me-1"></i> Cards
+                    </a>
+                    <a href="/admin/catalogue/departments/{{department.id}}?view=table{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}" class="btn {{#ifEquals viewMode 'table'}}btn-primary{{else}}btn-outline-secondary{{/ifEquals}}">
+                        <i class="fa-solid fa-table-list me-1"></i> Table
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-1 col-md-1 text-end">
+                <a href="/admin/catalogue/departments/{{department.id}}" class="btn btn-outline-secondary w-100" title="Reset Filters">
+                    <i class="fa-solid fa-rotate"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- TITLES LISTING -->
+    {{#if titles.length}}
+
+        <!-- TABLE VIEW (DEFAULT) -->
+        {{#ifEquals viewMode 'table'}}
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: var(--surface);">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">Order</th>
+                            <th>Professional Title</th>
+                            <th>Stable Composite ID</th>
+                            <th>Status</th>
+                            <th>Profile References</th>
+                            <th>Aliases</th>
+                            <th class="text-end" style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each titles}}
+                        <tr>
+                            <td class="text-muted fw-bold">#{{this.displayOrder}}</td>
+                            <td>
+                                <span class="fw-bold text-dark">{{this.label}}</span>
+                            </td>
+                            <td>
+                                <code class="small text-secondary">{{this.id}}</code>
+                            </td>
+                            <td>
+                                {{#ifEquals this.status 'active'}}
+                                <span class="badge bg-success-subtle text-success px-2 py-1">Active</span>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Retired</span>
+                                {{/ifEquals}}
+                            </td>
+                            <td>
+                                {{#if (eq this.usageCount null)}}
+                                <span class="badge bg-light text-muted border">Unavailable</span>
+                                {{else}}
+                                <span class="badge bg-light text-primary border">{{this.usageCount}} profiles</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if this.aliases.length}}
+                                <small class="text-muted">{{join this.aliases ', '}}</small>
+                                {{else}}
+                                <span class="text-muted small">&mdash;</span>
+                                {{/if}}
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-outline-secondary btn-sm px-2" data-bs-toggle="modal" data-bs-target="#editTitleModal-{{replace this.id ':' '-'}}" title="Edit Title">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} btn-sm px-2" data-bs-toggle="modal" data-bs-target="#statusTitleModal-{{replace this.id ':' '-'}}" title="{{#ifEquals this.status 'active'}}Retire{{else}}Reactivate{{/ifEquals}}">
+                                    <i class="fa-solid fa-power-off"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {{/ifEquals}}
+
+        <!-- CARD VIEW -->
+        {{#ifEquals viewMode 'card'}}
+        <div class="row g-3 mb-4">
+            {{#each titles}}
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; background: var(--surface);">
+                    <div class="card-header bg-transparent border-0 pt-3 px-4 pb-0 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-light text-muted border px-2 py-1" style="font-family: monospace; font-size: 11px;">
+                            #{{this.displayOrder}}
+                        </span>
+                        {{#ifEquals this.status 'active'}}
+                        <span class="badge bg-success-subtle text-success px-2 py-1">Active</span>
+                        {{else}}
+                        <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Retired</span>
+                        {{/ifEquals}}
+                    </div>
+
+                    <div class="card-body px-4 py-2">
+                        <h6 class="fw-bold mb-1 text-dark">{{this.label}}</h6>
+                        <code class="d-inline-block small text-secondary mb-2">{{this.id}}</code>
+
+                        <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: var(--surface-2);">
+                            <small class="text-muted">Profile References:</small>
+                            {{#if (eq this.usageCount null)}}
+                            <span class="badge bg-light text-muted border">Unavailable</span>
+                            {{else}}
+                            <span class="fw-bold text-primary">{{this.usageCount}} users</span>
+                            {{/if}}
+                        </div>
+
+                        {{#if this.aliases.length}}
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {{#each this.aliases}}
+                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 10px;">{{this}}</span>
+                            {{/each}}
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 px-4 pb-3 pt-0 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#editTitleModal-{{replace this.id ':' '-'}}">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-outline-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} btn-sm px-3" data-bs-toggle="modal" data-bs-target="#statusTitleModal-{{replace this.id ':' '-'}}">
+                            <i class="fa-solid fa-power-off me-1"></i> {{#ifEquals this.status 'active'}}Retire{{else}}Reactivate{{/ifEquals}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{/ifEquals}}
+
+        <!-- PAGINATION CONTROLS -->
+        {{#if (gt totalPages 1)}}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <small class="text-muted">
+                Showing page {{page}} of {{totalPages}} (Total {{total}} titles)
+            </small>
+
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm m-0">
+                    <li class="page-item {{#ifEquals page 1}}disabled{{/ifEquals}}">
+                        <a class="page-link" href="/admin/catalogue/departments/{{department.id}}?page={{dec page}}{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}&view={{viewMode}}">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">{{page}}</span>
+                    </li>
+                    <li class="page-item {{#ifEquals page totalPages}}disabled{{/ifEquals}}">
+                        <a class="page-link" href="/admin/catalogue/departments/{{department.id}}?page={{inc page}}{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}&view={{viewMode}}">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {{/if}}
+
+        <!-- EDIT TITLE MODALS (RENDERED FOR EACH TITLE) -->
+        {{#each titles}}
+        <div class="modal fade" id="editTitleModal-{{replace this.id ':' '-'}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                    <form action="/admin/catalogue/titles/{{this.id}}" method="POST" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }">
+                        <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold">
+                                <i class="fa-solid fa-pen-to-square text-primary me-2"></i> Edit Title
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body py-3">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Stable Identifier</label>
+                                <input type="text" class="form-control bg-light" value="{{this.id}}" readonly disabled style="font-family: monospace;">
+                                <small class="text-muted">Stable identifiers are immutable and are not modified during renames.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Title Display Label <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="label" value="{{this.label}}" required minlength="2" maxlength="100">
+                                <small class="text-muted">Display label shown across catalogue selections and candidate profiles.</small>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Display Order</label>
+                                    <input type="number" class="form-control" name="displayOrder" value="{{this.displayOrder}}" min="1" max="1000" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Status</label>
+                                    <select class="form-select" name="status">
+                                        <option value="active" {{#ifEquals this.status 'active'}}selected{{/ifEquals}}>Active</option>
+                                        <option value="retired" {{#ifEquals this.status 'retired'}}selected{{/ifEquals}}>Retired</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Aliases (Comma-separated)</label>
+                                <textarea class="form-control" name="aliases" rows="2" placeholder="e.g. Lead Engineer, PM, Infrastructure Lead">{{#if this.aliases.length}}{{join this.aliases ', '}}{{/if}}</textarea>
+                                <small class="text-muted">Search keywords to assist users during profile selection.</small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATUS TOGGLE MODAL FOR TITLE -->
+        <div class="modal fade" id="statusTitleModal-{{replace this.id ':' '-'}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                    <form action="/admin/catalogue/titles/{{this.id}}/status" method="POST">
+                        <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                        <input type="hidden" name="status" value="{{#ifEquals this.status 'active'}}retired{{else}}active{{/ifEquals}}">
+
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold text-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}}">
+                                <i class="fa-solid fa-power-off me-2"></i>
+                                Confirm Title {{#ifEquals this.status 'active'}}Retirement{{else}}Reactivation{{/ifEquals}}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body py-3">
+                            {{#ifEquals this.status 'active'}}
+                            <p class="mb-2">Are you sure you want to retire title <strong>{{this.label}}</strong>?</p>
+                            <div class="alert alert-warning p-2 small mb-0">
+                                <i class="fa-solid fa-info-circle me-1"></i>
+                                <strong>Safe Lifecycle:</strong> This title will remain permanently stored and resolvable. Existing user profiles referencing <code>{{this.id}}</code> will remain completely valid and intact.
+                            </div>
+                            {{else}}
+                            <p class="mb-0">Reactivating <strong>{{this.label}}</strong> will make it available again for new profile selections in department <strong>{{../department.name}}</strong>.</p>
+                            {{/ifEquals}}
+                        </div>
+
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} px-4">
+                                {{#ifEquals this.status 'active'}}Retire Title{{else}}Reactivate Title{{/ifEquals}}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+
+    {{else}}
+        <!-- EMPTY STATE -->
+        <div class="card p-5 text-center border-0 shadow-sm" style="border-radius: 16px; background: var(--surface);">
+            <div class="py-4">
+                <i class="fa-solid fa-id-card-clip text-muted fs-1 mb-3"></i>
+                <h5 class="fw-bold">No Titles Found</h5>
+                <p class="text-muted small">No titles match your current search query or filter selection in {{department.name}}.</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="/admin/catalogue/departments/{{department.id}}" class="btn btn-outline-secondary btn-sm px-3">
+                        <i class="fa-solid fa-rotate me-1"></i> Reset Filters
+                    </a>
+                    <button type="button" class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addTitleModal">
+                        <i class="fa-solid fa-plus me-1"></i> Add First Title
+                    </button>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+
+    <!-- ADD TITLE MODAL -->
+    <div class="modal fade" id="addTitleModal" tabindex="-1" aria-labelledby="addTitleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <form action="/admin/catalogue/departments/{{department.id}}/titles" method="POST" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerHTML = 'Adding...'; }">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="addTitleLabel">
+                            <i class="fa-solid fa-plus-circle text-primary me-2"></i> Add Title to {{department.name}}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body py-3">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Title Display Label <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="label" placeholder="e.g. Senior Structural Modeler" required minlength="2" maxlength="100">
+                            <small class="text-muted">A deterministic stable ID formatted as <code>{{department.id}}:&lt;slug&gt;</code> will be generated.</small>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Display Order</label>
+                                <input type="number" class="form-control" name="displayOrder" placeholder="Auto (next)" min="1" max="1000">
+                                <small class="text-muted">Leave blank for next sequential.</small>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Initial Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="active" selected>Active</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Aliases (Comma-separated)</label>
+                            <textarea class="form-control" name="aliases" rows="2" placeholder="e.g. Modeler, BIM Tech, Structural Tech"></textarea>
+                            <small class="text-muted">Helpful search aliases and alternative keywords.</small>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-plus me-1"></i> Create Title
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT PARENT DEPARTMENT MODAL -->
+    <div class="modal fade" id="editParentDeptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <form action="/admin/catalogue/departments/{{department.id}}" method="POST" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                    <input type="hidden" name="returnTo" value="/admin/catalogue/departments/{{department.id}}">
+
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-pen-to-square text-primary me-2"></i> Edit Department
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body py-3">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Department Stable ID</label>
+                            <input type="text" class="form-control bg-light" value="{{department.id}}" readonly disabled style="font-family: monospace;">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Display Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" value="{{department.name}}" required minlength="2" maxlength="100">
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Display Order</label>
+                                <input type="number" class="form-control" name="displayOrder" value="{{department.displayOrder}}" min="1" max="1000" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="active" {{#ifEquals department.status 'active'}}selected{{/ifEquals}}>Active</option>
+                                    <option value="retired" {{#ifEquals department.status 'retired'}}selected{{/ifEquals}}>Retired</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Aliases (Comma-separated)</label>
+                            <textarea class="form-control" name="aliases" rows="2">{{#if department.aliases.length}}{{join department.aliases ', '}}{{/if}}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>

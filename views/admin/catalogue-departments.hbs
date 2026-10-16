@@ -1,0 +1,437 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- BREADCRUMBS & HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Identity Catalogue</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-sitemap me-2"></i> Professional Identity Catalogue
+            </h2>
+            <small class="text-muted">Authoritative engineering departments and department-scoped professional title taxonomies.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/career-intelligence/roles" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-id-card-clip me-1"></i> Career Roles
+            </a>
+            <a href="/admin/career-intelligence/skills" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-diagram-project me-1"></i> Skill Graph
+            </a>
+        </div>
+    </div>
+
+    <!-- FLASH FEEDBACK ALERTS -->
+    {{#if successMessage}}
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <div class="fw-semibold">{{successMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    {{#if errorMessage}}
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+        <div class="fw-semibold">{{errorMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    <!-- TOP KPI STATS -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--surface);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 11px;">Total Departments</small>
+                        <h3 class="fw-bold m-0 mt-1" style="color: var(--brand);">{{totalDepartments}}</h3>
+                        <small class="text-success"><i class="fa-solid fa-shield-check me-1"></i>Canonical 2026.1</small>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(15, 23, 42, 0.08); width: 50px; height: 50px;">
+                        <i class="fa-solid fa-sitemap fs-5" style="color: var(--brand);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--surface);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 11px;">Active Departments</small>
+                        <h3 class="fw-bold m-0 mt-1 text-success">{{activeDepartments}}</h3>
+                        <small class="text-muted">{{retiredDepartments}} retired</small>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(16, 185, 129, 0.12); width: 50px; height: 50px;">
+                        <i class="fa-solid fa-circle-check fs-5 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--surface);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 11px;">Total Titles</small>
+                        <h3 class="fw-bold m-0 mt-1 text-primary">{{totalTitles}}</h3>
+                        <small class="text-muted">{{totalActiveTitles}} active in catalogue</small>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(59, 130, 246, 0.12); width: 50px; height: 50px;">
+                        <i class="fa-solid fa-id-card-clip fs-5 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--surface);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 11px;">Profile References</small>
+                        {{#if usageStatsAvailable}}
+                        <h3 class="fw-bold m-0 mt-1 text-info">Live</h3>
+                        <small class="text-success"><i class="fa-solid fa-link me-1"></i>User panel linked</small>
+                        {{else}}
+                        <h3 class="fw-bold m-0 mt-1 text-secondary">Offline</h3>
+                        <small class="text-muted"><i class="fa-solid fa-circle-info me-1"></i>Local / isolated</small>
+                        {{/if}}
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(139, 92, 246, 0.12); width: 50px; height: 50px;">
+                        <i class="fa-solid fa-users-viewfinder fs-5" style="color: var(--purple);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA INTEGRITY RULES BANNER -->
+    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(59, 130, 246, 0.04) 100%); border-left: 5px solid var(--brand) !important;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-start gap-3">
+                <i class="fa-solid fa-shield-halved text-primary fs-4 mt-1"></i>
+                <div>
+                    <h6 class="fw-bold m-0 text-dark">Data Integrity &amp; Identity Protection Rules</h6>
+                    <p class="small text-muted mb-0 mt-1">
+                        <strong>Stable Immutable IDs:</strong> Department IDs are permanent anchors. Display name edits preserve historical stable IDs.
+                        <br>
+                        <strong>No Hard Deletions:</strong> Departments and titles are never deleted. Retiring a department preserves its titles and existing user profile references.
+                        <br>
+                        <strong>Accurate Statistics:</strong> When the User Panel database is not connected to this admin instance, profile usage counts are reported as <em>Unavailable</em> rather than an invented zero.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/catalogue/departments" style="border-radius: 16px;">
+        <input type="hidden" name="view" value="{{#ifEquals viewMode 'table'}}table{{else}}card{{/ifEquals}}">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-6 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search departments by name or ID (e.g. civil, architectural)...">
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-4 col-6">
+                <select class="form-select" name="status" onchange="this.form.submit()">
+                    <option value="all" {{#ifEquals filters.status 'all'}}selected{{/ifEquals}}>All Statuses</option>
+                    <option value="active" {{#ifEquals filters.status 'active'}}selected{{/ifEquals}}>Active Only</option>
+                    <option value="retired" {{#ifEquals filters.status 'retired'}}selected{{/ifEquals}}>Retired Only</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-2 col-6 text-end">
+                <div class="btn-group w-100" role="group">
+                    <a href="/admin/catalogue/departments?view=card{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}" class="btn {{#ifEquals viewMode 'card'}}btn-primary{{else}}btn-outline-secondary{{/ifEquals}}">
+                        <i class="fa-solid fa-grip me-1"></i> Cards
+                    </a>
+                    <a href="/admin/catalogue/departments?view=table{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.status}}&status={{filters.status}}{{/if}}" class="btn {{#ifEquals viewMode 'table'}}btn-primary{{else}}btn-outline-secondary{{/ifEquals}}">
+                        <i class="fa-solid fa-table-list me-1"></i> Table
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-1 col-md-1 text-end">
+                <a href="/admin/catalogue/departments" class="btn btn-outline-secondary w-100" title="Reset Filters">
+                    <i class="fa-solid fa-rotate"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- CONTENT DISPLAY (CARD OR TABLE) -->
+    {{#if departments.length}}
+
+        <!-- CARD VIEW -->
+        {{#ifEquals viewMode 'card'}}
+        <div class="row g-4">
+            {{#each departments}}
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; background: var(--surface); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-light text-muted border px-2 py-1" style="font-family: monospace; font-size: 11px;">
+                            #{{this.displayOrder}}
+                        </span>
+                        {{#ifEquals this.status 'active'}}
+                        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-circle-check me-1"></i> Active
+                        </span>
+                        {{else}}
+                        <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-box-archive me-1"></i> Retired
+                        </span>
+                        {{/ifEquals}}
+                    </div>
+
+                    <div class="card-body px-4 py-3">
+                        <h5 class="fw-bold mb-1" style="color: var(--text);">{{this.name}}</h5>
+                        <div class="d-inline-block badge bg-light text-secondary border px-2 py-1 mb-3" style="font-family: monospace; font-size: 11px;">
+                            {{this.id}}
+                        </div>
+
+                        <!-- METRICS ROW -->
+                        <div class="row g-2 p-2 mb-3 rounded" style="background: var(--surface-2);">
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Titles Scoped</small>
+                                <span class="fw-bold" style="color: var(--brand);">{{this.titlesCount}} titles</span>
+                                <small class="text-success d-block" style="font-size: 10px;">{{this.activeTitlesCount}} active</small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Profile Usage</small>
+                                {{#if (eq this.usageCount null)}}
+                                <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 10px;">Unavailable</span>
+                                {{else}}
+                                <span class="fw-bold text-primary">{{this.usageCount}} users</span>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                        <!-- ALIASES -->
+                        <div class="mb-2">
+                            <small class="text-muted d-block fw-semibold mb-1" style="font-size: 11px;">Aliases &amp; Keywords:</small>
+                            {{#if this.aliases.length}}
+                            <div class="d-flex flex-wrap gap-1">
+                                {{#each this.aliases}}
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 10px;">{{this}}</span>
+                                {{/each}}
+                            </div>
+                            {{else}}
+                            <span class="text-muted small italic">None configured</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+                        <div class="d-flex gap-2">
+                            <a href="/admin/catalogue/departments/{{this.id}}" class="btn btn-primary flex-grow-1 btn-sm py-2">
+                                <i class="fa-solid fa-id-card-clip me-1"></i> Manage Titles ({{this.titlesCount}})
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#editDeptModal-{{this.id}}" title="Edit Department">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} btn-sm px-3" data-bs-toggle="modal" data-bs-target="#statusDeptModal-{{this.id}}" title="{{#ifEquals this.status 'active'}}Retire{{else}}Reactivate{{/ifEquals}}">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDIT DEPARTMENT MODAL -->
+            <div class="modal fade" id="editDeptModal-{{this.id}}" tabindex="-1" aria-labelledby="editDeptLabel-{{this.id}}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <form action="/admin/catalogue/departments/{{this.id}}" method="POST" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerHTML = 'Saving...'; }">
+                            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                            <input type="hidden" name="returnTo" value="/admin/catalogue/departments">
+                            
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold" id="editDeptLabel-{{this.id}}">
+                                    <i class="fa-solid fa-pen-to-square text-primary me-2"></i> Edit Department
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body py-3">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Department Stable ID</label>
+                                    <input type="text" class="form-control bg-light" value="{{this.id}}" readonly disabled style="font-family: monospace;">
+                                    <small class="text-muted">Stable identifiers are immutable and cannot be changed.</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Display Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="name" value="{{this.name}}" required minlength="2" maxlength="100">
+                                    <small class="text-muted">Plain text name displayed across the User Panel.</small>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Display Order</label>
+                                        <input type="number" class="form-control" name="displayOrder" value="{{this.displayOrder}}" min="1" max="1000" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Status</label>
+                                        <select class="form-select" name="status">
+                                            <option value="active" {{#ifEquals this.status 'active'}}selected{{/ifEquals}}>Active</option>
+                                            <option value="retired" {{#ifEquals this.status 'retired'}}selected{{/ifEquals}}>Retired</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Aliases (Comma-separated)</label>
+                                    <textarea class="form-control" name="aliases" rows="2" placeholder="e.g. Civils, Infrastructure, Site">{{#if this.aliases.length}}{{join this.aliases ', '}}{{/if}}</textarea>
+                                    <small class="text-muted">Search keywords to assist users during profile selection.</small>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATUS TOGGLE MODAL -->
+            <div class="modal fade" id="statusDeptModal-{{this.id}}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <form action="/admin/catalogue/departments/{{this.id}}/status" method="POST">
+                            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                            <input type="hidden" name="returnTo" value="/admin/catalogue/departments">
+                            <input type="hidden" name="status" value="{{#ifEquals this.status 'active'}}retired{{else}}active{{/ifEquals}}">
+
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold text-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}}">
+                                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                    Confirm Department {{#ifEquals this.status 'active'}}Retirement{{else}}Reactivation{{/ifEquals}}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body py-3">
+                                {{#ifEquals this.status 'active'}}
+                                <p class="mb-2">Are you sure you want to retire department <strong>{{this.name}}</strong>?</p>
+                                <div class="alert alert-warning p-2 small mb-0">
+                                    <i class="fa-solid fa-info-circle me-1"></i>
+                                    <strong>Safe Retirement:</strong> This department has <strong>{{this.titlesCount}} titles</strong>. Retiring will NOT delete or empty titles. All existing user profile selections will remain fully preserved and resolvable.
+                                </div>
+                                {{else}}
+                                <p class="mb-0">Reactivating <strong>{{this.name}}</strong> will restore it for new user profile selections.</p>
+                                {{/ifEquals}}
+                            </div>
+
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} px-4">
+                                    {{#ifEquals this.status 'active'}}Retire Department{{else}}Reactivate Department{{/ifEquals}}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{/ifEquals}}
+
+        <!-- TABLE VIEW -->
+        {{#ifEquals viewMode 'table'}}
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; background: var(--surface);">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">Order</th>
+                            <th>Department Name</th>
+                            <th>Stable ID</th>
+                            <th>Status</th>
+                            <th>Titles (Active / Total)</th>
+                            <th>Profile Usage</th>
+                            <th>Aliases</th>
+                            <th class="text-end" style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each departments}}
+                        <tr>
+                            <td class="text-muted fw-bold">#{{this.displayOrder}}</td>
+                            <td>
+                                <a href="/admin/catalogue/departments/{{this.id}}" class="fw-bold text-decoration-none" style="color: var(--brand);">
+                                    {{this.name}}
+                                </a>
+                            </td>
+                            <td>
+                                <code class="small text-secondary">{{this.id}}</code>
+                            </td>
+                            <td>
+                                {{#ifEquals this.status 'active'}}
+                                <span class="badge bg-success-subtle text-success px-2 py-1">Active</span>
+                                {{else}}
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Retired</span>
+                                {{/ifEquals}}
+                            </td>
+                            <td>
+                                <span class="fw-bold">{{this.activeTitlesCount}}</span> / {{this.titlesCount}}
+                            </td>
+                            <td>
+                                {{#if (eq this.usageCount null)}}
+                                <span class="badge bg-light text-muted border">Unavailable</span>
+                                {{else}}
+                                <span class="badge bg-light text-primary border">{{this.usageCount}} users</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if this.aliases.length}}
+                                <small class="text-muted">{{join this.aliases ', '}}</small>
+                                {{else}}
+                                <span class="text-muted small">&mdash;</span>
+                                {{/if}}
+                            </td>
+                            <td class="text-end">
+                                <a href="/admin/catalogue/departments/{{this.id}}" class="btn btn-outline-primary btn-sm px-2" title="Manage Titles">
+                                    <i class="fa-solid fa-id-card-clip"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-secondary btn-sm px-2" data-bs-toggle="modal" data-bs-target="#editDeptModal-{{this.id}}" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-{{#ifEquals this.status 'active'}}warning{{else}}success{{/ifEquals}} btn-sm px-2" data-bs-toggle="modal" data-bs-target="#statusDeptModal-{{this.id}}" title="Status">
+                                    <i class="fa-solid fa-power-off"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {{/ifEquals}}
+
+    {{else}}
+        <!-- EMPTY STATE -->
+        <div class="card p-5 text-center border-0 shadow-sm" style="border-radius: 16px; background: var(--surface);">
+            <div class="py-4">
+                <i class="fa-solid fa-sitemap text-muted fs-1 mb-3"></i>
+                <h5 class="fw-bold">No Departments Found</h5>
+                <p class="text-muted small">No departments match your current search query or filter selection.</p>
+                <a href="/admin/catalogue/departments" class="btn btn-primary btn-sm px-3 mt-2">
+                    <i class="fa-solid fa-rotate me-1"></i> Clear Filters
+                </a>
+            </div>
+        </div>
+    {{/if}}
+
+</div>
