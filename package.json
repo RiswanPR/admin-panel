@@ -24,9 +24,10 @@
     "usernames:repair": "node scripts/usernames-repair.js",
     "seed:catalogue": "node scripts/seed-catalogue.js",
     "seed:catalogue:dry": "node scripts/seed-catalogue.js --dry-run",
-    "test:catalogue": "node test/catalogue-database-foundation.test.js && node test/catalogue-admin-service.test.js && node test/catalogue-admin-ui.test.js",
+    "test:catalogue": "node test/catalogue-database-foundation.test.js && node test/catalogue-admin-service.test.js && node test/catalogue-admin-ui.test.js && node test/catalogue-admin-requests.test.js",
     "test:catalogue:service": "node test/catalogue-admin-service.test.js",
-    "test:catalogue:ui": "node test/catalogue-admin-ui.test.js"
+    "test:catalogue:ui": "node test/catalogue-admin-ui.test.js",
+    "test:catalogue:requests": "node test/catalogue-admin-requests.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1063.0",

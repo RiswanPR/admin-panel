@@ -52,5 +52,6 @@ module.exports = {
     COMMUNITY_POLLS_COLLECTION: 'community_polls',
     // Professional Identity Catalogue Collections (Phase 1)
     CATALOGUE_DEPARTMENTS_COLLECTION: 'catalogue_departments',
-    CATALOGUE_TITLES_COLLECTION: 'catalogue_titles'
+    CATALOGUE_TITLES_COLLECTION: 'catalogue_titles',
+    CATALOGUE_TITLE_REQUESTS_COLLECTION: 'catalogue_title_requests'
 };

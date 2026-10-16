@@ -760,6 +760,376 @@ async function reassignTitleDepartment(titleId, targetDepartmentId, actorContext
   );
 }
 
+/**
+ * 9. Custom Title Requests Administration
+ */
+
+/**
+ * Lists custom title requests with filtering, pagination, and KPI counts.
+ */
+async function getTitleRequests(filters = {}, pagination = {}, options = {}) {
+  const activeDb = resolveDb(options);
+  const reqCollName = collection.CATALOGUE_TITLE_REQUESTS_COLLECTION || 'catalogue_title_requests';
+  const reqColl = activeDb.collection(reqCollName);
+
+  const query = {};
+
+  const status = String(filters.status || 'all').trim().toLowerCase();
+  if (status && status !== 'all') {
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      throw new Error(`Invalid status filter: '${status}'. Allowed values: all, pending, approved, rejected.`);
+    }
+    query.status = status;
+  }
+
+  const deptId = String(filters.departmentId || '').trim();
+  if (deptId && deptId !== 'all') {
+    query.departmentId = deptId;
+  }
+
+  const search = String(filters.search || '').trim();
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.$or = [
+      { requestedTitle: new RegExp(escaped, 'i') },
+      { userName: new RegExp(escaped, 'i') },
+      { userEmail: new RegExp(escaped, 'i') },
+      { departmentName: new RegExp(escaped, 'i') },
+    ];
+  }
+
+  const page = Math.max(1, Number(pagination.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(pagination.limit) || 25));
+  const skip = (page - 1) * limit;
+
+  const total = await reqColl.countDocuments(query);
+  const pendingCount = await reqColl.countDocuments({ status: 'pending' }).catch(() => 0);
+  const approvedCount = await reqColl.countDocuments({ status: 'approved' }).catch(() => 0);
+  const rejectedCount = await reqColl.countDocuments({ status: 'rejected' }).catch(() => 0);
+
+  let requests = [];
+  const cursor = reqColl.find(query);
+  if (cursor && typeof cursor.sort === 'function') {
+    let sortedCursor = cursor.sort({ createdAt: -1 });
+    if (typeof sortedCursor.skip === 'function') {
+      sortedCursor = sortedCursor.skip(skip);
+    }
+    if (typeof sortedCursor.limit === 'function') {
+      sortedCursor = sortedCursor.limit(limit);
+    }
+    requests = await sortedCursor.toArray();
+  } else if (cursor && typeof cursor.toArray === 'function') {
+    const all = await cursor.toArray();
+    requests = all.slice(skip, skip + limit);
+  }
+
+  return {
+    requests,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    pendingCount,
+    approvedCount,
+    rejectedCount,
+    filters: {
+      status,
+      departmentId: deptId,
+      search,
+    },
+  };
+}
+
+/**
+ * Fetches a single title request by ID.
+ */
+async function getTitleRequestById(requestId, options = {}) {
+  if (!requestId || typeof requestId !== 'string' || !requestId.trim()) {
+    throw new Error('Valid request ID is required.');
+  }
+  const activeDb = resolveDb(options);
+  const reqCollName = collection.CATALOGUE_TITLE_REQUESTS_COLLECTION || 'catalogue_title_requests';
+  const reqColl = activeDb.collection(reqCollName);
+  return reqColl.findOne({ id: requestId.trim() });
+}
+
+/**
+ * Approves a custom title request:
+ * 1. Validates request and department state.
+ * 2. Checks for existing equivalent title in department.
+ * 3. Atomically updates request to approved.
+ * 4. Inserts new title into catalogue_titles if not duplicate.
+ * 5. Records structured audit log.
+ */
+async function approveTitleRequest(requestId, input = {}, actorContext = {}) {
+  if (!requestId || typeof requestId !== 'string' || !requestId.trim()) {
+    throw new Error('Valid request ID is required.');
+  }
+
+  const cleanRequestId = requestId.trim();
+  const activeDb = resolveDb(actorContext);
+  const reqCollName = collection.CATALOGUE_TITLE_REQUESTS_COLLECTION || 'catalogue_title_requests';
+  const deptCollName = collection.CATALOGUE_DEPARTMENTS_COLLECTION || 'catalogue_departments';
+  const titleCollName = collection.CATALOGUE_TITLES_COLLECTION || 'catalogue_titles';
+
+  const reqColl = activeDb.collection(reqCollName);
+  const deptColl = activeDb.collection(deptCollName);
+  const titleColl = activeDb.collection(titleCollName);
+
+  // 1. Fetch request
+  const request = await reqColl.findOne({ id: cleanRequestId });
+  if (!request) {
+    throw new Error(`Custom title request with ID '${cleanRequestId}' not found.`);
+  }
+
+  // Idempotency: if already approved
+  if (request.status === 'approved') {
+    const existingTitle = request.createdTitleId
+      ? await titleColl.findOne({ id: request.createdTitleId })
+      : null;
+    return {
+      success: true,
+      message: `Request '${cleanRequestId}' was already approved.`,
+      alreadyApproved: true,
+      request,
+      title: existingTitle,
+      auditLogged: true,
+    };
+  }
+
+  if (request.status !== 'pending') {
+    throw new Error(`Cannot approve request '${cleanRequestId}': current status is '${request.status}'.`);
+  }
+
+  // 2. Validate department exists and is active
+  const department = await deptColl.findOne({ id: request.departmentId });
+  if (!department) {
+    throw new Error(`Department with ID '${request.departmentId}' not found.`);
+  }
+  if (department.status !== 'active') {
+    throw new Error(
+      `Cannot approve title request for retired department '${department.name}'. Reactivate the department first.`
+    );
+  }
+
+  // 3. Generate department-scoped stable ID: `<deptId>:<slug>`
+  const cleanLabel = (input.label || request.requestedTitle || '').trim();
+  if (!cleanLabel) {
+    throw new Error('Title label is required.');
+  }
+
+  const titleSlug = slugify(cleanLabel);
+  const generatedId = `${request.departmentId}:${titleSlug}`;
+
+  // Check if title with same generated ID already exists
+  const existingTitleById = await titleColl.findOne({ id: generatedId });
+  if (existingTitleById && existingTitleById.status === 'active') {
+    // If title already exists and is active, link it safely
+    const now = new Date();
+    await reqColl.updateOne(
+      { id: cleanRequestId, status: 'pending' },
+      {
+        $set: {
+          status: 'approved',
+          reviewerId: String(actorContext.actor?._id || ''),
+          reviewerName: String(actorContext.actor?.Name || actorContext.actor?.name || 'Admin'),
+          reviewedAt: now,
+          createdTitleId: generatedId,
+          reviewNote: input.note || input.reason || `Linked to existing catalogue title "${existingTitleById.label}"`,
+          updatedAt: now,
+        },
+      }
+    );
+    const updatedReq = await reqColl.findOne({ id: cleanRequestId });
+    return {
+      success: true,
+      message: `Title '${existingTitleById.label}' already exists in ${department.name}. Request marked approved.`,
+      request: updatedReq,
+      title: existingTitleById,
+      alreadyExisted: true,
+      auditLogged: true,
+    };
+  }
+
+  // 4. Atomic status transition: 'pending' -> 'approved'
+  const now = new Date();
+  const updateResult = await reqColl.updateOne(
+    { id: cleanRequestId, status: 'pending' },
+    {
+      $set: {
+        status: 'approved',
+        reviewerId: String(actorContext.actor?._id || ''),
+        reviewerName: String(actorContext.actor?.Name || actorContext.actor?.name || 'Admin'),
+        reviewedAt: now,
+        createdTitleId: generatedId,
+        reviewNote: input.note || input.reason || 'Approved by administrator',
+        updatedAt: now,
+      },
+    }
+  );
+
+  if (updateResult.matchedCount === 0) {
+    const current = await reqColl.findOne({ id: cleanRequestId });
+    if (current && current.status === 'approved') {
+      const existing = await titleColl.findOne({ id: generatedId });
+      return {
+        success: true,
+        message: 'Request was already approved.',
+        alreadyApproved: true,
+        request: current,
+        title: existing,
+        auditLogged: true,
+      };
+    }
+    throw new Error('Request could not be approved because its status was changed concurrently.');
+  }
+
+  // 5. Insert new title into catalogue_titles if it did not exist
+  let titleDoc = await titleColl.findOne({ id: generatedId });
+  if (!titleDoc) {
+    const titlesInDept = await titleColl.find({ departmentId: request.departmentId }).toArray();
+    const maxOrder = titlesInDept.reduce((max, t) => Math.max(max, t.displayOrder || 0), 0);
+    const cleanDisplayOrder = maxOrder + 1;
+
+    titleDoc = {
+      id: generatedId,
+      departmentId: request.departmentId,
+      label: cleanLabel,
+      status: 'active',
+      displayOrder: cleanDisplayOrder,
+      catalogueVersion: department.catalogueVersion || '2026.1',
+      aliases: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await titleColl.insertMany([titleDoc], { ordered: true });
+    await deptColl.updateOne({ id: request.departmentId }, { $inc: { titlesCount: 1 } }).catch(() => {});
+  } else if (titleDoc.status === 'retired') {
+    // Reactivate title if it had been retired
+    await titleColl.updateOne({ id: generatedId }, { $set: { status: 'active', updatedAt: now } });
+    titleDoc.status = 'active';
+  }
+
+  // 6. Mandatory Audit Logging
+  const auditSuccess = await recordAudit(activeDb, {
+    req: actorContext.req,
+    actor: actorContext.actor,
+    action: 'CATALOGUE_TITLE_REQUEST_APPROVED',
+    entityType: 'CATALOGUE_TITLE_REQUEST',
+    entityId: cleanRequestId,
+    entityName: cleanLabel,
+    metadata: {
+      requestId: cleanRequestId,
+      departmentId: request.departmentId,
+      createdTitleId: generatedId,
+      titleLabel: cleanLabel,
+      reason: input.reason || input.note || 'Admin approved custom title request',
+    },
+    message: `Approved custom title request '${cleanRequestId}' -> created title '${generatedId}' in '${request.departmentId}'`,
+  });
+
+  const updatedRequest = await reqColl.findOne({ id: cleanRequestId });
+
+  return {
+    success: true,
+    message: `Title '${cleanLabel}' approved and successfully added to ${department.name}.`,
+    request: updatedRequest,
+    title: titleDoc,
+    auditLogged: auditSuccess,
+  };
+}
+
+/**
+ * Rejects a custom title request without modifying the official catalogue.
+ */
+async function rejectTitleRequest(requestId, input = {}, actorContext = {}) {
+  if (!requestId || typeof requestId !== 'string' || !requestId.trim()) {
+    throw new Error('Valid request ID is required.');
+  }
+
+  const cleanRequestId = requestId.trim();
+  const activeDb = resolveDb(actorContext);
+  const reqCollName = collection.CATALOGUE_TITLE_REQUESTS_COLLECTION || 'catalogue_title_requests';
+  const reqColl = activeDb.collection(reqCollName);
+
+  const request = await reqColl.findOne({ id: cleanRequestId });
+  if (!request) {
+    throw new Error(`Custom title request with ID '${cleanRequestId}' not found.`);
+  }
+
+  if (request.status === 'rejected') {
+    return {
+      success: true,
+      message: `Request '${cleanRequestId}' was already rejected.`,
+      alreadyRejected: true,
+      request,
+      auditLogged: true,
+    };
+  }
+
+  if (request.status !== 'pending') {
+    throw new Error(`Cannot reject request '${cleanRequestId}': current status is '${request.status}'.`);
+  }
+
+  const reason = input.reason || input.note || 'Rejected by administrator';
+  const now = new Date();
+
+  const updateResult = await reqColl.updateOne(
+    { id: cleanRequestId, status: 'pending' },
+    {
+      $set: {
+        status: 'rejected',
+        reviewerId: String(actorContext.actor?._id || ''),
+        reviewerName: String(actorContext.actor?.Name || actorContext.actor?.name || 'Admin'),
+        reviewedAt: now,
+        reviewNote: reason,
+        updatedAt: now,
+      },
+    }
+  );
+
+  if (updateResult.matchedCount === 0) {
+    const current = await reqColl.findOne({ id: cleanRequestId });
+    if (current && current.status === 'rejected') {
+      return {
+        success: true,
+        message: 'Request was already rejected.',
+        alreadyRejected: true,
+        request: current,
+        auditLogged: true,
+      };
+    }
+    throw new Error('Request could not be rejected because its status was changed concurrently.');
+  }
+
+  // Audit Logging (Zero catalogue writes on rejection)
+  const auditSuccess = await recordAudit(activeDb, {
+    req: actorContext.req,
+    actor: actorContext.actor,
+    action: 'CATALOGUE_TITLE_REQUEST_REJECTED',
+    entityType: 'CATALOGUE_TITLE_REQUEST',
+    entityId: cleanRequestId,
+    entityName: request.requestedTitle,
+    metadata: {
+      requestId: cleanRequestId,
+      departmentId: request.departmentId,
+      requestedTitle: request.requestedTitle,
+      reason,
+    },
+    message: `Rejected custom title request '${cleanRequestId}' ("${request.requestedTitle}"): ${reason}`,
+  });
+
+  const updatedRequest = await reqColl.findOne({ id: cleanRequestId });
+
+  return {
+    success: true,
+    message: `Request for title '${request.requestedTitle}' rejected.`,
+    request: updatedRequest,
+    auditLogged: auditSuccess,
+  };
+}
+
 module.exports = {
   getDepartmentsWithStats,
   getDepartmentById,
@@ -769,6 +1139,10 @@ module.exports = {
   updateTitle,
   setTitleStatus,
   reassignTitleDepartment,
+  getTitleRequests,
+  getTitleRequestById,
+  approveTitleRequest,
+  rejectTitleRequest,
   slugify,
   validatePlainText,
   validateAliases,

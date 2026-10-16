@@ -491,7 +491,148 @@ router.post('/titles/:titleId/status', verifyLogin, requireCapability('manage_ta
 });
 
 // =============================================================================
-// 5. HARD DELETION & REASSIGNMENT REJECTION GUARDS
+// 5. CUSTOM TITLE REQUESTS ADMINISTRATION (REVIEW QUEUE)
+// =============================================================================
+
+// List title requests with filtering and pagination
+router.get('/requests', verifyLogin, requireCapability('manage_taxonomy'), async (req, res) => {
+  try {
+    const filters = {
+      status: req.query.status || 'pending',
+      departmentId: req.query.departmentId || '',
+      search: req.query.search || '',
+    };
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
+
+    res.locals.currentPage = 'catalogue-requests';
+
+    const [listing, departments] = await Promise.all([
+      catalogueAdmin.getTitleRequests(filters, { page, limit }, { req }),
+      catalogueAdmin.getDepartmentsWithStats({ status: 'all' }, { req }),
+    ]);
+
+    res.render('admin/catalogue-requests', {
+      title: 'Professional Identity — Custom Title Requests',
+      requests: listing.requests,
+      total: listing.total,
+      page: listing.page,
+      limit: listing.limit,
+      totalPages: listing.totalPages,
+      pendingCount: listing.pendingCount,
+      approvedCount: listing.approvedCount,
+      rejectedCount: listing.rejectedCount,
+      departments,
+      filters,
+    });
+  } catch (err) {
+    logger.error('Failed to load custom title requests:', err.message);
+    res.status(500).render('error', {
+      message: err.message || 'Failed to load custom title requests. Please try again later.',
+    });
+  }
+});
+
+// Approve a custom title request
+router.post('/requests/:requestId/approve', verifyLogin, requireCapability('manage_taxonomy'), verifyCsrf, async (req, res) => {
+  const requestId = req.params.requestId;
+  try {
+    const actorContext = {
+      actor: req.session.admin,
+      req,
+      reason: req.body.reason || req.body.note || 'Admin approved custom title request',
+    };
+
+    const input = {
+      label: req.body.label ? String(req.body.label).trim() : undefined,
+      note: req.body.note ? String(req.body.note).trim() : undefined,
+    };
+
+    const result = await catalogueAdmin.approveTitleRequest(requestId, input, actorContext);
+
+    if (!result.auditLogged) {
+      logger.error(`Request '${requestId}' approved in DB but audit logging failed. Failing closed.`);
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(500).json({
+          success: false,
+          message: 'Security Audit Failure: Request approved but audit logging could not be recorded.',
+          auditFailure: true,
+        });
+      }
+      return res.status(500).render('error', {
+        message: 'Security Audit Failure: Request approved but audit logging could not be recorded.',
+      });
+    }
+
+    const msg = result.message || `Title '${result.title?.label}' approved successfully.`;
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: msg, request: result.request, title: result.title });
+    }
+
+    const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
+    res.redirect(`${returnUrl}?success=${encodeURIComponent(msg)}`);
+  } catch (err) {
+    logger.error(`Error approving title request '${requestId}':`, err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
+    res.redirect(`${returnUrl}?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+// Reject a custom title request
+router.post('/requests/:requestId/reject', verifyLogin, requireCapability('manage_taxonomy'), verifyCsrf, async (req, res) => {
+  const requestId = req.params.requestId;
+  try {
+    const actorContext = {
+      actor: req.session.admin,
+      req,
+      reason: req.body.reason || req.body.note || 'Admin rejected custom title request',
+    };
+
+    const input = {
+      reason: req.body.reason ? String(req.body.reason).trim() : (req.body.note ? String(req.body.note).trim() : undefined),
+    };
+
+    const result = await catalogueAdmin.rejectTitleRequest(requestId, input, actorContext);
+
+    if (!result.auditLogged) {
+      logger.error(`Request '${requestId}' rejected in DB but audit logging failed.`);
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+        return res.status(500).json({
+          success: false,
+          message: 'Security Audit Failure: Request rejected but audit logging could not be recorded.',
+          auditFailure: true,
+        });
+      }
+      return res.status(500).render('error', {
+        message: 'Security Audit Failure: Request rejected but audit logging could not be recorded.',
+      });
+    }
+
+    const msg = result.message || 'Custom title request rejected.';
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.json({ success: true, message: msg, request: result.request });
+    }
+
+    const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
+    res.redirect(`${returnUrl}?success=${encodeURIComponent(msg)}`);
+  } catch (err) {
+    logger.error(`Error rejecting title request '${requestId}':`, err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
+    res.redirect(`${returnUrl}?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+// =============================================================================
+// 6. HARD DELETION & REASSIGNMENT REJECTION GUARDS
 // =============================================================================
 
 router.all('/departments/:departmentId/delete', verifyLogin, requireCapability('manage_taxonomy'), (req, res) => {
