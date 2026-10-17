@@ -435,6 +435,36 @@
       box-shadow: var(--shadow);
     }
 
+    /* Bootstrap 5 btn-close polyfill for Bootstrap 4 compatibility */
+    .btn-close {
+      box-sizing: content-box;
+      width: 1em;
+      height: 1em;
+      padding: .375em .375em;
+      color: var(--text);
+      background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2364748b'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+      border: 0;
+      border-radius: .375rem;
+      opacity: .65;
+      cursor: pointer;
+      transition: opacity .15s ease-in-out, transform .15s ease-in-out;
+      display: inline-block;
+      line-height: 1;
+    }
+    .btn-close:hover {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    .btn-close:focus {
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+      opacity: 1;
+    }
+    .btn-close-white,
+    html[data-theme="dark"] .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
     .badge {
       border-radius: 10px;
       padding: 6px 12px;
@@ -892,7 +922,7 @@
             if (target) window.jQuery(target).modal('show');
           });
 
-          window.jQuery(document).on('click', '[data-bs-dismiss="modal"]', function (e) {
+          window.jQuery(document).on('click', '[data-bs-dismiss="modal"], [data-dismiss="modal"]', function (e) {
             e.preventDefault();
             window.jQuery(this).closest('.modal').modal('hide');
           });

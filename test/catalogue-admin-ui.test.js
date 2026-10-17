@@ -153,6 +153,13 @@ describe('Zeitnah Admin — Phase 3: Professional Identity Catalogue Admin UI', 
           },
           inc: (val) => Number(val || 0) + 1,
           dec: (val) => Math.max(1, Number(val || 1) - 1),
+          add: (a, b) => Number(a || 0) + Number(b || 0),
+          ifGt: function (a, b, options) {
+            return Number(a) > Number(b) ? options.fn(this) : options.inverse(this);
+          },
+          ifLt: function (a, b, options) {
+            return Number(a) < Number(b) ? options.fn(this) : options.inverse(this);
+          },
           join: (arr, sep) => (Array.isArray(arr) ? arr.join(typeof sep === 'string' ? sep : ', ') : ''),
           replace: (str, find, repl) => (str ? String(str).split(find).join(repl) : ''),
         },
@@ -808,6 +815,101 @@ describe('Zeitnah Admin — Phase 3: Professional Identity Catalogue Admin UI', 
         /\/admin\/catalogue\/requests\?departmentId=mechanical-engineering/,
         'Must dynamically interpolate department.id rather than hardcoding'
       );
+    });
+  });
+
+  describe('12. Moderation UI & Rejection Dialog Layout', () => {
+    beforeEach(async () => {
+      // Ensure seed request exists in mockDb
+      const requestsCol = mockDb.collection(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION || 'catalogue_title_requests');
+      requestsCol.store.length = 0;
+      requestsCol.store.push({
+        id: 'req_mod_ui_1',
+        userId: 'usr_moderation_test',
+        userName: 'Alex Johnson',
+        userEmail: 'alex.johnson.engineering@example.com',
+        requestedTitle: 'Lead Geotechnical Architect',
+        normalizedTitle: 'lead geotechnical architect',
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        status: 'pending',
+        submittedAt: '2026-10-17 12:00:00',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    test('GET /admin/catalogue/requests renders dark-themed rejection modal outside table-responsive', async () => {
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests`);
+      assert.strictEqual(res.status, 200);
+      const html = await res.text();
+
+      // Check table responsive wrapper is closed before modal definition
+      const tableRespIdx = html.indexOf('class="table-responsive');
+      const tableEndIdx = html.indexOf('</table>');
+      const modalIdx = html.indexOf('id="rejectModal-req_mod_ui_1"');
+
+      assert.ok(tableRespIdx > -1, 'Page must contain table-responsive container');
+      assert.ok(tableEndIdx > -1, 'Page must contain closed table');
+      assert.ok(modalIdx > -1, 'Page must render reject modal for req_mod_ui_1');
+      assert.ok(
+        modalIdx > tableEndIdx,
+        'Reject modal must be positioned outside and after the table to prevent overflow clipping'
+      );
+
+      // Verify modal structure & attributes
+      assert.match(html, /modal-dialog-centered/, 'Modal must be centered');
+      assert.match(html, /Reject Title Request/, 'Modal must contain complete title text');
+      assert.match(html, /name="reason"/, 'Modal must contain rejection reason field');
+      assert.match(html, /required/, 'Rejection reason must be marked required');
+      assert.match(html, /maxlength="500"/, 'Rejection reason must enforce maxlength 500');
+      assert.match(html, /data-bs-dismiss="modal"/, 'Modal must support BS5 dismiss');
+      assert.match(html, /data-dismiss="modal"/, 'Modal must support BS4 dismiss');
+      assert.match(html, /action="\/admin\/catalogue\/requests\/req_mod_ui_1\/reject"/, 'Form action must bind exact request ID');
+      assert.match(html, /name="_csrf"/, 'Form must include CSRF token');
+    });
+
+    test('GET /admin/catalogue/requests queue table has aligned headers and dark theme surfaces', async () => {
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests`);
+      assert.strictEqual(res.status, 200);
+      const html = await res.text();
+
+      // Header alignment & responsive constraints
+      assert.match(html, /Status<\/th>/, 'Queue table must have Status column');
+      assert.match(html, /Requested Title<\/th>/, 'Queue table must have Requested Title column');
+      assert.match(html, /Department<\/th>/, 'Queue table must have Department column');
+      assert.match(html, /Requester<\/th>/, 'Queue table must have Requester column');
+      assert.match(html, /Submitted<\/th>/, 'Queue table must have Submitted column');
+      assert.match(html, /Actions<\/th>/, 'Queue table must have Actions column');
+
+      // Check text truncation for long requester emails
+      assert.match(html, /text-truncate/, 'Requester email/id must use text-truncate to avoid breaking layout');
+      assert.match(html, /var\(--surface-2\)/, 'Table headers must use dark-compatible var(--surface-2)');
+    });
+
+    test('GET /admin/catalogue/requests/:requestId renders moderation actions without solid neon backgrounds', async () => {
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_mod_ui_1`);
+      assert.strictEqual(res.status, 200);
+      const html = await res.text();
+
+      // Ensure no broken Bootstrap 4 full solid neon backgrounds are present on entire form sections
+      assert.ok(!html.includes('bg-success bg-opacity-10'), 'Must not use un-polyfilled bg-success bg-opacity-10');
+      assert.ok(!html.includes('bg-danger bg-opacity-10'), 'Must not use un-polyfilled bg-danger bg-opacity-10');
+
+      // Verify clean accent borders and dark surface styling
+      assert.match(html, /border-left:\s*5px solid #10b981/i, 'Approval action must use subtle green accent border');
+      assert.match(html, /border-left:\s*5px solid #ef4444/i, 'Rejection action must use subtle red accent border');
+      assert.match(html, /action="\/admin\/catalogue\/requests\/req_mod_ui_1\/approve"/, 'Approval action binds correct request ID');
+      assert.match(html, /action="\/admin\/catalogue\/requests\/req_mod_ui_1\/reject"/, 'Rejection action binds correct request ID');
+      assert.match(html, /col-xl-6 col-lg-6 col-md-12 col-12/, 'Columns must use responsive grid classes');
+    });
+
+    test('Layout stylesheet contains btn-close polyfill and dark theme filter', () => {
+      const fs = require('fs');
+      const layoutHtml = fs.readFileSync(path.join(__dirname, '../views/Layout/layout.hbs'), 'utf8');
+      assert.match(layoutHtml, /\.btn-close\s*\{/, 'Layout must define .btn-close polyfill');
+      assert.match(layoutHtml, /\.btn-close-white/, 'Layout must define .btn-close-white');
+      assert.match(layoutHtml, /html\[data-theme="dark"\]\s+\.btn-close/, 'Layout must support inverted close icon in dark theme');
     });
   });
 });

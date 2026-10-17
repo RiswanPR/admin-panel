@@ -107,12 +107,12 @@
     </div>
 
     <!-- WORKFLOW INTEGRITY RULES BANNER -->
-    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(59, 130, 246, 0.04) 100%); border-left: 5px solid var(--brand) !important;">
+    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); border-left: 5px solid var(--brand-accent) !important;">
         <div class="card-body p-3">
             <div class="d-flex align-items-start gap-3">
                 <i class="fa-solid fa-shield-halved text-primary fs-4 mt-1"></i>
                 <div>
-                    <h6 class="fw-bold m-0 text-dark">Catalogue Moderation &amp; Review Protocol</h6>
+                    <h6 class="fw-bold m-0" style="color: var(--text);">Catalogue Moderation &amp; Review Protocol</h6>
                     <p class="small text-muted mb-0 mt-1">
                         <strong>Approval Invariant:</strong> Approving a request generates an immutable department-scoped composite ID (<code>&lt;departmentId&gt;:&lt;slug&gt;</code>) and activates the title in the official database.
                         <br>
@@ -126,16 +126,16 @@
     </div>
 
     <!-- FILTER TOOLBAR -->
-    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/catalogue/requests" style="border-radius: 16px;">
+    <form class="card p-3 mb-4 border-0 shadow-sm" method="GET" action="/admin/catalogue/requests" style="border-radius: 16px; background: var(--surface); border: 1px solid var(--border) !important;">
         <div class="row g-2 align-items-center">
             <div class="col-lg-4 col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search title, user, email, or department...">
+                    <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border);"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{filters.search}}" placeholder="Search title, user, email, or department..." style="background: var(--surface); color: var(--text); border-color: var(--border);">
                 </div>
             </div>
             <div class="col-lg-3 col-md-3">
-                <select class="form-select" name="departmentId">
+                <select class="form-select" name="departmentId" style="background: var(--surface); color: var(--text); border-color: var(--border);">
                     <option value="">All Departments</option>
                     {{#each departments}}
                     <option value="{{this.id}}" {{#ifEquals this.id ../filters.departmentId}}selected{{/ifEquals}}>
@@ -145,7 +145,7 @@
                 </select>
             </div>
             <div class="col-lg-3 col-md-2">
-                <select class="form-select" name="status">
+                <select class="form-select" name="status" style="background: var(--surface); color: var(--text); border-color: var(--border);">
                     <option value="pending" {{#ifEquals filters.status 'pending'}}selected{{/ifEquals}}>Pending Only</option>
                     <option value="approved" {{#ifEquals filters.status 'approved'}}selected{{/ifEquals}}>Approved</option>
                     <option value="rejected" {{#ifEquals filters.status 'rejected'}}selected{{/ifEquals}}>Rejected</option>
@@ -164,18 +164,18 @@
     </form>
 
     <!-- REQUESTS LIST -->
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0 table-hover">
-                <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: var(--surface); border: 1px solid var(--border) !important; overflow: hidden;">
+        <div class="table-responsive mb-0" style="border: none; border-radius: 0;">
+            <table class="table align-middle mb-0 table-hover" style="min-width: 920px;">
+                <thead style="background: var(--surface-2); border-bottom: 1px solid var(--border);">
                     <tr>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Status</th>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Requested Title</th>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Department</th>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Requester</th>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Submitted</th>
-                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px;">Review Details</th>
-                        <th class="py-3 px-3 text-end text-uppercase text-muted fw-bold" style="font-size: 11px;">Actions</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; width: 120px;">Status</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; min-width: 220px;">Requested Title</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; min-width: 160px;">Department</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; min-width: 180px;">Requester</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; width: 130px;">Submitted</th>
+                        <th class="py-3 px-3 text-uppercase text-muted fw-bold" style="font-size: 11px; min-width: 180px;">Review Details</th>
+                        <th class="py-3 px-3 text-end text-uppercase text-muted fw-bold" style="font-size: 11px; width: 220px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -184,17 +184,17 @@
                         <!-- Status Badge -->
                         <td class="px-3">
                             {{#ifEquals this.status 'pending'}}
-                            <span class="badge bg-warning text-dark px-2.5 py-1.5" style="border-radius: 8px;">
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 6px 10px;">
                                 <i class="fa-solid fa-clock me-1"></i> Pending
                             </span>
                             {{/ifEquals}}
                             {{#ifEquals this.status 'approved'}}
-                            <span class="badge bg-success px-2.5 py-1.5" style="border-radius: 8px;">
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 6px 10px;">
                                 <i class="fa-solid fa-check me-1"></i> Approved
                             </span>
                             {{/ifEquals}}
                             {{#ifEquals this.status 'rejected'}}
-                            <span class="badge bg-secondary px-2.5 py-1.5" style="border-radius: 8px;">
+                            <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.25); border-radius: 8px; padding: 6px 10px;">
                                 <i class="fa-solid fa-ban me-1"></i> Rejected
                             </span>
                             {{/ifEquals}}
@@ -202,12 +202,12 @@
 
                         <!-- Requested Title -->
                         <td class="px-3">
-                            <a href="/admin/catalogue/requests/{{this.id}}" class="fw-bold text-dark text-decoration-none hover-primary fs-6" title="Inspect Request Details">
+                            <a href="/admin/catalogue/requests/{{this.id}}" class="fw-bold text-decoration-none hover-primary fs-6 text-break" style="color: var(--text);" title="Inspect Request Details">
                                 "{{this.requestedTitle}}"
                             </a>
                             {{#if this.createdTitleId}}
                             <div class="mt-1">
-                                <span class="badge bg-light text-primary border font-monospace" style="font-size: 10px;">
+                                <span class="badge font-monospace" style="background: var(--surface-2); color: #10b981; border: 1px solid var(--border); font-size: 10px;">
                                     ID: {{this.createdTitleId}}
                                 </span>
                             </div>
@@ -218,35 +218,35 @@
                         <td class="px-3">
                             <div class="d-flex align-items-center gap-1.5">
                                 <i class="fa-solid fa-building text-muted" style="font-size: 12px;"></i>
-                                <span class="fw-semibold text-dark">{{this.departmentName}}</span>
+                                <span class="fw-semibold" style="color: var(--text);">{{this.departmentName}}</span>
                             </div>
                             <small class="text-muted font-monospace" style="font-size: 10px;">{{this.departmentId}}</small>
                         </td>
 
                         <!-- Requester -->
                         <td class="px-3">
-                            <div class="fw-semibold text-dark">
+                            <div class="fw-semibold text-truncate" style="color: var(--text); max-width: 180px;">
                                 {{#if this.userName}}{{this.userName}}{{else}}User{{/if}}
                             </div>
-                            <small class="text-muted" style="font-size: 11px;">
-                                {{#if this.userEmail}}{{this.userEmail}}{{else}}<span class="font-monospace">{{this.userId}}</span>{{/if}}
-                            </small>
+                            <div class="text-muted text-truncate font-monospace" style="font-size: 11px; max-width: 180px;" title="{{this.userEmail}}">
+                                {{#if this.userEmail}}{{this.userEmail}}{{else}}{{this.userId}}{{/if}}
+                            </div>
                         </td>
 
                         <!-- Submitted Date -->
-                        <td class="px-3 text-muted" style="font-size: 12px;">
+                        <td class="px-3 text-muted" style="font-size: 12px; white-space: nowrap;">
                             {{this.submittedAt}}
                         </td>
 
                         <!-- Review Details -->
                         <td class="px-3">
                             {{#if this.reviewedAt}}
-                            <div class="small text-dark">
+                            <div class="small" style="color: var(--text);">
                                 <i class="fa-solid fa-user-shield text-muted me-1"></i>
                                 {{#if this.reviewerName}}{{this.reviewerName}}{{else}}Administrator{{/if}}
                             </div>
                             {{#if this.reviewNote}}
-                            <div class="text-muted small fst-italic mt-0.5">
+                            <div class="text-muted small fst-italic mt-0.5 text-truncate" style="max-width: 220px;" title="{{this.reviewNote}}">
                                 "{{this.reviewNote}}"
                             </div>
                             {{/if}}
@@ -257,100 +257,19 @@
 
                         <!-- Action Buttons -->
                         <td class="px-3 text-end">
-                            <div class="d-inline-flex gap-1.5">
-                                <a href="/admin/catalogue/requests/{{this.id}}" class="btn btn-sm btn-outline-secondary px-2.5 py-1" title="Inspect Details">
+                            <div class="d-inline-flex gap-1.5 flex-nowrap align-items-center justify-content-end">
+                                <a href="/admin/catalogue/requests/{{this.id}}" class="btn btn-sm btn-outline-secondary px-2.5 py-1 text-nowrap" title="Inspect Details">
                                     <i class="fa-solid fa-eye me-1"></i> Inspect
                                 </a>
                                 {{#ifEquals this.status 'pending'}}
-                                <button type="button" class="btn btn-sm btn-success px-2.5 py-1" data-bs-toggle="modal" data-bs-target="#approveModal-{{this.id}}" title="Approve Title">
+                                <button type="button" class="btn btn-sm btn-success px-2.5 py-1 text-nowrap" data-bs-toggle="modal" data-toggle="modal" data-bs-target="#approveModal-{{this.id}}" data-target="#approveModal-{{this.id}}" title="Approve Title">
                                     <i class="fa-solid fa-check me-1"></i> Approve
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1" data-bs-toggle="modal" data-bs-target="#rejectModal-{{this.id}}" title="Reject Title">
+                                <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1 text-nowrap" data-bs-toggle="modal" data-toggle="modal" data-bs-target="#rejectModal-{{this.id}}" data-target="#rejectModal-{{this.id}}" title="Reject Title">
                                     <i class="fa-solid fa-xmark me-1"></i> Reject
                                 </button>
                                 {{/ifEquals}}
                             </div>
-
-                            {{#ifEquals this.status 'pending'}}
-                            <!-- APPROVE MODAL -->
-                            <div class="modal fade text-start" id="approveModal-{{this.id}}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-                                        <div class="modal-header bg-success text-white">
-                                            <h5 class="modal-title fw-bold">
-                                                <i class="fa-solid fa-circle-check me-2"></i> Approve Professional Title
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <form method="POST" action="/admin/catalogue/requests/{{this.id}}/approve">
-                                            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
-                                            <input type="hidden" name="returnTo" value="/admin/catalogue/requests">
-                                            <div class="modal-body p-4 space-y-3">
-                                                <p class="text-muted small mb-3">
-                                                    Approving will insert this title into <strong>{{this.departmentName}}</strong> in the official catalogue with status <em>active</em>.
-                                                </p>
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold small text-muted text-uppercase">Title Label</label>
-                                                    <input type="text" class="form-control" name="label" value="{{this.requestedTitle}}" required maxlength="100">
-                                                    <small class="text-muted">You may adjust casing or punctuation before catalogue insertion.</small>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold small text-muted text-uppercase">Admin Review Note (Optional)</label>
-                                                    <input type="text" class="form-control" name="note" placeholder="e.g. Standard industry role verified" maxlength="500">
-                                                </div>
-                                                <div class="p-3 bg-light rounded-3 small text-muted">
-                                                    <i class="fa-solid fa-shield-check text-success me-1"></i>
-                                                    Stable ID will be generated as <code>{{this.departmentId}}:&lt;slug&gt;</code>.
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-0 p-3 pt-0">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success px-4 fw-bold" onclick="return confirm('Are you sure you want to approve this title?');">
-                                                    <i class="fa-solid fa-check me-1"></i> Confirm &amp; Add to Catalogue
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- REJECT MODAL -->
-                            <div class="modal fade text-start" id="rejectModal-{{this.id}}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-                                        <div class="modal-header bg-danger text-white">
-                                            <h5 class="modal-title fw-bold">
-                                                <i class="fa-solid fa-ban me-2"></i> Reject Title Request
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <form method="POST" action="/admin/catalogue/requests/{{this.id}}/reject">
-                                            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
-                                            <input type="hidden" name="returnTo" value="/admin/catalogue/requests">
-                                            <div class="modal-body p-4">
-                                                <p class="text-muted small mb-3">
-                                                    Rejecting will preserve request history without modifying the official catalogue.
-                                                </p>
-                                                <div class="p-3 bg-light rounded-3 mb-3 small">
-                                                    <strong>Requested Title:</strong> "{{this.requestedTitle}}"<br>
-                                                    <strong>Department:</strong> {{this.departmentName}}
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold small text-muted text-uppercase">Rejection Reason</label>
-                                                    <textarea class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate of existing catalogue title, or not standard infrastructure role..." required maxlength="500"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-0 p-3 pt-0">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger px-4 fw-bold" onclick="return confirm('Are you sure you want to reject this request?');">
-                                                    <i class="fa-solid fa-ban me-1"></i> Reject Request
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            {{/ifEquals}}
                         </td>
                     </tr>
                     {{/each}}
@@ -360,7 +279,7 @@
                         <td colspan="7" class="py-5 text-center text-muted">
                             <div class="py-4">
                                 <i class="fa-solid fa-inbox fs-1 text-muted opacity-50 mb-3 d-block"></i>
-                                <h6 class="fw-bold text-dark">No Title Requests Found</h6>
+                                <h6 class="fw-bold" style="color: var(--text);">No Title Requests Found</h6>
                                 <p class="small text-muted mb-0">No custom title requests match your current filters.</p>
                             </div>
                         </td>
@@ -373,18 +292,18 @@
         <!-- PAGINATION -->
         {{#if totalPages}}
         {{#ifGt totalPages 1}}
-        <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: var(--border) !important;">
             <small class="text-muted">
                 Showing page <strong>{{page}}</strong> of <strong>{{totalPages}}</strong> ({{total}} total requests)
             </small>
             <div class="d-flex gap-2">
                 {{#ifGt page 1}}
-                <a href="/admin/catalogue/requests?page={{subtract page 1}}&status={{filters.status}}&departmentId={{filters.departmentId}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
+                <a href="/admin/catalogue/requests?page={{dec page}}&status={{filters.status}}&departmentId={{filters.departmentId}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
                     <i class="fa-solid fa-chevron-left me-1"></i> Previous
                 </a>
                 {{/ifGt}}
                 {{#ifLt page totalPages}}
-                <a href="/admin/catalogue/requests?page={{add page 1}}&status={{filters.status}}&departmentId={{filters.departmentId}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
+                <a href="/admin/catalogue/requests?page={{inc page}}&status={{filters.status}}&departmentId={{filters.departmentId}}&search={{filters.search}}" class="btn btn-sm btn-outline-secondary">
                     Next <i class="fa-solid fa-chevron-right ms-1"></i>
                 </a>
                 {{/ifLt}}
@@ -393,4 +312,133 @@
         {{/ifGt}}
         {{/if}}
     </div>
+
+    <!-- MODAL DIALOGS RENDERED OUTSIDE OVERFLOW CONTAINER -->
+    {{#each requests}}
+    {{#ifEquals this.status 'pending'}}
+    <!-- APPROVE MODAL -->
+    <div class="modal fade text-start" id="approveModal-{{this.id}}" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel-{{this.id}}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 540px; margin: 1.75rem auto;">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--card); border: 1px solid var(--border) !important; border-radius: 20px; overflow: hidden;">
+                <div class="modal-header border-bottom px-4 py-3" style="background: var(--surface-2); border-color: var(--border) !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                            <i class="fa-solid fa-circle-check fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0" id="approveModalLabel-{{this.id}}" style="color: var(--text); font-size: 17px;">
+                                Approve Professional Title
+                            </h5>
+                            <small class="text-muted" style="font-size: 12px;">Publish title into official catalogue for {{this.departmentName}}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="/admin/catalogue/requests/{{this.id}}/approve" class="m-0">
+                    <input type="hidden" name="_csrf" value="{{#if ../csrfToken}}{{../csrfToken}}{{else}}{{@root.csrfToken}}{{/if}}">
+                    <input type="hidden" name="returnTo" value="/admin/catalogue/requests">
+                    <div class="modal-body p-4 text-start">
+                        <div class="p-3 rounded-3 mb-3" style="background: var(--surface-2); border: 1px solid var(--border);">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Target Department</small>
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 10px;">New Catalogue Entry</span>
+                            </div>
+                            <div class="fw-semibold text-truncate" style="color: var(--text);">
+                                <i class="fa-solid fa-building me-1.5 text-muted"></i>{{this.departmentName}}
+                            </div>
+                            <div class="font-monospace text-muted mt-0.5" style="font-size: 11px;">Department ID: {{this.departmentId}}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="approve-label-{{this.id}}" class="form-label fw-bold small text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                                Title Label <span class="text-danger">*</span>
+                            </label>
+                            <input id="approve-label-{{this.id}}" type="text" class="form-control" name="label" value="{{this.requestedTitle}}" required maxlength="100" style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">
+                            <small class="text-muted d-block mt-1" style="font-size: 11px;">You may refine casing or punctuation before permanent catalogue insertion.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="approve-note-{{this.id}}" class="form-label fw-bold small text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                                Review Note <span class="text-muted fw-normal">(Optional)</span>
+                            </label>
+                            <input id="approve-note-{{this.id}}" type="text" class="form-control" name="note" placeholder="e.g. Standard industry role verified" maxlength="500" style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">
+                        </div>
+
+                        <div class="p-2.5 rounded-3 small" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--text);">
+                            <i class="fa-solid fa-shield-halved text-success me-1.5"></i>
+                            Stable ID will be generated as <code class="fw-bold" style="color: #10b981;">{{this.departmentId}}:&lt;slug&gt;</code>.
+                        </div>
+                    </div>
+                    <div class="modal-footer px-4 py-3 border-top d-flex justify-content-end gap-2" style="background: var(--surface-2); border-color: var(--border) !important;">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4 fw-bold" onclick="return confirm('Are you sure you want to approve this title and add it to the catalogue?');">
+                            <i class="fa-solid fa-check me-1.5"></i> Confirm &amp; Add to Catalogue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- REJECT MODAL -->
+    <div class="modal fade text-start" id="rejectModal-{{this.id}}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel-{{this.id}}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 540px; margin: 1.75rem auto;">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--card); border: 1px solid var(--border) !important; border-radius: 20px; overflow: hidden;">
+                <div class="modal-header border-bottom px-4 py-3" style="background: var(--surface-2); border-color: var(--border) !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                            <i class="fa-solid fa-ban fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0" id="rejectModalLabel-{{this.id}}" style="color: var(--text); font-size: 17px;">
+                                Reject Title Request
+                            </h5>
+                            <small class="text-muted" style="font-size: 12px;">Maintain catalogue taxonomy standards and record moderation feedback</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="/admin/catalogue/requests/{{this.id}}/reject" class="m-0">
+                    <input type="hidden" name="_csrf" value="{{#if ../csrfToken}}{{../csrfToken}}{{else}}{{@root.csrfToken}}{{/if}}">
+                    <input type="hidden" name="returnTo" value="/admin/catalogue/requests">
+                    <div class="modal-body p-4 text-start">
+                        <p class="text-muted small mb-3">
+                            Rejecting declines this submission while securely preserving request history. The official identity catalogue remains completely unmodified.
+                        </p>
+
+                        <div class="p-3 rounded-3 mb-3" style="background: var(--surface-2); border: 1px solid var(--border);">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Submission Details</small>
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 10px;">Pending Review</span>
+                            </div>
+                            <div class="fs-6 fw-bold mb-1 text-break" style="color: var(--text);">
+                                "{{this.requestedTitle}}"
+                            </div>
+                            <div class="small text-muted d-flex align-items-center flex-wrap gap-2">
+                                <span><i class="fa-solid fa-building me-1"></i>{{this.departmentName}}</span>
+                                <span>&bull;</span>
+                                <span><i class="fa-solid fa-user me-1"></i>{{#if this.userName}}{{this.userName}}{{else}}User{{/if}}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reject-reason-{{this.id}}" class="form-label fw-bold small text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                                Rejection Reason <span class="text-danger">*</span>
+                            </label>
+                            <textarea id="reject-reason-{{this.id}}" class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate of existing catalogue title, out of domain scope, or non-standard formatting..." required maxlength="500" style="background: var(--surface); color: var(--text); border: 1px solid var(--border); resize: vertical; min-height: 80px;"></textarea>
+                            <small class="text-muted d-block mt-1" style="font-size: 11px;">Explains why this request was declined (max 500 characters).</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer px-4 py-3 border-top d-flex justify-content-end gap-2" style="background: var(--surface-2); border-color: var(--border) !important;">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 fw-bold" onclick="return confirm('Are you sure you want to reject this request?');">
+                            <i class="fa-solid fa-ban me-1.5"></i> Reject Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {{/ifEquals}}
+    {{/each}}
 </div>
