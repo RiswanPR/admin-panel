@@ -65,7 +65,7 @@
                         <span class="text-muted" style="font-size: 12px;">Live database metrics are temporarily unavailable. System operation is in resilient fallback mode.</span>
                     </div>
                 </div>
-                <a href="/" class="btn btn-sm btn-outline-warning text-dark px-3">
+                <a href="/" class="btn btn-sm btn-outline-warning px-3">
                     <i class="fa-solid fa-rotate-right me-1"></i> Retry
                 </a>
             </div>
@@ -116,7 +116,7 @@
     {{#if dashboard.attention.visible}}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="panel-card p-3 border rounded-3 shadow-xs" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important;">
+            <div class="panel-card p-3 border rounded-3 shadow-xs" style="background: var(--card); border-color: var(--border) !important;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge {{#if dashboard.attention.hasCritical}}bg-danger text-white{{else if (gt dashboard.attention.queueCount 0)}}bg-warning-subtle text-warning border border-warning{{else}}bg-success-subtle text-success border border-success{{/if}} px-2.5 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700; text-transform: uppercase;">
@@ -136,7 +136,7 @@
                 <div class="row g-2 mt-1">
                     {{#each dashboard.attention.items}}
                     <div class="col-xl-6 col-12">
-                        <div class="p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-3 h-100" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                        <div class="p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-3 h-100" style="background: var(--surface-2); border-color: var(--border) !important;">
                             <div class="d-flex align-items-center gap-2.5 min-w-0">
                                 <div style="width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="{{this.badgeClass}}">
                                     <i class="{{this.icon}} fs-6"></i>
@@ -350,15 +350,15 @@
 
                     <div class="row g-3">
                         <!-- Network Users & Profiles -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-users-rays text-primary fs-5"></i>
-                                        <span class="badge bg-light text-primary border small" style="font-size: 10px;">Phase 1</span>
+                                        <span class="badge bg-primary-subtle text-primary border small" style="font-size: 10px;">Phase 1</span>
                                     </div>
                                     <span class="text-muted small d-block">Network Users</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Directory &amp; Roles</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Directory &amp; Roles</strong>
                                 </div>
                                 {{#if (or isSuperuser canManageNetwork)}}
                                 <a href="/admin/network/users" class="btn btn-sm btn-outline-primary w-100 mt-auto">
@@ -373,8 +373,8 @@
                         </div>
 
                         <!-- Businesses Review -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-building-shield text-warning fs-5"></i>
@@ -385,10 +385,10 @@
                                         {{/if}}
                                     </div>
                                     <span class="text-muted small d-block">Businesses</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Pending Review</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Pending Review</strong>
                                 </div>
                                 {{#if (or isSuperuser canReviewBusinesses)}}
-                                <a href="/admin/businesses?tab=pending" class="btn btn-sm btn-outline-warning text-dark w-100 mt-auto">
+                                <a href="/admin/businesses?tab=pending" class="btn btn-sm btn-outline-warning w-100 mt-auto">
                                     <i class="fa-solid fa-clipboard-check me-1"></i> Review
                                 </a>
                                 {{else}}
@@ -400,15 +400,15 @@
                         </div>
 
                         <!-- Jobs Governance -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-briefcase text-success fs-5"></i>
-                                        <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{dashboard.governance.activeJobs}} Active</span>
+                                        <span class="badge bg-secondary-subtle text-muted border small" style="font-size: 10px;">{{dashboard.governance.activeJobs}} Active</span>
                                     </div>
                                     <span class="text-muted small d-block">Job Governance</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Postings &amp; Flags</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Postings &amp; Flags</strong>
                                 </div>
                                 {{#if (or isSuperuser canManageJobs)}}
                                 <a href="/admin/jobs?tab=published" class="btn btn-sm btn-outline-success w-100 mt-auto">
@@ -423,15 +423,15 @@
                         </div>
 
                         <!-- AI Matching Engine -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-brain text-info fs-5"></i>
                                         <span class="badge bg-success-subtle text-success small" style="font-size: 10px;">Live</span>
                                     </div>
                                     <span class="text-muted small d-block">AI Matching</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Telemetry Engine</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Telemetry Engine</strong>
                                 </div>
                                 {{#if (or isSuperuser canManageAI)}}
                                 <a href="/admin/ai/matching" class="btn btn-sm btn-outline-info w-100 mt-auto">
@@ -446,15 +446,15 @@
                         </div>
 
                         <!-- Career Intelligence -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-route text-primary fs-5"></i>
-                                        <span class="badge bg-light text-dark border small" style="font-size: 10px;">Taxonomy</span>
+                                        <span class="badge bg-secondary-subtle text-muted border small" style="font-size: 10px;">Taxonomy</span>
                                     </div>
                                     <span class="text-muted small d-block">Career Intel</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Roles &amp; Ladders</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Roles &amp; Ladders</strong>
                                 </div>
                                 {{#if (or isSuperuser canManageTaxonomy)}}
                                 <a href="/admin/career-intelligence/roles" class="btn btn-sm btn-outline-primary w-100 mt-auto">
@@ -469,8 +469,8 @@
                         </div>
 
                         <!-- Moderation Queue -->
-                        <div class="col-xl-2 col-md-4 col-6">
-                            <div class="p-3 bg-white rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between">
+                        <div class="col-xl-4 col-md-6 col-12">
+                            <div class="p-3 rounded-3 border h-100 shadow-xs hover-elevate transition d-flex flex-column justify-content-between" style="background: var(--card); border-color: var(--border) !important;">
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <i class="fa-solid fa-shield-halved text-danger fs-5"></i>
@@ -481,7 +481,7 @@
                                         {{/if}}
                                     </div>
                                     <span class="text-muted small d-block">Moderation</span>
-                                    <strong class="text-dark fs-6 d-block mb-3">Triage Queue</strong>
+                                    <strong class="fs-6 d-block mb-3" style="color: var(--text);">Triage Queue</strong>
                                 </div>
                                 {{#if (or isSuperuser canModerateContent)}}
                                 <a href="/admin/moderation?tab=open" class="btn btn-sm btn-outline-danger w-100 mt-auto">
@@ -502,7 +502,7 @@
         <!-- ZEITNAH COMMUNITY & SOCIAL ECOSYSTEM SECTION -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="panel-card p-4 border rounded-3 shadow-xs" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important;">
+                <div class="panel-card p-4 border rounded-3 shadow-xs" style="background: var(--card); border-color: var(--border) !important;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge px-3 py-2 rounded-pill" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(99, 102, 241, 0.25);">
@@ -531,12 +531,12 @@
                     <div class="row g-3 mb-3">
                         <!-- Posts Metric Card -->
                         <div class="col-xl-3 col-md-6 col-12">
-                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--surface-2); border-color: var(--border) !important;">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <span class="text-muted small d-block" style="font-size: 12px;">Published Posts</span>
                                         <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
-                                            {{dashboard.community.overview.activePosts}}
+                                             {{dashboard.community.overview.activePosts}}
                                         </h3>
                                     </div>
                                     <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
@@ -554,12 +554,12 @@
 
                         <!-- Comments Metric Card -->
                         <div class="col-xl-3 col-md-6 col-12">
-                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--surface-2); border-color: var(--border) !important;">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <span class="text-muted small d-block" style="font-size: 12px;">Comments</span>
                                         <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
-                                            {{dashboard.community.overview.activeComments}}
+                                             {{dashboard.community.overview.activeComments}}
                                         </h3>
                                     </div>
                                     <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: #10b981;">
@@ -577,12 +577,12 @@
 
                         <!-- Stories Metric Card -->
                         <div class="col-xl-3 col-md-6 col-12">
-                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--surface-2); border-color: var(--border) !important;">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <span class="text-muted small d-block" style="font-size: 12px;">Active Stories</span>
                                         <h3 class="fw-bold m-0 mt-1" style="color: var(--text); font-size: 1.5rem;">
-                                            {{dashboard.community.overview.activeStories}}
+                                             {{dashboard.community.overview.activeStories}}
                                         </h3>
                                     </div>
                                     <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); display: flex; align-items: center; justify-content: center; color: #f59e0b;">
@@ -600,7 +600,7 @@
 
                         <!-- Moderation & Reports Metric Card (RBAC-Gated) -->
                         <div class="col-xl-3 col-md-6 col-12">
-                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--bg-surface-2, rgba(248, 249, 250, 0.6)); border-color: var(--border) !important;">
+                            <div class="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between" style="background: var(--surface-2); border-color: var(--border) !important;">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <span class="text-muted small d-block" style="font-size: 12px;">Community Reports</span>
@@ -639,7 +639,7 @@
 
                     <!-- Operational Summary Bar (Report Types & Quick Navigation) -->
                     {{#if dashboard.community.moderation.visible}}
-                    <div class="p-2.5 rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: var(--bg-surface, #ffffff); border-color: var(--border) !important; font-size: 12px;">
+                    <div class="p-2.5 rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: var(--surface); border-color: var(--border) !important; font-size: 12px;">
                         <div class="d-flex align-items-center gap-3 flex-wrap">
                             <span class="fw-bold text-muted"><i class="fa-solid fa-shield-halved me-1 text-primary"></i> Actionable Queue:</span>
                             <span>Posts: <strong>{{dashboard.community.moderation.reportsByType.post}}</strong></span>
@@ -966,6 +966,70 @@
        DASHBOARD STYLING & PREMIUM DESIGN SYSTEM
        ========================================= */
 
+    /* Surface & background utilities */
+    .bg-surface { background: var(--card) !important; }
+    .bg-surface-2 { background: var(--surface-2) !important; }
+
+    /* Bootstrap 4 Flexbox Gap Polyfill */
+    .gap-1 { gap: 0.25rem !important; }
+    .gap-1\.5, .gap-1-5, [class*="gap-1.5"] { gap: 0.375rem !important; }
+    .gap-2 { gap: 0.5rem !important; }
+    .gap-2\.5, .gap-2-5, [class*="gap-2.5"] { gap: 0.625rem !important; }
+    .gap-3 { gap: 1rem !important; }
+
+    /* Bootstrap 4 Grid Row Gutters Polyfill */
+    .row.g-2 {
+        margin-right: -4px;
+        margin-left: -4px;
+    }
+    .row.g-2 > [class*="col"] {
+        padding-right: 4px;
+        padding-left: 4px;
+        margin-bottom: 8px;
+    }
+    .row.g-3 {
+        margin-right: -8px;
+        margin-left: -8px;
+    }
+    .row.g-3 > [class*="col"] {
+        padding-right: 8px;
+        padding-left: 8px;
+        margin-bottom: 16px;
+    }
+    .row.g-4 {
+        margin-right: -12px;
+        margin-left: -12px;
+    }
+    .row.g-4 > [class*="col"] {
+        padding-right: 12px;
+        padding-left: 12px;
+        margin-bottom: 24px;
+    }
+
+    /* Fractional Padding Polyfills */
+    .p-2\.5, [class*="p-2.5"] { padding: 0.625rem !important; }
+    .px-2\.5, [class*="px-2.5"] { padding-left: 0.625rem !important; padding-right: 0.625rem !important; }
+    .py-1\.5, [class*="py-1.5"] { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
+
+    /* Radius Polyfills */
+    .rounded-3 { border-radius: 12px !important; }
+    .rounded-4 { border-radius: 16px !important; }
+    .rounded-pill { border-radius: 50rem !important; }
+
+    /* Subtle Background Badges for Bootstrap 4 */
+    .bg-success-subtle { background-color: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; }
+    .bg-danger-subtle { background-color: rgba(239, 68, 68, 0.12) !important; color: #ef4444 !important; }
+    .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.12) !important; color: #f59e0b !important; }
+    .bg-secondary-subtle { background-color: var(--surface-2) !important; color: var(--muted) !important; }
+    .bg-info-subtle { background-color: rgba(13, 202, 240, 0.12) !important; color: #0dcaf0 !important; }
+    .bg-primary-subtle { background-color: rgba(59, 130, 246, 0.12) !important; color: #3b82f6 !important; }
+
+    /* Typography & Layout Utilities */
+    .fs-5 { font-size: 1.25rem !important; }
+    .fs-6 { font-size: 1rem !important; }
+    .min-w-0 { min-width: 0 !important; }
+    .shadow-xs { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+
     .dashboard-wrapper {
         padding-top: 10px;
         padding-bottom: 30px;
@@ -1145,6 +1209,17 @@
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         position: relative;
         overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .stat-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .stat-card:hover {
@@ -2035,29 +2110,50 @@
         if (dataScript) {
             try {
                 const analytics = JSON.parse(dataScript.textContent);
-                initMainTrendsChart(analytics);
+                requestAnimationFrame(() => {
+                    initMainTrendsChart(analytics);
+                });
             } catch (e) {}
         }
     }
 
-    // Initialize charts on DOMContentLoaded
-    window.addEventListener('DOMContentLoaded', () => {
+    // Initialize charts safely once container has nonzero layout dimensions
+    function setupDashboardCharts() {
+        document.body.classList.add('page-loaded');
+
         const dataScript = document.getElementById('dashboardAnalyticsData');
-        if (dataScript) {
-            try {
-                const analytics = JSON.parse(dataScript.textContent);
+        if (!dataScript) return;
+
+        try {
+            const analytics = JSON.parse(dataScript.textContent);
+
+            requestAnimationFrame(() => {
                 initMainTrendsChart(analytics);
                 initCourseDoughnutChart(analytics);
+            });
 
-                // Listen for theme switch to update chart styles
-                const themeObserver = new MutationObserver(() => {
+            // Listen for theme switch to update chart styles
+            const themeObserver = new MutationObserver(() => {
+                requestAnimationFrame(() => {
                     initMainTrendsChart(analytics);
                     initCourseDoughnutChart(analytics);
                 });
-                themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-            } catch (err) {
-                console.warn('Could not initialize dashboard charts:', err.message);
-            }
+            });
+            themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+            // Ensure charts resize accurately when window dimensions change
+            window.addEventListener('resize', () => {
+                if (mainTrendsChartInstance) mainTrendsChartInstance.resize();
+                if (courseDoughnutChartInstance) courseDoughnutChartInstance.resize();
+            });
+        } catch (err) {
+            console.warn('Could not initialize dashboard charts:', err.message);
         }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', setupDashboardCharts);
+    } else {
+        setupDashboardCharts();
+    }
 </script>
