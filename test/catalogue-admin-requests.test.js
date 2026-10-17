@@ -1058,4 +1058,183 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
       }
     });
   });
+
+  describe('5. Partial Unique Index & Duplicate Pending Request Protection (Phase 10)', () => {
+    const { ensureCatalogueIndexes, createIndexIfPossible } = require('../Helpers/index-helper');
+
+    test('declares partial unique index on { departmentId: 1, normalizedTitle: 1 } for status=pending', async () => {
+      const createdIndexes = [];
+      const testDb = {
+        collection: (colName) => ({
+          createIndex: async (keys, options) => {
+            createdIndexes.push({ collection: colName, keys, options });
+            return Object.keys(keys).join('_');
+          },
+        }),
+      };
+
+      await ensureCatalogueIndexes(testDb);
+
+      const partialIndex = createdIndexes.find(
+        (idx) =>
+          idx.collection === collection.CATALOGUE_TITLE_REQUESTS_COLLECTION &&
+          idx.keys.departmentId === 1 &&
+          idx.keys.normalizedTitle === 1 &&
+          !idx.keys.status
+      );
+
+      assert.ok(partialIndex, 'Partial unique index on { departmentId: 1, normalizedTitle: 1 } must be declared');
+      assert.strictEqual(partialIndex.options?.unique, true, 'Partial index must specify unique: true');
+      assert.deepStrictEqual(
+        partialIndex.options?.partialFilterExpression,
+        { status: 'pending' },
+        'Partial index must filter on { status: "pending" }'
+      );
+    });
+
+    test('preserves existing unique index on request id and non-unique query indexes', async () => {
+      const createdIndexes = [];
+      const testDb = {
+        collection: (colName) => ({
+          createIndex: async (keys, options) => {
+            createdIndexes.push({ collection: colName, keys, options });
+            return Object.keys(keys).join('_');
+          },
+        }),
+      };
+
+      await ensureCatalogueIndexes(testDb);
+
+      const reqIndexes = createdIndexes.filter(
+        (idx) => idx.collection === collection.CATALOGUE_TITLE_REQUESTS_COLLECTION
+      );
+
+      const idIndex = reqIndexes.find((idx) => idx.keys.id === 1 && Object.keys(idx.keys).length === 1);
+      assert.ok(idIndex, 'Unique index on id must be preserved');
+      assert.strictEqual(idIndex.options?.unique, true);
+
+      const statusSortIndex = reqIndexes.find(
+        (idx) => idx.keys.status === 1 && idx.keys.createdAt === -1
+      );
+      assert.ok(statusSortIndex, 'Query index on { status: 1, createdAt: -1 } must be preserved');
+
+      const compoundQueryIndex = reqIndexes.find(
+        (idx) => idx.keys.departmentId === 1 && idx.keys.normalizedTitle === 1 && idx.keys.status === 1
+      );
+      assert.ok(compoundQueryIndex, 'Query index on { departmentId: 1, normalizedTitle: 1, status: 1 } must be preserved');
+      assert.ok(!compoundQueryIndex.options?.unique, 'Query compound index must remain non-unique for multi-field lookups');
+    });
+
+    test('partial unique index rejects duplicate pending requests with E11000 duplicate key error', async () => {
+      const store = [];
+      const customInsert = async (doc) => {
+        if (doc.status === 'pending') {
+          const duplicate = store.find(
+            (d) =>
+              d.status === 'pending' &&
+              d.departmentId === doc.departmentId &&
+              d.normalizedTitle === doc.normalizedTitle
+          );
+          if (duplicate) {
+            const err = new Error(
+              `E11000 duplicate key error collection: catalogue_title_requests index: departmentId_1_normalizedTitle_1 dup key: { departmentId: "${doc.departmentId}", normalizedTitle: "${doc.normalizedTitle}" }`
+            );
+            err.code = 11000;
+            throw err;
+          }
+        }
+        store.push(JSON.parse(JSON.stringify(doc)));
+        return { insertedId: doc.id, acknowledged: true };
+      };
+
+      await customInsert({
+        id: 'req_partial_1',
+        departmentId: 'civil-engineering',
+        normalizedTitle: 'tunnel ventilation engineer',
+        status: 'pending',
+      });
+
+      await assert.rejects(
+        async () => {
+          await customInsert({
+            id: 'req_partial_2',
+            departmentId: 'civil-engineering',
+            normalizedTitle: 'tunnel ventilation engineer',
+            status: 'pending',
+          });
+        },
+        (err) => {
+          assert.strictEqual(err.code, 11000);
+          assert.match(err.message, /E11000 duplicate key error/);
+          return true;
+        }
+      );
+    });
+
+    test('partial unique index permits coexisting historical records when status is approved or rejected', async () => {
+      const store = [];
+      const customInsert = async (doc) => {
+        if (doc.status === 'pending') {
+          const duplicate = store.find(
+            (d) =>
+              d.status === 'pending' &&
+              d.departmentId === doc.departmentId &&
+              d.normalizedTitle === doc.normalizedTitle
+          );
+          if (duplicate) {
+            const err = new Error('E11000 duplicate key error');
+            err.code = 11000;
+            throw err;
+          }
+        }
+        store.push(JSON.parse(JSON.stringify(doc)));
+        return { insertedId: doc.id, acknowledged: true };
+      };
+
+      await customInsert({
+        id: 'req_approved_hist',
+        departmentId: 'civil-engineering',
+        normalizedTitle: 'structural forensic engineer',
+        status: 'approved',
+      });
+
+      await customInsert({
+        id: 'req_rejected_hist',
+        departmentId: 'civil-engineering',
+        normalizedTitle: 'structural forensic engineer',
+        status: 'rejected',
+      });
+
+      await customInsert({
+        id: 'req_new_pending',
+        departmentId: 'civil-engineering',
+        normalizedTitle: 'structural forensic engineer',
+        status: 'pending',
+      });
+
+      assert.strictEqual(store.length, 3, 'Approved, rejected, and pending records must coexist safely');
+    });
+
+    test('createIndexIfPossible safely catches IndexOptionsConflict (code 85) without throwing', async () => {
+      const conflictingDb = {
+        collection: () => ({
+          createIndex: async () => {
+            const err = new Error('Index already exists with different options');
+            err.code = 85;
+            err.codeName = 'IndexOptionsConflict';
+            throw err;
+          },
+        }),
+      };
+
+      await assert.doesNotReject(async () => {
+        await createIndexIfPossible(
+          conflictingDb,
+          collection.CATALOGUE_TITLE_REQUESTS_COLLECTION,
+          { departmentId: 1, normalizedTitle: 1 },
+          { unique: true, partialFilterExpression: { status: 'pending' } }
+        );
+      });
+    });
+  });
 });

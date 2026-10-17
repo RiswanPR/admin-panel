@@ -147,6 +147,7 @@ describe('Zeitnah Admin — Phase 3: Professional Identity Catalogue Admin UI', 
           eq: (a, b) => String(a) === String(b),
           gt: (a, b) => a > b,
           lt: (a, b) => a < b,
+          or: (...args) => args.slice(0, -1).some(Boolean),
           ifEquals: function (a, b, options) {
             return String(a) === String(b) ? options.fn(this) : options.inverse(this);
           },
@@ -701,6 +702,112 @@ describe('Zeitnah Admin — Phase 3: Professional Identity Catalogue Admin UI', 
       const location = res.headers.get('location');
       assert.ok(location.startsWith('/admin/catalogue/departments/civil-engineering'));
       assert.ok(!location.includes('malicious-external-site.com'));
+    });
+  });
+
+  describe('11. Phase 10: Navigation Permissions & Department Requests Shortcut', () => {
+    const fs = require('fs');
+    const handlebars = require('handlebars');
+
+    const headerHbsSource = fs.readFileSync(
+      path.join(__dirname, '../views/partials/Admin-Header.hbs'),
+      'utf8'
+    );
+    const compileHeader = () => {
+      const hbsInstance = handlebars.create();
+      hbsInstance.registerHelper('or', (...args) => args.slice(0, -1).some(Boolean));
+      hbsInstance.registerHelper('ifEquals', function (a, b, options) {
+        return String(a) === String(b) ? options.fn(this) : options.inverse(this);
+      });
+      return hbsInstance.compile(headerHbsSource);
+    };
+
+    test('taxonomy manager sees Identity Catalogue and Title Requests in header', () => {
+      const template = compileHeader();
+      const html = template({
+        canManageTaxonomy: true,
+        canManageAI: false,
+        isSuperuser: false,
+      });
+
+      assert.ok(html.includes('/admin/catalogue/departments'), 'Taxonomy manager must see Identity Catalogue link');
+      assert.ok(html.includes('/admin/catalogue/requests'), 'Taxonomy manager must see Title Requests link');
+    });
+
+    test('superuser sees Identity Catalogue and Title Requests in header', () => {
+      const template = compileHeader();
+      const html = template({
+        canManageTaxonomy: false,
+        canManageAI: false,
+        isSuperuser: true,
+      });
+
+      assert.ok(html.includes('/admin/catalogue/departments'), 'Superuser must see Identity Catalogue link');
+      assert.ok(html.includes('/admin/catalogue/requests'), 'Superuser must see Title Requests link');
+    });
+
+    test('AI-only manager (without manage_taxonomy) does NOT see catalogue links in header', () => {
+      const template = compileHeader();
+      const html = template({
+        canManageAI: true,
+        canManageTaxonomy: false,
+        isSuperuser: false,
+      });
+
+      assert.ok(!html.includes('/admin/catalogue/departments'), 'AI-only manager must NOT see Identity Catalogue link');
+      assert.ok(!html.includes('/admin/catalogue/requests'), 'AI-only manager must NOT see Title Requests link');
+      assert.ok(html.includes('/admin/ai/matching'), 'AI manager still sees Matching link');
+      assert.ok(html.includes('/admin/ai/config'), 'AI manager still sees AI Monitoring link');
+    });
+
+    test('administrator without taxonomy or AI permissions does NOT see Career Intelligence catalogue links', () => {
+      const template = compileHeader();
+      const html = template({
+        canManageAI: false,
+        canManageTaxonomy: false,
+        isSuperuser: false,
+      });
+
+      assert.ok(!html.includes('/admin/catalogue/departments'));
+      assert.ok(!html.includes('/admin/catalogue/requests'));
+    });
+
+    test('department titles page renders contextual shortcut to filtered requests queue', async () => {
+      const res = await fetch(`${baseUrl}/admin/catalogue/departments/civil-engineering`);
+      assert.strictEqual(res.status, 200);
+      const body = await res.text();
+
+      assert.match(
+        body,
+        /\/admin\/catalogue\/requests\?departmentId=civil-engineering/,
+        'Must contain contextual link to filtered requests for civil-engineering'
+      );
+      assert.match(body, /Title Requests/, 'Shortcut must show "Title Requests" button text');
+
+      assert.match(body, /Add Professional Title/, 'Add title button must be preserved');
+      assert.match(body, /Edit Department/, 'Edit department button must be preserved');
+      assert.match(body, /All Departments/, 'All departments link must be preserved');
+    });
+
+    test('department shortcut dynamically interpolates different department IDs without hardcoding', async () => {
+      mockDb.getRawCollection(collection.CATALOGUE_DEPARTMENTS_COLLECTION).store.push({
+        id: 'mechanical-engineering',
+        name: 'Mechanical Engineering',
+        status: 'active',
+        displayOrder: 2,
+        catalogueVersion: '2026.1',
+        aliases: [],
+      });
+
+      const res = await fetch(`${baseUrl}/admin/catalogue/departments/mechanical-engineering`);
+      assert.strictEqual(res.status, 200);
+      const body = await res.text();
+
+      assert.match(
+        body,
+        /\/admin\/catalogue\/requests\?departmentId=mechanical-engineering/,
+        'Must dynamically interpolate department.id rather than hardcoding'
+      );
     });
   });
 });

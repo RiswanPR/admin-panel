@@ -100,7 +100,7 @@ const ensureIndexes = async (db) => {
     [collection.ERROR_REPORTS_COLLECTION, { status: 1, createdAt: -1 }],
     [collection.VERIFICATION_REQUESTS_COLLECTION, { status: 1, createdAt: -1 }],
     [collection.COMMUNITY_REPORTS_COLLECTION, { status: 1, createdAt: -1 }],
-    // Professional Identity Catalogue Indexes (Phase 1)
+    // Professional Identity Catalogue Indexes (Phase 1 & Phase 10)
     [collection.CATALOGUE_DEPARTMENTS_COLLECTION, { id: 1 }, { unique: true }],
     [collection.CATALOGUE_DEPARTMENTS_COLLECTION, { status: 1, displayOrder: 1 }],
     [collection.CATALOGUE_TITLES_COLLECTION, { id: 1 }, { unique: true }],
@@ -108,6 +108,11 @@ const ensureIndexes = async (db) => {
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { id: 1 }, { unique: true }],
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { status: 1, createdAt: -1 }],
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { departmentId: 1, normalizedTitle: 1, status: 1 }],
+    [
+      collection.CATALOGUE_TITLE_REQUESTS_COLLECTION,
+      { departmentId: 1, normalizedTitle: 1 },
+      { unique: true, partialFilterExpression: { status: 'pending' } },
+    ],
   ];
 
   await Promise.allSettled(
@@ -125,6 +130,11 @@ const ensureCatalogueIndexes = async (db) => {
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { id: 1 }, { unique: true }],
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { status: 1, createdAt: -1 }],
     [collection.CATALOGUE_TITLE_REQUESTS_COLLECTION, { departmentId: 1, normalizedTitle: 1, status: 1 }],
+    [
+      collection.CATALOGUE_TITLE_REQUESTS_COLLECTION,
+      { departmentId: 1, normalizedTitle: 1 },
+      { unique: true, partialFilterExpression: { status: 'pending' } },
+    ],
   ];
   return Promise.allSettled(
     catalogueIndexDefs.map(([col, keys, opts]) => createIndexIfPossible(db, col, keys, opts))
