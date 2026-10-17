@@ -1,0 +1,345 @@
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- BREADCRUMBS & HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/career-intelligence/roles">Career Intelligence</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/catalogue/departments">Identity Catalogue</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/catalogue/requests">Custom Title Requests</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Request Details</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold m-0" style="color:var(--brand);">
+                <i class="fa-solid fa-file-circle-check me-2"></i> Custom Title Request Review
+            </h2>
+            <small class="text-muted">Inspect submission context, verify catalogue uniqueness, and execute moderation decision.</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/catalogue/requests" class="btn btn-outline-secondary px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Queue
+            </a>
+            <a href="/admin/catalogue/departments/{{request.departmentId}}" class="btn btn-outline-primary px-3">
+                <i class="fa-solid fa-sitemap me-1"></i> View Department
+            </a>
+        </div>
+    </div>
+
+    <!-- FLASH FEEDBACK ALERTS -->
+    {{#if successMessage}}
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <div class="fw-semibold">{{successMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    {{#if errorMessage}}
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert" style="border-radius: 12px;">
+        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+        <div class="fw-semibold">{{errorMessage}}</div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    <!-- STATUS BANNER -->
+    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+        <div class="card-body p-4 {{#ifEquals request.status 'pending'}}bg-light border-start border-warning border-5{{/ifEquals}}{{#ifEquals request.status 'approved'}}bg-light border-start border-success border-5{{/ifEquals}}{{#ifEquals request.status 'rejected'}}bg-light border-start border-secondary border-5{{/ifEquals}}">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    {{#ifEquals request.status 'pending'}}
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning" style="width: 54px; height: 54px;">
+                        <i class="fa-solid fa-clock-rotate-left fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="badge bg-warning text-dark px-2.5 py-1 mb-1" style="border-radius: 6px;">
+                            <i class="fa-solid fa-hourglass-half me-1"></i> PENDING REVIEW
+                        </span>
+                        <h4 class="fw-bold mb-0 text-dark">Awaiting Moderation Decision</h4>
+                        <small class="text-muted">Submitted on {{request.submittedAt}}</small>
+                    </div>
+                    {{/ifEquals}}
+
+                    {{#ifEquals request.status 'approved'}}
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success" style="width: 54px; height: 54px;">
+                        <i class="fa-solid fa-circle-check fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="badge bg-success px-2.5 py-1 mb-1" style="border-radius: 6px;">
+                            <i class="fa-solid fa-check me-1"></i> APPROVED &amp; ACTIVE
+                        </span>
+                        <h4 class="fw-bold mb-0 text-dark">Approved into Official Catalogue</h4>
+                        <small class="text-muted">Reviewed on {{request.reviewedAt}} by <strong>{{#if request.reviewerName}}{{request.reviewerName}}{{else}}Administrator{{/if}}</strong></small>
+                    </div>
+                    {{/ifEquals}}
+
+                    {{#ifEquals request.status 'rejected'}}
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary" style="width: 54px; height: 54px;">
+                        <i class="fa-solid fa-ban fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary px-2.5 py-1 mb-1" style="border-radius: 6px;">
+                            <i class="fa-solid fa-ban me-1"></i> REJECTED
+                        </span>
+                        <h4 class="fw-bold mb-0 text-dark">Request Declined by Moderation</h4>
+                        <small class="text-muted">Reviewed on {{request.reviewedAt}} by <strong>{{#if request.reviewerName}}{{request.reviewerName}}{{else}}Administrator{{/if}}</strong></small>
+                    </div>
+                    {{/ifEquals}}
+                </div>
+
+                {{#if request.createdTitleId}}
+                <div class="text-end">
+                    <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Generated Stable ID</small>
+                    <code class="fs-6 fw-bold text-success">{{request.createdTitleId}}</code>
+                    <div class="mt-1">
+                        <a href="/admin/catalogue/departments/{{request.departmentId}}" class="btn btn-sm btn-outline-success">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View in Catalogue
+                        </a>
+                    </div>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN INSPECTION GRID -->
+    <div class="row g-4">
+
+        <!-- LEFT COLUMN: REQUEST CONTEXT -->
+        <div class="col-lg-6">
+
+            <!-- REQUESTED TITLE & NORMALIZATION -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-id-badge text-primary me-2"></i> Requested Professional Title
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Requested Title Label</small>
+                        <div class="fs-4 fw-bold text-dark mt-1">"{{request.requestedTitle}}"</div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <div class="p-2.5 bg-light rounded-3 border">
+                                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Normalized Form</small>
+                                <code class="text-dark">{{request.normalizedTitle}}</code>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-2.5 bg-light rounded-3 border">
+                                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Request ID</small>
+                                <code class="text-muted">{{request.id}}</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARGET DEPARTMENT -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-building text-primary me-2"></i> Target Department
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border mb-3">
+                        <div>
+                            <div class="fs-5 fw-bold text-dark">{{request.departmentName}}</div>
+                            <small class="text-muted font-monospace">{{request.departmentId}}</small>
+                        </div>
+                        <div>
+                            {{#if department}}
+                                {{#ifEquals department.status 'active'}}
+                                <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-check me-1"></i> Active</span>
+                                {{else}}
+                                <span class="badge bg-secondary px-2 py-1"><i class="fa-solid fa-ban me-1"></i> Retired</span>
+                                {{/ifEquals}}
+                            {{else}}
+                            <span class="badge bg-warning text-dark px-2 py-1">Department record</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <a href="/admin/catalogue/departments/{{request.departmentId}}" class="btn btn-outline-primary w-100">
+                        <i class="fa-solid fa-sitemap me-1"></i> Inspect All Titles in {{request.departmentName}}
+                    </a>
+                </div>
+            </div>
+
+            <!-- REQUESTER IDENTITY -->
+            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-user text-primary me-2"></i> Requester Profile
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary" style="width: 48px; height: 48px;">
+                            <i class="fa-solid fa-user fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-6 text-dark">
+                                {{#if request.userName}}{{request.userName}}{{else}}User Profile{{/if}}
+                            </div>
+                            <div class="text-muted small">
+                                {{#if request.userEmail}}{{request.userEmail}}{{else}}<span class="font-monospace">{{request.userId}}</span>{{/if}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2.5 bg-light rounded-3 border small">
+                        <span class="text-muted">User ID:</span> <code class="text-dark">{{request.userId}}</code>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: CONFLICT ANALYSIS & DECISION -->
+        <div class="col-lg-6">
+
+            <!-- CATALOGUE COLLISION CHECK -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-shield-halved text-primary me-2"></i> Uniqueness &amp; Conflict Inspection
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {{#if conflictingTitle}}
+                    <div class="alert alert-danger d-flex align-items-start gap-3 p-3 mb-0" role="alert" style="border-radius: 12px;">
+                        <i class="fa-solid fa-triangle-exclamation fs-4 mt-0.5 text-danger"></i>
+                        <div>
+                            <h6 class="fw-bold text-danger mb-1">Collision Detected in Catalogue</h6>
+                            <p class="small mb-2 text-danger">
+                                An equivalent title or alias already exists in <strong>{{request.departmentName}}</strong>:
+                            </p>
+                            <div class="p-2 bg-white rounded border border-danger border-opacity-25 small mb-2">
+                                <strong>Existing Title:</strong> "{{conflictingTitle.label}}"<br>
+                                <strong>Stable ID:</strong> <code>{{conflictingTitle.id}}</code><br>
+                                <strong>Status:</strong> <span class="badge bg-secondary">{{conflictingTitle.status}}</span>
+                            </div>
+                            <small class="text-muted d-block">
+                                <i class="fa-solid fa-info-circle me-1"></i> System invariant: Approval will be rejected to prevent duplicate title entries in the catalogue. Reject this request with an explanatory note.
+                            </small>
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="alert alert-success d-flex align-items-center gap-3 p-3 mb-0" role="alert" style="border-radius: 12px;">
+                        <i class="fa-solid fa-circle-check fs-4 text-success"></i>
+                        <div>
+                            <h6 class="fw-bold text-success mb-0">No Duplicate Conflicts Found</h6>
+                            <small class="text-muted">Title is distinct from all existing titles and aliases in <strong>{{request.departmentName}}</strong>.</small>
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+
+            <!-- IF ALREADY REVIEWED: REVIEW HISTORY -->
+            {{#if request.reviewedAt}}
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Review Audit Record
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Reviewed By</small>
+                        <div class="fw-bold text-dark">
+                            <i class="fa-solid fa-user-shield text-muted me-1"></i>
+                            {{#if request.reviewerName}}{{request.reviewerName}}{{else}}Administrator{{/if}}
+                            {{#if request.reviewerId}}<small class="text-muted">({{request.reviewerId}})</small>{{/if}}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 10px;">Review Timestamp</small>
+                        <div class="text-dark">{{request.reviewedAt}}</div>
+                    </div>
+                    {{#if request.reviewNote}}
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 10px;">Reviewer Note / Decision Reason</small>
+                        <div class="text-dark fst-italic">"{{request.reviewNote}}"</div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+            {{/if}}
+
+            <!-- IF PENDING: ACTION FORMS -->
+            {{#ifEquals request.status 'pending'}}
+            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-dark m-0">
+                        <i class="fa-solid fa-gavel text-primary me-2"></i> Moderation Actions
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- APPROVAL SECTION -->
+                    <div class="p-3 rounded-3 mb-4 border border-success border-opacity-25 bg-success bg-opacity-10">
+                        <h6 class="fw-bold text-success mb-2">
+                            <i class="fa-solid fa-circle-check me-1"></i> Approve &amp; Insert into Catalogue
+                        </h6>
+                        <p class="small text-muted mb-3">
+                            Approving will generate a stable ID (<code>{{request.departmentId}}:&lt;slug&gt;</code>) and activate the title in <strong>{{request.departmentName}}</strong>.
+                        </p>
+                        <form method="POST" action="/admin/catalogue/requests/{{request.id}}/approve">
+                            <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                            <input type="hidden" name="returnTo" value="/admin/catalogue/requests/{{request.id}}">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Title Label (Editable)</label>
+                                <input type="text" class="form-control" name="label" value="{{request.requestedTitle}}" required maxlength="100">
+                                <small class="text-muted">Adjust formatting, capitalization, or punctuation if required.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Review Note (Optional)</label>
+                                <input type="text" class="form-control" name="note" placeholder="e.g. Standard industry role verified" maxlength="500">
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 fw-bold" onclick="return confirm('Are you sure you want to approve this custom title and activate it in the official catalogue?');">
+                                <i class="fa-solid fa-check me-1"></i> Approve &amp; Activate Title
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- REJECTION SECTION -->
+                    <div class="p-3 rounded-3 border border-danger border-opacity-25 bg-danger bg-opacity-10">
+                        <h6 class="fw-bold text-danger mb-2">
+                            <i class="fa-solid fa-ban me-1"></i> Reject Request
+                        </h6>
+                        <p class="small text-muted mb-3">
+                            Rejecting preserves request history without modifying the official catalogue.
+                        </p>
+                        <form method="POST" action="/admin/catalogue/requests/{{request.id}}/reject">
+                            <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                            <input type="hidden" name="returnTo" value="/admin/catalogue/requests/{{request.id}}">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Rejection Reason</label>
+                                <textarea class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate of existing catalogue title, or not standard infrastructure role..." required maxlength="500"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold" onclick="return confirm('Are you sure you want to reject this custom title request?');">
+                                <i class="fa-solid fa-ban me-1"></i> Reject Request
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+            {{/ifEquals}}
+
+        </div>
+
+    </div>
+
+</div>

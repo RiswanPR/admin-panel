@@ -116,8 +116,21 @@ function createMockDb() {
             }),
           };
         },
+        deleteOne: async (query = {}) => {
+          const idx = store.findIndex((doc) => matchesFilter(doc, query));
+          if (idx !== -1) {
+            store.splice(idx, 1);
+            return { deletedCount: 1, acknowledged: true };
+          }
+          return { deletedCount: 0, acknowledged: true };
+        },
         insertOne: async (doc) => {
           const cloned = JSON.parse(JSON.stringify(doc));
+          if (cloned.id && store.some((d) => d.id === cloned.id)) {
+            const err = new Error(`E11000 duplicate key error collection: ${name} index: id_1 dup key: { id: "${cloned.id}" }`);
+            err.code = 11000;
+            throw err;
+          }
           if (!cloned._id) cloned._id = `id_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
           store.push(cloned);
           return { insertedId: cloned._id, acknowledged: true };
@@ -390,7 +403,7 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
       assert.strictEqual(finalTitlesCount, initialTitlesCount);
     });
 
-    test('safely links if equivalent title already exists in catalogue without inserting duplicate', async () => {
+    test('existing title collision prevents duplicate creation and returns clear conflict error', async () => {
       // Add a request for 'Site Engineer' (which already exists in civil-engineering)
       mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push({
         id: 'req_duplicate',
@@ -404,14 +417,115 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
 
       const initialCount = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).length;
 
-      const res = await catalogueAdmin.approveTitleRequest('req_duplicate', {}, adminContext);
-      assert.strictEqual(res.success, true);
-      assert.strictEqual(res.request.status, 'approved');
-      assert.strictEqual(res.alreadyExisted, true);
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_duplicate', {}, adminContext);
+        },
+        (err) => {
+          assert.strictEqual(err.code, 'CONFLICT');
+          assert.match(err.message, /conflicts with existing catalogue title/);
+          return true;
+        }
+      );
 
-      // No new title record inserted
+      // Verify no new title was inserted
       const finalCount = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).length;
       assert.strictEqual(finalCount, initialCount);
+
+      // Verify request remains pending
+      const reqDoc = await catalogueAdmin.getTitleRequestById('req_duplicate', { db: mockDb });
+      assert.strictEqual(reqDoc.status, 'pending');
+
+      // Verify conflict audit log was recorded
+      const auditStore = mockDb.getRawStore(collection.AUDIT_LOG_COLLECTION);
+      const conflictLog = auditStore.find((a) => a.action === 'CATALOGUE_TITLE_REQUEST_APPROVAL_CONFLICT');
+      assert.ok(conflictLog, 'Audit log must record approval conflict attempt');
+    });
+
+    test('alias collision in same department prevents duplicate creation and returns conflict error', async () => {
+      // Add existing title with an alias
+      mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).push({
+        id: 'civil-engineering:project-engineer',
+        departmentId: 'civil-engineering',
+        label: 'Project Engineer',
+        status: 'active',
+        displayOrder: 2,
+        aliases: ['Field Project Lead'],
+      });
+
+      mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push({
+        id: 'req_alias_dup',
+        userId: 'user_777',
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        requestedTitle: 'Field Project Lead',
+        normalizedTitle: 'field project lead',
+        status: 'pending',
+      });
+
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_alias_dup', {}, adminContext);
+        },
+        /conflicts with existing catalogue title/
+      );
+    });
+
+    test('server-side validation rejects invalid title label (<2 chars, >100 chars, control chars, HTML)', async () => {
+      // < 2 chars
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_001', { label: 'A' }, adminContext);
+        },
+        /must be at least 2 character\(s\) long/
+      );
+
+      // > 100 chars
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_001', { label: 'X'.repeat(101) }, adminContext);
+        },
+        /must not exceed 100 characters/
+      );
+
+      // HTML markup
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_001', { label: '<script>alert(1)</script>' }, adminContext);
+        },
+        /HTML angle brackets/
+      );
+
+      // Control characters
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_001', { label: 'Engineer\x00' }, adminContext);
+        },
+        /control characters/
+      );
+    });
+
+    test('recovers from prior partial failure without creating duplicate titles', async () => {
+      // Simulate title was inserted in previous run but request status update failed
+      const preInsertedTitle = {
+        id: 'civil-engineering:coastal-protection-engineer',
+        departmentId: 'civil-engineering',
+        label: 'Coastal Protection Engineer',
+        status: 'active',
+        displayOrder: 2,
+        requestId: 'req_001',
+      };
+      mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).push(preInsertedTitle);
+      const countBefore = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).length;
+
+      // Retry approving req_001
+      const res = await catalogueAdmin.approveTitleRequest('req_001', {}, adminContext);
+      assert.strictEqual(res.success, true);
+      assert.strictEqual(res.request.status, 'approved');
+
+      // Title count must NOT increase
+      const countAfter = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).length;
+      assert.strictEqual(countAfter, countBefore);
     });
 
     test('rejects approval when request references retired department', async () => {
@@ -439,6 +553,98 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
         },
         /not found/
       );
+    });
+
+    test('concurrent approval of same request behaves safely and returns alreadyApproved: true for the second call', async () => {
+      const [res1, res2] = await Promise.all([
+        catalogueAdmin.approveTitleRequest('req_001', {}, adminContext),
+        catalogueAdmin.approveTitleRequest('req_001', {}, adminContext),
+      ]);
+
+      assert.strictEqual(res1.success, true);
+      assert.strictEqual(res2.success, true);
+      const alreadyApprovedCount = (res1.alreadyApproved ? 1 : 0) + (res2.alreadyApproved ? 1 : 0);
+      assert.strictEqual(alreadyApprovedCount, 1);
+
+      const titlesStore = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION);
+      const inserted = titlesStore.filter((t) => t.id === 'civil-engineering:coastal-protection-engineer');
+      assert.strictEqual(inserted.length, 1);
+    });
+
+    test('concurrent duplicate title creation across two distinct requests raises 409 conflict and logs conflict audit event', async () => {
+      mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push(
+        {
+          id: 'req_concurrent_a',
+          userId: 'user_a',
+          departmentId: 'civil-engineering',
+          departmentName: 'Civil Engineering',
+          requestedTitle: 'Marine Geotechnical Engineer',
+          status: 'pending',
+        },
+        {
+          id: 'req_concurrent_b',
+          userId: 'user_b',
+          departmentId: 'civil-engineering',
+          departmentName: 'Civil Engineering',
+          requestedTitle: 'Marine Geotechnical Engineer',
+          status: 'pending',
+        }
+      );
+
+      const resA = await catalogueAdmin.approveTitleRequest('req_concurrent_a', {}, adminContext);
+      assert.strictEqual(resA.success, true);
+
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_concurrent_b', {}, adminContext);
+        },
+        (err) => {
+          assert.strictEqual(err.code, 'CONFLICT');
+          assert.strictEqual(err.status, 409);
+          return true;
+        }
+      );
+
+      const auditStore = mockDb.getRawStore(collection.AUDIT_LOG_COLLECTION);
+      const conflictLog = auditStore.find((a) => a.action === 'CATALOGUE_TITLE_REQUEST_APPROVAL_CONFLICT' && a.entityId === 'req_concurrent_b');
+      assert.ok(conflictLog, 'Audit log must record conflict for request B');
+    });
+
+    test('rolls back newly created title if request status was changed concurrently away from pending', async () => {
+      mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push({
+        id: 'req_concurrent_abort',
+        userId: 'user_abort',
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        requestedTitle: 'Offshore Wind Structural Engineer',
+        status: 'pending',
+      });
+
+      const reqColl = mockDb.collection(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION);
+      const originalUpdateOne = reqColl.updateOne;
+      reqColl.updateOne = async (query, update) => {
+        if (query.id === 'req_concurrent_abort') {
+          const doc = mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).find((d) => d.id === 'req_concurrent_abort');
+          if (doc) doc.status = 'rejected';
+          return { matchedCount: 0, modifiedCount: 0 };
+        }
+        return originalUpdateOne(query, update);
+      };
+
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.approveTitleRequest('req_concurrent_abort', {}, adminContext);
+        },
+        (err) => {
+          assert.strictEqual(err.code, 'CONFLICT');
+          assert.strictEqual(err.status, 409);
+          return true;
+        }
+      );
+
+      const titlesStore = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION);
+      const orphaned = titlesStore.find((t) => t.id === 'civil-engineering:offshore-wind-structural-engineer');
+      assert.strictEqual(orphaned, undefined, 'Orphaned title must be deleted via rollback on concurrent abort');
     });
   });
 
@@ -487,6 +693,53 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
         },
         /Cannot reject request 'req_003': current status is 'approved'/
       );
+    });
+
+    test('rejects rejection reason with HTML tags or exceeding 500 characters', async () => {
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.rejectTitleRequest('req_002', { reason: '<b>Bold HTML</b>' }, adminContext);
+        },
+        /HTML angle brackets/
+      );
+
+      await assert.rejects(
+        async () => {
+          await catalogueAdmin.rejectTitleRequest('req_002', { reason: 'R'.repeat(501) }, adminContext);
+        },
+        /must not exceed 500 characters/
+      );
+    });
+
+    test('rejection safely cleans up unapproved title lingering from a prior aborted/failed approval attempt', async () => {
+      mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push({
+        id: 'req_failed_prior',
+        userId: 'user_failed',
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        requestedTitle: 'Tunnel Ventilation Engineer',
+        status: 'pending',
+      });
+
+      mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION).push({
+        id: 'civil-engineering:tunnel-ventilation-engineer',
+        departmentId: 'civil-engineering',
+        label: 'Tunnel Ventilation Engineer',
+        status: 'active',
+        displayOrder: 99,
+        requestId: 'req_failed_prior',
+      });
+
+      const titlesBefore = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION);
+      assert.ok(titlesBefore.some((t) => t.id === 'civil-engineering:tunnel-ventilation-engineer'));
+
+      const res = await catalogueAdmin.rejectTitleRequest('req_failed_prior', { reason: 'Not an accepted role' }, adminContext);
+      assert.strictEqual(res.success, true);
+      assert.strictEqual(res.request.status, 'rejected');
+
+      const titlesAfter = mockDb.getRawStore(collection.CATALOGUE_TITLES_COLLECTION);
+      const lingering = titlesAfter.find((t) => t.requestId === 'req_failed_prior');
+      assert.strictEqual(lingering, undefined, 'Lingering unapproved title must be deleted when request is rejected');
     });
   });
 
@@ -610,6 +863,199 @@ describe('Zeitnah Admin — Custom Title Requests Review Queue', () => {
       assert.strictEqual(data.success, true);
       assert.strictEqual(data.request.status, 'rejected');
       assert.strictEqual(data.request.reviewNote, 'Out of domain scope');
+    });
+
+    test('GET /admin/catalogue/requests/:id returns 200 and details for existing request', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'admin_super_1',
+          name: 'Chief Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_001`, {
+        headers: { accept: 'application/json' },
+      });
+      assert.strictEqual(res.status, 200);
+      const data = await res.json();
+      assert.strictEqual(data.success, true);
+      assert.strictEqual(data.request.id, 'req_001');
+      assert.strictEqual(data.request.requestedTitle, 'Coastal Protection Engineer');
+      assert.strictEqual(data.department.id, 'civil-engineering');
+    });
+
+    test('GET /admin/catalogue/requests/:id returns 404 for non-existent request', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'admin_super_1',
+          name: 'Chief Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests/non_existent_999`, {
+        headers: { accept: 'application/json' },
+      });
+      assert.strictEqual(res.status, 404);
+      const data = await res.json();
+      assert.strictEqual(data.success, false);
+      assert.match(data.message, /not found/i);
+    });
+
+    test('POST approve route enforces conflict return status 409 when collision detected', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'admin_super_1',
+          name: 'Chief Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      // Add duplicate request
+      mockDb.getRawStore(collection.CATALOGUE_TITLE_REQUESTS_COLLECTION).push({
+        id: 'req_dup_route',
+        userId: 'user_888',
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        requestedTitle: 'Site Engineer',
+        normalizedTitle: 'site engineer',
+        status: 'pending',
+      });
+
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_dup_route/approve`, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-csrf-token': 'valid-token-xyz',
+        },
+        body: JSON.stringify({}),
+      });
+
+      assert.strictEqual(res.status, 409);
+      const data = await res.json();
+      assert.strictEqual(data.success, false);
+      assert.match(data.message, /conflicts with existing catalogue title/);
+    });
+
+    test('reviewer identity is derived strictly from server-side session, ignoring body overrides', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'real_admin_777',
+          name: 'Legit Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_001/approve`, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-csrf-token': 'valid-token-xyz',
+        },
+        body: JSON.stringify({
+          reviewerId: 'spoofed_admin_id',
+          reviewerName: 'Fake Name',
+          status: 'pending', // attempt to tamper status
+        }),
+      });
+
+      assert.strictEqual(res.status, 200);
+      const data = await res.json();
+      assert.strictEqual(data.success, true);
+      assert.strictEqual(data.request.status, 'approved');
+      assert.strictEqual(data.request.reviewerId, 'real_admin_777');
+      assert.strictEqual(data.request.reviewerName, 'Legit Admin');
+    });
+
+    test('POST approve route fails closed (500) if audit logging fails', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'admin_super_1',
+          name: 'Chief Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      const auditHelper = require('../Helpers/audit-helper');
+      const originalLogAction = auditHelper.logAction;
+      auditHelper.logAction = async () => false;
+
+      const auditColl = mockDb.collection(collection.AUDIT_LOG_COLLECTION);
+      const originalInsertOne = auditColl.insertOne;
+      auditColl.insertOne = async () => { throw new Error('Audit disk full'); };
+
+      try {
+        const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_001/approve`, {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-csrf-token': 'valid-token-xyz',
+          },
+          body: JSON.stringify({}),
+        });
+
+        assert.strictEqual(res.status, 500);
+        const data = await res.json();
+        assert.strictEqual(data.success, false);
+        assert.strictEqual(data.auditFailure, true);
+      } finally {
+        auditHelper.logAction = originalLogAction;
+        auditColl.insertOne = originalInsertOne;
+      }
+    });
+
+    test('POST reject route fails closed (500) if audit logging fails', async () => {
+      currentSession = {
+        adminloggedIn: true,
+        admin: {
+          _id: 'admin_super_1',
+          name: 'Chief Admin',
+          role: 'superuser',
+        },
+        csrfToken: 'valid-token-xyz',
+      };
+
+      const auditHelper = require('../Helpers/audit-helper');
+      const originalLogAction = auditHelper.logAction;
+      auditHelper.logAction = async () => false;
+
+      const auditColl = mockDb.collection(collection.AUDIT_LOG_COLLECTION);
+      const originalInsertOne = auditColl.insertOne;
+      auditColl.insertOne = async () => { throw new Error('Audit disk full'); };
+
+      try {
+        const res = await fetch(`${baseUrl}/admin/catalogue/requests/req_002/reject`, {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-csrf-token': 'valid-token-xyz',
+          },
+          body: JSON.stringify({ reason: 'Failed audit test' }),
+        });
+
+        assert.strictEqual(res.status, 500);
+        const data = await res.json();
+        assert.strictEqual(data.success, false);
+        assert.strictEqual(data.auditFailure, true);
+      } finally {
+        auditHelper.logAction = originalLogAction;
+        auditColl.insertOne = originalInsertOne;
+      }
     });
   });
 });

@@ -202,7 +202,9 @@
 
                         <!-- Requested Title -->
                         <td class="px-3">
-                            <span class="fw-bold text-dark fs-6">"{{this.requestedTitle}}"</span>
+                            <a href="/admin/catalogue/requests/{{this.id}}" class="fw-bold text-dark text-decoration-none hover-primary fs-6" title="Inspect Request Details">
+                                "{{this.requestedTitle}}"
+                            </a>
                             {{#if this.createdTitleId}}
                             <div class="mt-1">
                                 <span class="badge bg-light text-primary border font-monospace" style="font-size: 10px;">
@@ -255,16 +257,21 @@
 
                         <!-- Action Buttons -->
                         <td class="px-3 text-end">
-                            {{#ifEquals this.status 'pending'}}
                             <div class="d-inline-flex gap-1.5">
+                                <a href="/admin/catalogue/requests/{{this.id}}" class="btn btn-sm btn-outline-secondary px-2.5 py-1" title="Inspect Details">
+                                    <i class="fa-solid fa-eye me-1"></i> Inspect
+                                </a>
+                                {{#ifEquals this.status 'pending'}}
                                 <button type="button" class="btn btn-sm btn-success px-2.5 py-1" data-bs-toggle="modal" data-bs-target="#approveModal-{{this.id}}" title="Approve Title">
                                     <i class="fa-solid fa-check me-1"></i> Approve
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1" data-bs-toggle="modal" data-bs-target="#rejectModal-{{this.id}}" title="Reject Title">
                                     <i class="fa-solid fa-xmark me-1"></i> Reject
                                 </button>
+                                {{/ifEquals}}
                             </div>
 
+                            {{#ifEquals this.status 'pending'}}
                             <!-- APPROVE MODAL -->
                             <div class="modal fade text-start" id="approveModal-{{this.id}}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -289,7 +296,7 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label fw-bold small text-muted text-uppercase">Admin Review Note (Optional)</label>
-                                                    <input type="text" class="form-control" name="note" placeholder="e.g. Standard industry role verified">
+                                                    <input type="text" class="form-control" name="note" placeholder="e.g. Standard industry role verified" maxlength="500">
                                                 </div>
                                                 <div class="p-3 bg-light rounded-3 small text-muted">
                                                     <i class="fa-solid fa-shield-check text-success me-1"></i>
@@ -298,7 +305,7 @@
                                             </div>
                                             <div class="modal-footer border-0 p-3 pt-0">
                                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success px-4 fw-bold">
+                                                <button type="submit" class="btn btn-success px-4 fw-bold" onclick="return confirm('Are you sure you want to approve this title?');">
                                                     <i class="fa-solid fa-check me-1"></i> Confirm &amp; Add to Catalogue
                                                 </button>
                                             </div>
@@ -330,12 +337,12 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label fw-bold small text-muted text-uppercase">Rejection Reason</label>
-                                                    <textarea class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate of existing catalogue title, or not standard infrastructure role..." required></textarea>
+                                                    <textarea class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate of existing catalogue title, or not standard infrastructure role..." required maxlength="500"></textarea>
                                                 </div>
                                             </div>
                                             <div class="modal-footer border-0 p-3 pt-0">
                                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger px-4 fw-bold">
+                                                <button type="submit" class="btn btn-danger px-4 fw-bold" onclick="return confirm('Are you sure you want to reject this request?');">
                                                     <i class="fa-solid fa-ban me-1"></i> Reject Request
                                                 </button>
                                             </div>
@@ -343,8 +350,6 @@
                                     </div>
                                 </div>
                             </div>
-                            {{else}}
-                            <span class="text-muted small">Reviewed</span>
                             {{/ifEquals}}
                         </td>
                     </tr>

@@ -534,6 +534,52 @@ router.get('/requests', verifyLogin, requireCapability('manage_taxonomy'), async
   }
 });
 
+// Inspect a single custom title request with review history and duplicate checking
+router.get('/requests/:requestId', verifyLogin, requireCapability('manage_taxonomy'), async (req, res) => {
+  const requestId = req.params.requestId;
+  try {
+    const result = await catalogueAdmin.getTitleRequestById(requestId, {
+      includeConflictCheck: true,
+      db: req.mockDb,
+      req,
+    });
+
+    if (!result || !result.request) {
+      if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.is('json')) {
+        return res.status(404).json({ success: false, message: `Custom title request with ID '${requestId}' not found.` });
+      }
+      return res.status(404).render('error', {
+        message: `Custom title request with ID '${requestId}' not found.`,
+      });
+    }
+
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.is('json')) {
+      return res.json({
+        success: true,
+        request: result.request,
+        department: result.department,
+        conflictingTitle: result.conflictingTitle,
+      });
+    }
+
+    res.locals.currentPage = 'catalogue-requests';
+    res.render('admin/catalogue-request-detail', {
+      title: `Review Title Request: "${result.request.requestedTitle}"`,
+      request: result.request,
+      department: result.department,
+      conflictingTitle: result.conflictingTitle,
+    });
+  } catch (err) {
+    logger.error(`Error loading title request '${requestId}':`, err.message);
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.is('json')) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.status(500).render('error', {
+      message: err.message || 'Failed to load custom title request details.',
+    });
+  }
+});
+
 // Approve a custom title request
 router.post('/requests/:requestId/approve', verifyLogin, requireCapability('manage_taxonomy'), verifyCsrf, async (req, res) => {
   const requestId = req.params.requestId;
@@ -541,12 +587,13 @@ router.post('/requests/:requestId/approve', verifyLogin, requireCapability('mana
     const actorContext = {
       actor: req.session.admin,
       req,
+      db: req.mockDb,
       reason: req.body.reason || req.body.note || 'Admin approved custom title request',
     };
 
     const input = {
       label: req.body.label ? String(req.body.label).trim() : undefined,
-      note: req.body.note ? String(req.body.note).trim() : undefined,
+      note: req.body.note ? String(req.body.note).trim() : (req.body.reason ? String(req.body.reason).trim() : undefined),
     };
 
     const result = await catalogueAdmin.approveTitleRequest(requestId, input, actorContext);
@@ -575,8 +622,9 @@ router.post('/requests/:requestId/approve', verifyLogin, requireCapability('mana
     res.redirect(`${returnUrl}?success=${encodeURIComponent(msg)}`);
   } catch (err) {
     logger.error(`Error approving title request '${requestId}':`, err.message);
-    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-      return res.status(400).json({ success: false, message: err.message });
+    const statusCode = err.code === 'CONFLICT' || err.status === 409 ? 409 : 400;
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.is('json')) {
+      return res.status(statusCode).json({ success: false, message: err.message, code: err.code });
     }
     const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
     res.redirect(`${returnUrl}?error=${encodeURIComponent(err.message)}`);
@@ -590,11 +638,12 @@ router.post('/requests/:requestId/reject', verifyLogin, requireCapability('manag
     const actorContext = {
       actor: req.session.admin,
       req,
+      db: req.mockDb,
       reason: req.body.reason || req.body.note || 'Admin rejected custom title request',
     };
 
     const input = {
-      reason: req.body.reason ? String(req.body.reason).trim() : (req.body.note ? String(req.body.note).trim() : undefined),
+      reason: req.body.reason !== undefined ? String(req.body.reason).trim() : (req.body.note !== undefined ? String(req.body.note).trim() : undefined),
     };
 
     const result = await catalogueAdmin.rejectTitleRequest(requestId, input, actorContext);
@@ -623,8 +672,9 @@ router.post('/requests/:requestId/reject', verifyLogin, requireCapability('manag
     res.redirect(`${returnUrl}?success=${encodeURIComponent(msg)}`);
   } catch (err) {
     logger.error(`Error rejecting title request '${requestId}':`, err.message);
-    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-      return res.status(400).json({ success: false, message: err.message });
+    const statusCode = err.code === 'CONFLICT' || err.status === 409 ? 409 : 400;
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.is('json')) {
+      return res.status(statusCode).json({ success: false, message: err.message, code: err.code });
     }
     const returnUrl = sanitizeReturnUrl(req.body.returnTo, '/admin/catalogue/requests');
     res.redirect(`${returnUrl}?error=${encodeURIComponent(err.message)}`);
