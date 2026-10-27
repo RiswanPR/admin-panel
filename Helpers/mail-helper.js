@@ -1,5 +1,6 @@
 const axios = require('axios');
 const logger = require('./logger');
+const { escapeHtml, wrapAdminEmail } = require('./email-service');
 
 const RESEND_TIMEOUT_MS = 10000;
 
@@ -27,139 +28,58 @@ module.exports = {
             return; // skip email, OTP is still securely stored in session
         }
 
+        const contentHtml = `
+            <div style="text-align:center; margin-bottom:20px;">
+                <span style="display:inline-block; padding:6px 16px; background:rgba(18,49,76,.08); border:1px solid #cbd5e1; border-radius:20px; font-size:12px; font-weight:700; color:#12314c; letter-spacing:1px; text-transform:uppercase;">
+                    🔒 Administrator Security
+                </span>
+            </div>
+
+            <h1 style="margin:0 0 10px 0; color:#0f172a; font-size:24px; font-weight:800; letter-spacing:-0.5px; text-align:center;">
+                Admin Login Verification
+            </h1>
+            <p style="margin:0 0 28px 0; color:#475569; font-size:15px; text-align:center; line-height:1.6;">
+                Use the following one-time password to complete your administrator sign-in.
+            </p>
+
+            <!-- OTP Card: Solid border, centered, monospaced, tap-to-select -->
+            <div style="background-color:#f8fafc; border:1px solid #cbd5e1; border-radius:14px; padding:28px 24px; text-align:center; margin:24px 0 28px 0;">
+                <span style="font-size:11px; font-weight:800; color:#12314c; letter-spacing:2px; text-transform:uppercase; display:block; margin-bottom:12px;">
+                    One-Time Administrator Code
+                </span>
+                <div style="font-size:38px; font-weight:800; letter-spacing:12px; color:#0f172a; font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,Courier,monospace; line-height:1; padding-left:12px; -webkit-user-select:all; user-select:all;">
+                    ${escapeHtml(otp)}
+                </div>
+            </div>
+
+            <!-- Timer Indicator (Strict 5-minute validity) -->
+            <div style="text-align:center; margin-bottom:28px;">
+                <span style="display:inline-block; padding:6px 16px; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); border-radius:20px; font-size:12px; font-weight:700; color:#b45309;">
+                    ⏱️ Valid for 5 minutes only
+                </span>
+            </div>
+
+            <!-- Security Warning Card -->
+            <div style="background:#f1f5f9; border-left:4px solid #12314c; border-radius:0 8px 8px 0; padding:16px 20px;">
+                <h4 style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0f172a;">
+                    🔒 Administrator Security Notice
+                </h4>
+                <p style="margin:0; font-size:13px; color:#475569; line-height:1.5;">
+                    Never share this authentication code with anyone. Zeitnah personnel will never request your administrator OTP. If you did not initiate this login request, please verify your account credentials immediately.
+                </p>
+            </div>
+        `;
+
+        const html = wrapAdminEmail(contentHtml, `Your Admin Login OTP is ${otp}`, 'SECURE AUTHENTICATION');
+
         // Send via Resend API
         try {
             const response = await axios.post('https://api.resend.com/emails', {
                 from: fromEmail,
                 to: email,
                 subject: "Your Admin Login OTP • Zeitnah",
-                text: `Your OTP for admin login is ${otp}. It will expire in 5 minutes.`,
-                html: `
-    <div style="
-        margin:0;
-        padding:0;
-        background:#f4f7f8;
-        font-family:Helvetica,Arial,sans-serif;
-    ">
-        <div style="
-            max-width:620px;
-            margin:40px auto;
-            background:#ffffff;
-            border-radius:28px;
-            overflow:hidden;
-            box-shadow:0 20px 60px rgba(0,0,0,.12);
-        ">
-            
-            <!-- HEADER -->
-            <div style="
-                background:linear-gradient(135deg,#12314c 0%,#0d2438 100%);
-                padding:45px 40px;
-                text-align:center;
-                position:relative;
-            ">
-                <div style="
-                    width:78px;
-                    height:78px;
-                    margin:auto;
-                    background:#9fd5b2;
-                    border-radius:22px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    box-shadow:0 10px 30px rgba(159,213,178,.35);
-                    font-size:32px;
-                    line-height:78px;
-                    text-align:center;
-                ">
-                    🔐
-                </div>
-
-                <p style="
-                    margin:25px 0 0;
-                    color:#9fd5b2;
-                    font-size:13px;
-                    letter-spacing:3px;
-                    text-transform:uppercase;
-                    font-weight:600;
-                ">
-                    Secure Authentication
-                </p>
-
-                <h1 style="
-                    margin:12px 0 0;
-                    color:white;
-                    font-size:34px;
-                    font-weight:800;
-                    letter-spacing:-1px;
-                ">
-                    Admin Login OTP
-                </h1>
-            </div>
-
-            <!-- BODY -->
-            <div style="padding:50px 40px;text-align:center;">
-                
-                <p style="
-                    margin:0;
-                    color:#6b7280;
-                    font-size:17px;
-                    line-height:1.8;
-                ">
-                    Use the following one-time password to continue your secure login.
-                </p>
-
-                <div style="
-                    margin:38px auto;
-                    width:max-content;
-                    background:linear-gradient(135deg,#f6ed4a 0%,#e6dd42 100%);
-                    color:#12314c;
-                    font-size:42px;
-                    font-weight:900;
-                    letter-spacing:12px;
-                    padding:22px 38px;
-                    border-radius:22px;
-                    box-shadow:0 15px 40px rgba(246,237,74,.35);
-                ">
-                    ${otp}
-                </div>
-
-                <div style="
-                    background:#f8fafc;
-                    border:1px solid #e5e7eb;
-                    border-radius:18px;
-                    padding:20px;
-                    margin-top:25px;
-                    color:#475569;
-                    font-size:14px;
-                    line-height:1.8;
-                ">
-                    ⏳ Expires in <b>5 minutes</b><br>
-                    🔒 Never share this code with anyone
-                </div>
-
-            </div>
-
-            <!-- FOOTER -->
-            <div style="
-                background:#f9fafb;
-                border-top:1px solid #edf2f7;
-                padding:28px;
-                text-align:center;
-            ">
-                <p style="
-                    margin:0;
-                    color:#94a3b8;
-                    font-size:13px;
-                    line-height:1.8;
-                ">
-                    Zeitnah Group of Institutions<br>
-                    Premium Education • Trusted Systems
-                </p>
-            </div>
-
-        </div>
-    </div>
-    `
+                text: `Your OTP for admin login is ${otp}. It will expire in 5 minutes. Never share this code with anyone.`,
+                html: html
             }, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
